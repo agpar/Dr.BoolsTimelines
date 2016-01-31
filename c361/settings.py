@@ -79,11 +79,8 @@ WSGI_APPLICATION = 'c361.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'c361',
-        'USER': 'c361',
-        'PASSWORD': 'c361',
-        'HOST': 'localhost'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'c361.db')
     }
 }
 

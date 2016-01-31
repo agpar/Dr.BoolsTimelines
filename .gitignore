@@ -1,3 +1,4 @@
-c361/__pycache__
+__pycache__
 .idea
 .env
+c361.db
