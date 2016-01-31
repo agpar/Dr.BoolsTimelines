@@ -1,0 +1,43 @@
+Backend/Frontend API
+====================
+
+Client sends GET request for turns to:
+
+http://[host]/api/[game-uuid]/
+
+Which accepts the following query parameters:
+
+?currentTurn = Integer (the latest turn the client has)
+?requestAmnt = Integer (the number of turns the client wants to fetch). Amounts greater than 50 will be overridden and return 50 turns.
+?reverse = Boolean (If the player is working in reverse, defaults to False and not required.)
+
+Assuming the request is well formed, the server will return JSON which follows this schema:
+
+{
+    "type": "turnList"
+    "gameID": [UUID string],
+    "turnStart": [Integer],
+    "turnEnd": [Integer],
+    "turns": 
+    [
+        {
+            "type": "turn",
+            "turnNum": [Integer],
+            "deltas":
+            [
+                {
+                    "type": "delta",
+                    "coords": [String of format "X,Y" or null for world vars],
+                    "actorID": [UUID String or null for world vars]
+                    "varTarget": [String of variable being targeted]
+                    "from": [null or current value]
+                    "to": [new value]
+                },
+
+                ...
+            ]
+        },
+        
+        ...
+    ]
+}
