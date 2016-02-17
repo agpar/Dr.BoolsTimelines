@@ -1,14 +1,14 @@
 """The globals which are relevant to the gamelogic engine"""
 
-from .actions import *
+def is_edible(obj):
+    return obj.EDIBLE
 
 ACTIONS = {
 
 }
 
 VARIABLES = {
-    "UP": var_up,
-
+    "EDIBLE": is_edible
 }
 
 # A set of all words to quickly check for membership
