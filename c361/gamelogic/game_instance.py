@@ -23,8 +23,8 @@ class GameInstance:
         self.world_size = 250
 
     def __getitem__(self, item):
-        x, y = item
-        return self.world[x][y]
+        x = self.world[item]
+        return x
 
     def init_empty_world(self):
         """Create an empty 50x50 cell grid for testing."""
