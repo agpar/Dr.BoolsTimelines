@@ -1,6 +1,6 @@
 __pycache__
 .idea
 .env
-/c361.db
+c361.db
 *.pyc
-
+c361/frontend/node_modules/

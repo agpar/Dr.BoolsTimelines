@@ -1,0 +1,11 @@
+{
+  "name": "cteam-render-engine",
+  "version": "1.0.0",
+  "description": "The core module for rendering the state of the AI simulation and offering an API to the front end module.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
