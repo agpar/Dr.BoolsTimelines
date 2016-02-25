@@ -1,12 +1,14 @@
 from rest_framework.views import APIView
 from django.contrib.auth.views import logout
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import redirect, render
 from django.views.generic.base import View
-from django.contrib.auth.forms import AuthenticationForm
-from c361.forms.user import UserForm
 from django.http import HttpResponseRedirect
+from c361.forms.user import UserForm
 
+
+"""Basic auth views that I grabbed from another project."""
 
 class UserLogin(View):
     form_class = AuthenticationForm
@@ -23,18 +25,6 @@ class UserLogin(View):
             return redirect("/")
         else:
             return render(request, self.template_name, {'form': form})
-
-
-def UserLogout(request):
-    """
-    Logs out the current user.
-    """
-    logout(request)
-    next = request.GET.get('next', None)
-    if next:
-        return redirect(next)
-    else:
-        return redirect('/')
 
 
 class UserRegister(APIView):
@@ -55,3 +45,14 @@ class UserRegister(APIView):
                 return HttpResponseRedirect("/")
             else:
                 return render(request, "auth/register.html", {'form': form})
+
+def user_logout(request):
+    """
+    Logs out the current user.
+    """
+    logout(request)
+    next = request.GET.get('next', None)
+    if next:
+        return redirect(next)
+    else:
+        return redirect('/')
