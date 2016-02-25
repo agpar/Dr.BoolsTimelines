@@ -23,21 +23,31 @@ Assuming the request is well formed, the server will return JSON which follows t
         {
             "type": "turn",
             "turnNum": [Integer],
-            "deltas":
+            "worldDeltas":
             [
                 {
-                    "type": "delta",
-                    "coords": [String of format "X,Y" or null for world vars],
-                    "actorID": [UUID String or null for world vars]
+                    "type": "worldDelta",
+                    "coords": [String of format "X,Y" or null],
+                    "varTarget": [String of variable being targeted],
+                    "from": [Current value]
+                    "to": [Cew value]
+                }
+            ]
+            "actorDeltas":
+            [
+                {
+                    "type": "actorDelta",
+                    "coords": [String of format "X,Y"],
+                    "actorID": [UUID String]
                     "varTarget": [String of variable being targeted]
-                    "from": [null or current value]
-                    "to": [new value]
+                    "from": [Current value]
+                    "to": [New value]
                 },
 
                 ...
             ]
         },
-        
+
         ...
     ]
 }
