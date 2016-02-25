@@ -9,8 +9,8 @@ b_str = "if hunger < 50 then find food"
 class Behaviour:
     """Parse and compile functions based on scripting API."""
 
-    def __init__(self, b_str=""):
-        self.b_str = b_str
+    def __init__(self, b_str=None):
+        self.b_str = b_str if b_str else None
         self.conditions = []
         self.actions = []
         self.weight = 0
@@ -55,6 +55,7 @@ class Actor(WorldInhabitant):
         self.health = 100
         self.hunger = 100
         self.sleep = 100
+        self.info = {}
         self.behaviours = []
         self.gameInstance = None
         self.is_sleeping = False
