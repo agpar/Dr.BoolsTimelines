@@ -8,8 +8,6 @@ class GameRunner(pykka.ThreadingActor):
         super(GameRunner, self).__init__()
         self.game_uuid = game_uuid
         self.game_model = GameInstance.objects.get(uuid=game_uuid)
-        self.game_model.active = True
-        self.game_model.save()
 
     def do_turn(self, n=1):
         self.game_model.current_turn_number += n

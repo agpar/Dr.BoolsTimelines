@@ -19,7 +19,6 @@ class GameInstance(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4)
     creator = models.ForeignKey(User, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    active = models.BooleanField(default=False)
 
     actors = models.ManyToManyField(GameActor, blank=True, related_name="games")
     current_turn_number = models.IntegerField(default=0)
