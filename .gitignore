@@ -4,3 +4,5 @@ __pycache__
 c361.db
 *.pyc
 c361/frontend/node_modules/
+c361/gamelogic/scripting_engine/parser.out
+c361/gamelogic/scripting_engine/parsertab.py
