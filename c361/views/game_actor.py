@@ -1,29 +1,31 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 
 from rest_framework.response import Response
 from rest_framework import generics
 from c361.models import GameActor
 from c361.serializers.game_actor import GameActorFullSerializer
+from c361.views.main import BaseListCreateView, BaseDetailView
 
 
-class ActorList(generics.ListCreateAPIView):
+class MyActorList(BaseDetailView):
+    """Redirect to the ActorList with appropriate query parameter."""
     model = GameActor
     serializer_class = GameActorFullSerializer
-    queryset = GameActor.objects.all()
-
-
-class ActorDetail(generics.RetrieveDestroyAPIView):
-    model = GameActor
-    serializer_class = GameActorFullSerializer
-    queryset = GameActor.objects.all()
-
-    def get_object(self, pk=None):
-        try:
-            return GameActor.objects.get(pk=pk)
-        except GameActor.DoesNotExist:
-            raise Http404
 
     def get(self, request, *args, **kwargs):
-        actor = self.get_object(kwargs.get('pk'))
-        serializer = GameActorFullSerializer(actor)
-        return Response(serializer.data)
+        if request.user.is_authenticated:
+            username = request.user.username
+            return HttpResponseRedirect("/actors/?creator={0}".format(username))
+        return HttpResponseRedirect("/login")
+
+
+class ActorList(BaseListCreateView):
+    """View for list of Actors"""
+    model = GameActor
+    serializer_class = GameActorFullSerializer
+
+
+class ActorDetail(BaseDetailView):
+    """View for detail of specific actor."""
+    model = GameActor
+    serializer_class = GameActorFullSerializer

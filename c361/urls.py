@@ -19,7 +19,8 @@ from django.conf.urls import url
 from django.contrib import admin
 from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.views import home
-from c361.views.game_actor import ActorList, ActorDetail
+from c361.views.game_actor import ActorList, ActorDetail, MyActorList
+from c361.views.user import UserDetail, UserList
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -28,7 +29,14 @@ urlpatterns = [
     url(r'^logout/', user_logout, name="logout"),
     url(r'^register/', UserRegister.as_view(), name="register"),
 
-    url(r'^actors/', ActorList.as_view(), name="actor-list"),
-    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(), name='actor-detail')
+    url(r'^actors/$', ActorList.as_view(),
+        name="gameactor-list", kwargs={'model': "GameActor"}),
+    url(r'^actors/mine/$', MyActorList.as_view(),
+        name="my-actor-list"),
+    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(),
+        name='gameactor-detail', kwargs={'model': "GameActor"}),
+
+    url(r'^users/$', UserList.as_view(), name='user-list'),
+    url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail')
 ]
 
