@@ -20,6 +20,7 @@ from django.contrib import admin
 from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.views import home
 from c361.views.game_actor import ActorList, ActorDetail, MyActorList
+from c361.views.game_instance import GameList, GameDetail, MyGameList
 from c361.views.user import UserDetail, UserList
 
 urlpatterns = [
@@ -32,9 +33,16 @@ urlpatterns = [
     url(r'^actors/$', ActorList.as_view(),
         name="gameactor-list", kwargs={'model': "GameActor"}),
     url(r'^actors/mine/$', MyActorList.as_view(),
-        name="my-actor-list"),
+        name="my-gameactor-list"),
     url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(),
         name='gameactor-detail', kwargs={'model': "GameActor"}),
+
+    url(r'^games/$', GameList.as_view(),
+        name="gameinstance-list", kwargs={'model': "GameInstance"}),
+    url(r'^games/mine/$', MyGameList.as_view(),
+        name="my-gameinstance-list"),
+    url(r'^game/(?P<pk>[0-9a-z-]+)', GameDetail.as_view(),
+        name='gameinstance-detail', kwargs={'model': "GameInstance"}),
 
     url(r'^users/$', UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail')

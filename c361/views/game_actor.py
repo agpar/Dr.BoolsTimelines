@@ -1,7 +1,5 @@
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 
-from rest_framework.response import Response
-from rest_framework import generics
 from c361.models import GameActor
 from c361.serializers.game_actor import GameActorFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
