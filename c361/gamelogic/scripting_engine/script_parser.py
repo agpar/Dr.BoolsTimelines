@@ -247,6 +247,6 @@ if __name__ == "__main__":
         else:
             for i in inf.inferences:
                 if isinstance(i.value, ast.UnaryNumOperation):
-                    print(i.symbol + " is " + i.value.operation + i.value.operand)
+                    print(i.symbol + " is " + i.value.operation + str(i.value.operand))
                 else:
-                    print(i.symbol + " is " + i.value)
+                    print(i.symbol + " is " + str(i.value))
