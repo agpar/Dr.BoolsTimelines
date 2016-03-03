@@ -1,8 +1,25 @@
-body {
+body
+{
     padding-top: 50px;
 }
-.row-content, .row-navbar
 
+#sim-ui-overlay
+{
+    pointer-events: none;
+    position: absolute;
+}
+
+.sim-ui-element
+{
+    pointer-events: all;
+}
+
+#sim-render-target
+{
+    position: absolute;
+}
+
+.row-content, .row-navbar
 {
     padding-left:15px;
     padding-right:15px;
