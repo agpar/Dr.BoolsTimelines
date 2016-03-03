@@ -18,7 +18,7 @@ Assuming the request is well formed, the server will return JSON which follows t
     "gameID": [UUID string],
     "turnStart": [Integer],
     "turnEnd": [Integer],
-    "turns": 
+    "turns":
     [
         {
             "type": "turn",
@@ -27,18 +27,18 @@ Assuming the request is well formed, the server will return JSON which follows t
             [
                 {
                     "type": "worldDelta",
-                    "coords": [String of format "X,Y" or null],
+                    "coords": [Dict of form {x: 0, y:0}],
                     "varTarget": [String of variable being targeted],
                     "from": [Current value]
-                    "to": [Cew value]
+                    "to": [New value]
                 }
             ]
             "actorDeltas":
             [
                 {
                     "type": "actorDelta",
-                    "coords": [String of format "X,Y"],
-                    "actorID": [UUID String]
+                    "coords": [Dict of form {x: 0, y:0}],
+                    "actorID": [UUID String],  #Used instead of coords
                     "varTarget": [String of variable being targeted]
                     "from": [Current value]
                     "to": [New value]
