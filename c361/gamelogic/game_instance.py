@@ -17,10 +17,21 @@ class GameInstance:
     accept a number of different arguments. The goal is to have as open
     an api as possible, given
     """
-    def __init__(self):
-        self.actors = {}
-        self.world = []
-        self.world_size = 250
+    def __init__(self, model=None):
+        if not model:
+            # For testing.
+            self.actors = {}
+            self.world = []
+            self.world_size = 250
+        else:
+            self.uuid = str(model.uuid)
+            self.current_turn = model.current_turn
+            self.actors = {}
+            self.world = []
+            self.world_size = 250
+
+            for a in model.actors.all():
+                self.add_actor(Actor(a))
 
     def __getitem__(self, item):
         x = self.world[item]

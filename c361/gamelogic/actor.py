@@ -14,20 +14,19 @@ class Actor(WorldInhabitant):
     integrity and logic of the world.
     """
 
-    def __init__(self, x=-1, y=-1, name="Anonymous", script=""):
-        self.uuid = uuid.uuid4()
-        self.name = name
-        self._coords = (x, y)
-        self.health = 100
-        self.hunger = 100
-        self.sleep = 100
+    def __init__(self, model):
+        self.uuid = model.uuid
+        self.name = model.title
+        self._coords = model.coords
+        self.health = model.health
+        self.hunger = model.hunger
+        self.sleep = model.sleep
         self.info = {}
         self.gameInstance = None
-        self.is_sleeping = False
+        self.is_sleeping = model.is_sleeping
         parser = AiScriptParser()
-        self.behaviour = parser.parse(script)
-        self.direction = "North"
-        self.food = False
+        self.direction = model.direction
+        self.food = model.food
         self.sight_line = []
 
     def __repr__(self):

@@ -10,5 +10,18 @@ class GameActorModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     behaviour_script = models.TextField(blank=True, null=True)
 
+    health = models.IntegerField(default=100)
+    hunger = models.IntegerField(default=100)
+    sleep = models.IntegerField(default=100)
+    is_sleeping = models.BooleanField(default=False)
+    direction = models.CharField(max_length=20, default='North')
+    food = models.BooleanField(default=False)
+    x_coord = models.IntegerField(default=-1)
+    y_coord = models.IntegerField(default=-1)
+
     def __str__(self):
         return "{}: {}".format(self.title, self.created)
+
+    @property
+    def coords(self):
+        return (self.x_coord, self.y_coord)
