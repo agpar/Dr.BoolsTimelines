@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 from rest_framework.response import Response
-from c361.models import GameInstance
+from c361.models import GameInstanceModel
 from c361.serializers.game_instance import GameInstanceFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
@@ -8,7 +8,7 @@ from rest_framework import status
 
 class MyGameList(BaseDetailView):
     """Redirect to the GameList with appropriate query parameter."""
-    model = GameInstance
+    model = GameInstanceModel
     serializer_class = GameInstanceFullSerializer
 
     def get(self, request, *args, **kwargs):
@@ -20,13 +20,13 @@ class MyGameList(BaseDetailView):
 
 class GameList(BaseListCreateView):
     """View for list of Games"""
-    model = GameInstance
+    model = GameInstanceModel
     serializer_class = GameInstanceFullSerializer
 
 
 class GameDetail(BaseDetailView):
     """View for detail of specific Game."""
-    model = GameInstance
+    model = GameInstanceModel
     serializer_class = GameInstanceFullSerializer
 
     get_args = {"start", "stop", "do_turn"}

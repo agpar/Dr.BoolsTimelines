@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
-from c361.models.game_actor import GameActor
+from c361.models.game_actor import GameActorModel
 from pykka import ActorRegistry
 from django.core.cache import cache
 
@@ -14,13 +14,13 @@ class NotRunningError(Exception):
     pass
 
 
-class GameInstance(models.Model):
+class GameInstanceModel(models.Model):
     title = models.CharField(max_length=256, default="Untitled Game")
     uuid = models.UUIDField(default=uuid.uuid4)
     creator = models.ForeignKey(User, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
-    actors = models.ManyToManyField(GameActor, blank=True, related_name="games")
+    actors = models.ManyToManyField(GameActorModel, blank=True, related_name="games")
     current_turn_number = models.IntegerField(default=0)
 
     def is_active(self):

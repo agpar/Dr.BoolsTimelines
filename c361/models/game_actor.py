@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 import uuid
 
 
-class GameActor(models.Model):
+class GameActorModel(models.Model):
     title = models.CharField(max_length=256, default="Booly")
     uuid = models.UUIDField(default=uuid.uuid4)
     creator = models.ForeignKey(User, blank=True, null=True)

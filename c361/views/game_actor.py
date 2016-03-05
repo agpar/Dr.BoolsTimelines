@@ -1,13 +1,13 @@
 from django.http import HttpResponseRedirect
 
-from c361.models import GameActor
+from c361.models import GameActorModel
 from c361.serializers.game_actor import GameActorFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 
 
 class MyActorList(BaseDetailView):
     """Redirect to the ActorList with appropriate query parameter."""
-    model = GameActor
+    model = GameActorModel
     serializer_class = GameActorFullSerializer
 
     def get(self, request, *args, **kwargs):
@@ -19,11 +19,11 @@ class MyActorList(BaseDetailView):
 
 class ActorList(BaseListCreateView):
     """View for list of Actors"""
-    model = GameActor
+    model = GameActorModel
     serializer_class = GameActorFullSerializer
 
 
 class ActorDetail(BaseDetailView):
     """View for detail of specific actor."""
-    model = GameActor
+    model = GameActorModel
     serializer_class = GameActorFullSerializer
