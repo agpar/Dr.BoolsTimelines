@@ -31,18 +31,18 @@ urlpatterns = [
     url(r'^register/', UserRegister.as_view(), name="register"),
 
     url(r'^actors/$', ActorList.as_view(),
-        name="gameactor-list", kwargs={'model': "GameActor"}),
+        name="gameactormodel-list", kwargs={'model': "GameActorModel"}),
     url(r'^actors/mine/$', MyActorList.as_view(),
-        name="my-gameactor-list"),
+        name="my-gameactormodel-list"),
     url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(),
-        name='gameactor-detail', kwargs={'model': "GameActor"}),
+        name='gameactormodel-detail', kwargs={'model': "GameActorModel"}),
 
     url(r'^games/$', GameList.as_view(),
-        name="gameinstance-list", kwargs={'model': "GameInstance"}),
+        name="gameinstancemodel-list", kwargs={'model': "GameInstanceModel"}),
     url(r'^games/mine/$', MyGameList.as_view(),
-        name="my-gameinstance-list"),
+        name="my-gameinstancemodel-list"),
     url(r'^game/(?P<pk>[0-9a-z-]+)', GameDetail.as_view(),
-        name='gameinstance-detail', kwargs={'model': "GameInstance"}),
+        name='gameinstancemodel-detail', kwargs={'model': "GameInstanceModel"}),
 
     url(r'^users/$', UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail')
