@@ -30,7 +30,6 @@ class Actor(WorldInhabitant):
         self.food = False
         self.sight_line = []
 
-
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
         return temp.format(self.x, self.y, self.name)
@@ -38,7 +37,7 @@ class Actor(WorldInhabitant):
     def do_turn(self):
         self._turn_stat_change()
         action = self.behaviour.next_action()
-        action = _action_table()[action]
+        action = self._action_table()[action]
         return action()
 
     def _turn_stat_change(self):
@@ -51,8 +50,8 @@ class Actor(WorldInhabitant):
         else:
             self.sleep -= 5
 
-# Actions
-    def _action_table():
+    # Actions
+    def _action_table(self):
         return {
             "eat": self.eat,
             "walk": self.walk,
@@ -65,58 +64,59 @@ class Actor(WorldInhabitant):
             "smell": self.smell
         }
 
-    def eat():
+    def eat(self):
         return {
             "type": "actorDelta",
-            "coords": {'x': self._coords[0], 'y': self._coords[1]},
+            "coords": {'x': self.x, 'y': self.y},
             "actorID": self.uuid,
             "varTarget": "food",
             "from": True,
             "to": False
         }
 
-    def walk():
+    def walk(self):
         if self.direction == "North":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "_coords",
-                "from": (x,y),
-                "to": (x,y+1)
+                "from": self._coords,
+                "to": self.north()
             }
         elif self.direction == "East":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "_coords",
-                "from": (x,y),
-                "to": (x+1,y)
+                "from": self._coords,
+                "to": self.east()
             }
         elif self.direction == "West":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "_coords",
-                "from": (x,y),
-                "to": (x-1,y)
+                "from": self._coords,
+                "to": self.west()
             }
         elif self.direction == "South":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  #Used instead of coords
                 "varTarget": "_coords",
-                "from": (x,y),
-                "to": (x,y-1)
+                "from": self._coords,
+                "to": self.south()
             }
-    def turn_right():
+
+    def turn_right(self):
         if self.direction == "North":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "North",
@@ -125,7 +125,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "East":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "East",
@@ -134,7 +134,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "West":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "West",
@@ -143,17 +143,18 @@ class Actor(WorldInhabitant):
         elif self.direction == "South":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  #Used instead of coords
                 "varTarget": "direction",
                 "from": "South",
                 "to": "West"
             }
-    def turn_left():
+
+    def turn_left(self):
         if self.direction == "North":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "North",
@@ -162,7 +163,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "East":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "East",
@@ -171,7 +172,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "West":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "West",
@@ -180,36 +181,39 @@ class Actor(WorldInhabitant):
         elif self.direction == "South":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  #Used instead of coords
                 "varTarget": "direction",
                 "from": "South",
                 "to": "East"
             }
-    def pickup():
+
+    def pickup(self):
         return {
 
         }
-    def harvest():
+
+    def harvest(self):
         return {
             "type": "worldDelta",
-            "coords": {'x': self._coords[0], 'y': self._coords[1]},
+            "coords": {'x': self.x, 'y': self.y},
             "varTarget": "plant",
             "to": None
         }
-    def drop():
+
+    def drop(self):
         return {
             "type": "worldDelta",
-            "coords": {'x': self._coords[0], 'y': self._coords[1]},
+            "coords": {'x': self.x, 'y': self.y},
             "varTarget": "cell",
             "to": "food"
         }
 
-    def see():
+    def see(self):
         if self.direction == "North":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "North",
@@ -218,7 +222,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "East":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "East",
@@ -227,7 +231,7 @@ class Actor(WorldInhabitant):
         elif self.direction == "West":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  
                 "varTarget": "direction",
                 "from": "West",
@@ -236,13 +240,14 @@ class Actor(WorldInhabitant):
         elif self.direction == "South":
             return {
                 "type": "actorDelta",
-                "coords": {'x': self._coords[0], 'y': self._coords[1]},
+                "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,  #Used instead of coords
                 "varTarget": "direction",
                 "from": "South",
                 "to": "East"
             }
-    def smell(): 
+
+    def smell(self):
         return {
 
         }
