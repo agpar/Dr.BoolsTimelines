@@ -26,7 +26,9 @@ class Actor(WorldInhabitant):
         self.is_sleeping = False
         parser = AiScriptParser()
         self.behaviour = parser.parse(script)
-
+        self.direction = "North"
+        self.food = False
+        self.sight_line = []
 
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
@@ -35,7 +37,7 @@ class Actor(WorldInhabitant):
     def do_turn(self):
         self._turn_stat_change()
         action = self.behaviour.next_action()
-        action = _action_table()[action]
+        action = self._action_table()[action]
         return action()
 
     def _turn_stat_change(self):
@@ -48,17 +50,218 @@ class Actor(WorldInhabitant):
         else:
             self.sleep -= 5
 
-# Actions
-    def _action_table():
+    # Actions
+    def _action_table(self):
         return {
-            "eat": self.eat
+            "eat": self.eat,
+            "walk": self.walk,
+            "turn_right": self.turn_right,
+            "turn_left": self.turn_left,
+            "pickup": self.pickup,
+            "harvest": self.harvest,
+            "drop": self.drop,
+            "see": self.see,
+            "smell": self.smell
         }
 
-    def eat():
+    def eat(self):
+        return {
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "food",
+            "from": True,
+            "to": False
+        }
+
+    def walk(self):
+        if self.direction == "North":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "_coords",
+                "from": self._coords,
+                "to": self.north()
+            }
+        elif self.direction == "East":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "_coords",
+                "from": self._coords,
+                "to": self.east()
+            }
+        elif self.direction == "West":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "_coords",
+                "from": self._coords,
+                "to": self.west()
+            }
+        elif self.direction == "South":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "_coords",
+                "from": self._coords,
+                "to": self.south()
+            }
+
+    def turn_right(self):
+        if self.direction == "North":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "North",
+                "to": "East"
+            }
+        elif self.direction == "East":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "East",
+                "to": "South"
+            }
+        elif self.direction == "West":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "West",
+                "to": "North"
+            }
+        elif self.direction == "South":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "direction",
+                "from": "South",
+                "to": "West"
+            }
+
+    def turn_left(self):
+        if self.direction == "North":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "North",
+                "to": "West"
+            }
+        elif self.direction == "East":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "East",
+                "to": "North"
+            }
+        elif self.direction == "West":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "West",
+                "to": "South"
+            }
+        elif self.direction == "South":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "direction",
+                "from": "South",
+                "to": "East"
+            }
+
+    def pickup(self):
+        return {
+
+        }
+
+    def harvest(self):
         return {
             "type": "worldDelta",
-            "coords": {'x': self._coords[0], 'y': self._coords[1]},
+            "coords": {'x': self.x, 'y': self.y},
             "varTarget": "plant",
             "to": None
         }
-#
+
+    def drop(self):
+        return {
+            "type": "worldDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "varTarget": "cell",
+            "to": "food"
+        }
+
+    def see(self):
+        if self.direction == "North":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "North",
+                "to": "West"
+            }
+        elif self.direction == "East":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "East",
+                "to": "North"
+            }
+        elif self.direction == "West":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  
+                "varTarget": "direction",
+                "from": "West",
+                "to": "South"
+            }
+        elif self.direction == "South":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "direction",
+                "from": "South",
+                "to": "East"
+            }
+
+    def smell(self):
+        return {
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
