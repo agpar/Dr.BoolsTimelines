@@ -14,7 +14,16 @@ class GameRunner(pykka.ThreadingActor):
         self.game_object = GameInstance(self.game_model)
 
     def do_turn(self, n=1):
-        # Temporary testing code here.
+        """
+        This will be the main method for getting turn
+        information. You should pass in an n which is how
+        many turns you want. This class will tell its game_object
+        to compute the turns, then return the deltas as a Turn object.
+        The turn objects will be saved in the database.
+
+        The GameInstance and GameActor models will only be written
+        through to the database when
+        """
         self.game_model.current_turn_number += n
         self.game_model.save()
         return self.game_model.current_turn_number
