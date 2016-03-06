@@ -1,6 +1,10 @@
-{% extends "base/base.html" %}
+{% extends "base/common.html" %}
 
-{% block page_content %}
-<div id="ui-overlay"></div>
+{% block container %}
+<style>
+  body{padding: 0 0; overflow: hidden}
+</style>
 <canvas id="simulation-render-target"></canvas>
+<div class="sim-ui-container container-fluid">
+</div>
 {% endblock %}

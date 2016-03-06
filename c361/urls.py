@@ -19,6 +19,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.views import home
+from c361.views.views import simulation
 from c361.views.game_actor import ActorList, ActorDetail
 
 urlpatterns = [
@@ -29,6 +30,7 @@ urlpatterns = [
     url(r'^register/', UserRegister.as_view(), name="register"),
 
     url(r'^actors/', ActorList.as_view(), name="actor-list"),
-    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(), name='actor-detail')
-]
+    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(), name='actor-detail'),
 
+    url(r'^simulation/', simulation, name="simulation")
+]
