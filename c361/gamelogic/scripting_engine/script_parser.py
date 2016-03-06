@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
-import ast_nodes as ast
-from behaviour import Behaviour
+import c361.gamelogic.scripting_engine.ast_nodes as ast
+from c361.gamelogic.scripting_engine.behaviour import Behaviour
 
 reserved = {
     'and': 'AND',

@@ -1,8 +1,8 @@
 import bisect
 import uuid
 
-from cell import WorldInhabitant
-from scripting_engine.script_parser import AiScriptParser
+from .cell import WorldInhabitant
+from .scripting_engine.script_parser import AiScriptParser
 
 
 class Actor(WorldInhabitant):
@@ -24,7 +24,6 @@ class Actor(WorldInhabitant):
         self.info = {}
         self.gameInstance = None
         self.is_sleeping = model.is_sleeping
-        parser = AiScriptParser()
         self.direction = model.direction
         self.food = model.food
         self.sight_line = []

@@ -1,6 +1,6 @@
-from actor import Actor
-from cell import Cell, WorldInhabitant
-from globals import VARIABLES
+from .actor import Actor
+from .cell import Cell, WorldInhabitant
+from .globals import VARIABLES
 
 import uuid
 
@@ -25,11 +25,12 @@ class GameInstance:
             self.world_size = 250
         else:
             self.uuid = str(model.uuid)
-            self.current_turn = model.current_turn
+            self.current_turn = model.current_turn_number
             self.actors = {}
             self.world = []
             self.world_size = 250
 
+            self.init_empty_world()
             for a in model.actors.all():
                 self.add_actor(Actor(a))
 
@@ -78,15 +79,25 @@ class GameInstance:
             tmp = "{} already in GameInstance."
             raise ValueError(tmp.format(atest))
 
-        atest = self.get_actor(x, y)
-        if atest:
-            tmp = "{0} already at coord. Only 1 Actor on a cell at a time."
-            raise ValueError(tmp.format(atest))
+        if x==0 and y==0:
+            for x, y in zip(range(10), range(10)):
+                atest = self.get_actor(x, y)
+                if not atest:
+                    self.actors[a.uuid] = a
+                    a._coords = (x, y)
+                    a.gameInstance = self
+                    self.world[x][y].append(a)
 
-        self.actors[a.uuid] = a
-        a._coords = (x, y)
-        a.gameInstance = self
-        self.world[x][y].append(a)
+        else:
+            atest = self.get_actor(x, y)
+            if atest:
+                tmp = "{0} already at coord. Only 1 Actor on a cell at a time."
+                raise ValueError(tmp.format(atest))
+
+            self.actors[a.uuid] = a
+            a._coords = (x, y)
+            a.gameInstance = self
+            self.world[x][y].append(a)
 
     def remove_actor(self, x, y=None):
         """Remove an actor from the GameInstance. Fail silently.
@@ -116,7 +127,7 @@ class GameInstance:
         if isinstance(x, WorldInhabitant):
             x, y = self.coord_parse(x, y)
 
-        content = self[x, y]
+        content = self[x][y]
         if len(content) > 1:
             for z in content:
                 if isinstance(z, Actor):
