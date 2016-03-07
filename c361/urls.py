@@ -22,6 +22,7 @@ from c361.views.views import home
 from c361.views.game_actor import ActorList, ActorDetail, MyActorList
 from c361.views.game_instance import GameList, GameDetail, MyGameList
 from c361.views.user import UserDetail, UserList
+from c361.views.views import simulation
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -45,6 +46,7 @@ urlpatterns = [
         name='gameinstancemodel-detail', kwargs={'model': "GameInstanceModel"}),
 
     url(r'^users/$', UserList.as_view(), name='user-list'),
-    url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail')
-]
+    url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail'),
 
+    url(r'^simulation/', simulation, name="simulation")
+]

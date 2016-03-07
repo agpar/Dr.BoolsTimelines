@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
 import ast_nodes as ast
-
+from behaviour import Behaviour
 
 reserved = {
     'and': 'AND',
@@ -87,6 +87,11 @@ precedence = (
     ('left', 'OR'),
     ('right', 'NOT')
 )
+
+
+def p_behaviour(p):
+    "behaviour : rules"
+    p[0] = Behaviour(rules)
 
 
 def p_rules(p):
@@ -212,7 +217,7 @@ def p_error(p):
 
 
 class AiScriptParser(object):
-    def __init__(self):
+    def __init__(self, script):
         yacc.yacc()
         self.parse = yacc.parse
 
