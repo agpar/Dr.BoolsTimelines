@@ -149,14 +149,15 @@ class GameInstance:
 
     def do_turn(self, up_to=0):
         all_turns = []
-        import pdb
-        pdb.set_trace()
         while self.current_turn <= up_to:
             self.current_turn += 1
             this_turn = {'number': self.current_turn, 'deltas': []}
-            for uuid, actor in self.actors.items():
+            for uuid, actor in random.shuffle(list(self.actors.items())):
                 this_turn['deltas'].append(actor.do_turn())
 
             all_turns.append(this_turn)
+
+            # TODO Validate the delta before accepting and returning it.
+            # TODO Calculate other effects that result from the delta (health changes, deaths, etc)
 
         return all_turns

@@ -15,6 +15,7 @@ class Actor(WorldInhabitant):
     """
 
     def __init__(self, model):
+        # TODO: Add parsing of script to this model.
         self.uuid = str(model.uuid)
         self.name = model.title
         self._coords = model.coords
@@ -34,6 +35,7 @@ class Actor(WorldInhabitant):
 
     def do_turn(self):
         self._turn_stat_change()
+        # TODO Replace this placeholder with actions based on a parsed behaviour script.
         #action = self.behaviour.next_action()
         #action = self._action_table()[action]
         return {

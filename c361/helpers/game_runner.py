@@ -5,6 +5,8 @@ from c361.models.turn import TurnModel
 from c361.gamelogic.game_instance import GameInstance
 from django.core.cache import cache
 
+# TODO Write serializer for dumping GameInstance and GameActor to the database.
+
 
 class GameRunner(pykka.ThreadingActor):
     """Runs a GameInstance in a Pykka actor"""
@@ -17,14 +19,9 @@ class GameRunner(pykka.ThreadingActor):
 
     def do_turn(self, up_to=0):
         """
-        This will be the main method for getting turn
-        information. You should pass in an n which is how
-        many turns you want. This class will tell its game_object
-        to compute the turns, then return the deltas as a Turn object.
-        The turn objects will be saved in the database.
-
-        The GameInstance and GameActor models will only be written
-        through to the database when
+        This will be the main method for getting turn information.
+        You should pass in the turn number you wish to get up to.
+        This class will tell its game_object to compute the turns, then save deltas as TurnModels.
         """
         results = self.game_object.do_turn(up_to)
 
@@ -37,6 +34,4 @@ class GameRunner(pykka.ThreadingActor):
 
     def stop(self):
         cache.delete(str(self.game_uuid))
-        # Need serializers for gameInstance-GameInstanceModel
-        # and for Actor to ActorModel.
         super().stop()
