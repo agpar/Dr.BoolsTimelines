@@ -15,7 +15,7 @@ class Actor(WorldInhabitant):
     """
 
     def __init__(self, model):
-        self.uuid = model.uuid
+        self.uuid = str(model.uuid)
         self.name = model.title
         self._coords = model.coords
         self.health = model.health
@@ -34,9 +34,16 @@ class Actor(WorldInhabitant):
 
     def do_turn(self):
         self._turn_stat_change()
-        action = self.behaviour.next_action()
-        action = self._action_table()[action]
-        return action()
+        #action = self.behaviour.next_action()
+        #action = self._action_table()[action]
+        return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "_coords",
+                "from": self._coords,
+                "to": self.north()
+        }
 
     def _turn_stat_change(self):
         self.hunger -= 5

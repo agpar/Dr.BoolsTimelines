@@ -2,7 +2,9 @@ from .actor import Actor
 from .cell import Cell, WorldInhabitant
 from .globals import VARIABLES
 
+import random
 import uuid
+
 
 class GameInstance:
     """Container for world and actors in world.
@@ -87,6 +89,7 @@ class GameInstance:
                     a._coords = (x, y)
                     a.gameInstance = self
                     self.world[x][y].append(a)
+                    break
 
         else:
             atest = self.get_actor(x, y)
@@ -144,4 +147,16 @@ class GameInstance:
         """
         x, y = self.coord_parse(x, y)
 
+    def do_turn(self, up_to=0):
+        all_turns = []
+        import pdb
+        pdb.set_trace()
+        while self.current_turn <= up_to:
+            self.current_turn += 1
+            this_turn = {'number': self.current_turn, 'deltas': []}
+            for uuid, actor in self.actors.items():
+                this_turn['deltas'].append(actor.do_turn())
 
+            all_turns.append(this_turn)
+
+        return all_turns

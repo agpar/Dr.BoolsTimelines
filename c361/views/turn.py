@@ -3,6 +3,7 @@ from c361.models import TurnModel, GameInstanceModel
 from c361.serializers.turn import TurnFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
+from rest_framework.exceptions import NotAcceptable
 
 
 class TurnList(BaseListCreateView):
@@ -20,13 +21,17 @@ class TurnList(BaseListCreateView):
         first = int(self.request.GET.get('first'))
         last = int(self.request.GET.get('last'))
 
+        # Raise error if requesting new turns but game not running.
         if last > game_instance.current_turn_number and not game_instance.is_active():
-            return Response("Requested new turns from non-running GameInstance.", status=status.HTTP_400_BAD_REQUEST)
-        else:
-            game_proxy = game_instance.get_pactor_proxy()
-            num_to_do = last - game_instance.current_turn_number
-            game_proxy.do_turn(num_to_do)
+            raise NotAcceptable("Requested new turns from non-running GameInstance.")
+        # Calculate new turns if necessary.
+        elif last > game_instance.current_turn_number:
+            actor_proxy = game_instance.get_pactor_proxy()
+            future = actor_proxy.do_turn(last)
+            result = future.get()
 
+        # Return queryset of the requested turns.
         qs = game_instance.turns.filter(number__gte=first)
         qs = game_instance.turns.filter(number__lte=last)
         return qs
+

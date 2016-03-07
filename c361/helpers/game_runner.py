@@ -1,5 +1,7 @@
 import pykka
 from c361.models.game_instance import GameInstanceModel
+from c361.models.turn import TurnModel
+
 from c361.gamelogic.game_instance import GameInstance
 from django.core.cache import cache
 
@@ -13,7 +15,7 @@ class GameRunner(pykka.ThreadingActor):
         self.game_model = GameInstanceModel.objects.get(uuid=game_uuid)
         self.game_object = GameInstance(self.game_model)
 
-    def do_turn(self, n=1):
+    def do_turn(self, up_to=0):
         """
         This will be the main method for getting turn
         information. You should pass in an n which is how
@@ -24,7 +26,12 @@ class GameRunner(pykka.ThreadingActor):
         The GameInstance and GameActor models will only be written
         through to the database when
         """
-        self.game_model.current_turn_number += n
+        results = self.game_object.do_turn(up_to)
+
+        for turn in results:
+            temp = TurnModel(game=self.game_model, number=turn['number'], delta_dump=turn['deltas'])
+            temp.save()
+        self.game_model.current_turn_number = up_to
         self.game_model.save()
         return self.game_model.current_turn_number
 
