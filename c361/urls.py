@@ -21,6 +21,7 @@ from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.views import home
 from c361.views.game_actor import ActorList, ActorDetail, MyActorList
 from c361.views.game_instance import GameList, GameDetail, MyGameList
+from c361.views.turn import TurnList
 from c361.views.user import UserDetail, UserList
 from c361.views.views import simulation
 
@@ -42,8 +43,11 @@ urlpatterns = [
         name="gameinstancemodel-list", kwargs={'model': "GameInstanceModel"}),
     url(r'^games/mine/$', MyGameList.as_view(),
         name="my-gameinstancemodel-list"),
-    url(r'^game/(?P<pk>[0-9a-z-]+)', GameDetail.as_view(),
+    url(r'^game/(?P<pk>[0-9a-z-]+)/$', GameDetail.as_view(),
         name='gameinstancemodel-detail', kwargs={'model': "GameInstanceModel"}),
+
+    url(r'^game/(?P<pk>[0-9a-z-]+)/turns/', TurnList.as_view(),
+        name='turnmodel-list', kwargs={'model': "TurnModel"}),
 
     url(r'^users/$', UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail'),
