@@ -35,3 +35,4 @@ module.exports = Class("GraphicsEngineController", {
         renderer.updateCam(x,y)
     },
 })
+
