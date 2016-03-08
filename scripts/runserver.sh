@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#cd /code
 pushd ./c361/frontend
+npm install
 node node_modules/gulp/bin/gulp.js make
 popd
 pip install -r requirements.txt

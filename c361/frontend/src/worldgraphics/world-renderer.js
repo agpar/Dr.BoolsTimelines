@@ -63,7 +63,7 @@ module.exports =  Class("WorldRenderer", {
         var scene  = new BABYLON.Scene(engine)
 
         var camera = new BABYLON.TouchCamera("camera", new BABYLON.Vector3(0,10,0), scene)
-        camera.setTarget(new BABYLON.Vector3(4,0,4))
+        camera.setTarget(new BABYLON.Vector3(10,0,10))
         camera.attachControl(renderTarget)
 
         var light = new BABYLON.PointLight("light", new BABYLON.Vector3(0,100,-5), scene)
