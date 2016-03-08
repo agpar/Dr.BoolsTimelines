@@ -15,7 +15,7 @@ module.exports =  Class("WorldRenderer", {
     },
     __construct: function (renderTarget) {
         var options = {
-            max: 100,
+            max: 1100,
             dispose: function (key, chunk) {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
@@ -30,15 +30,15 @@ module.exports =  Class("WorldRenderer", {
         this._sceneChunks = lru(options)
 
     //  placeholder state
-        var width = 1200
-        var length = 1200
-        var chunkSize = 4
+        var width  = 120000
+        var length = 120000
+        var chunkSize = 6
 
         var seed = []
 
-        for (var i = 0; i < Math.ceil(length/1); i++){
+        for (var i = 0; i < Math.ceil(600); i++){
             var row = []
-            for (var j = 0; j < Math.ceil(width/1); j++){
+            for (var j = 0; j < Math.ceil(600); j++){
                 row.push(Math.random())
             }
             seed.push(row)
@@ -49,8 +49,8 @@ module.exports =  Class("WorldRenderer", {
             'wwidth': width,
             'wlength': length,
             'seed': {
-                'mwidth': Math.ceil(width/1),
-                'mlength': Math.ceil(length/1),
+                'mwidth': Math.ceil(600),
+                'mlength': Math.ceil(600),
                 'matrix': seed
             },
             'user_made': {}
@@ -62,11 +62,11 @@ module.exports =  Class("WorldRenderer", {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
 
-        var camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0,10,0), scene)
+        var camera = new BABYLON.TouchCamera("camera", new BABYLON.Vector3(0,10,0), scene)
         camera.setTarget(new BABYLON.Vector3(4,0,4))
         camera.attachControl(renderTarget)
 
-        var light = new BABYLON.PointLight("light", new BABYLON.Vector3(0,30,-5), scene)
+        var light = new BABYLON.PointLight("light", new BABYLON.Vector3(0,100,-5), scene)
 
         this._renderEngine = engine
         this._scene = scene
@@ -123,13 +123,13 @@ module.exports =  Class("WorldRenderer", {
         if(cellx >= worldWidth) return null
         if(celly >= worldLength) return null
 
-        var x0 = Math.floor(cellx/(worldWidth/seed.mwidth))
-        var x1 = x0 + 1
-        var dx = cellx/(worldWidth/seed.mwidth) - x0
+        var x0 = Math.floor(cellx/this._worldState.chunkSize) % seed.mwidth
+        var x1 = (x0 + 1) % seed.mwidth
+        var dx = cellx/this._worldState.chunkSize - x0
 
-        var y0 = Math.floor(celly/(worldLength/seed.mlength))
-        var y1 = y0 + 1
-        var dy = celly/(worldLength/seed.mlength) - y0
+        var y0 = Math.floor(celly/this._worldState.chunkSize) % seed.mlength
+        var y1 = (y0 + 1) % seed.mlength
+        var dy = celly/this._worldState.chunkSize - y0
 
         var f0 = this._cosineInterp(seed.matrix[y0][x0], seed.matrix[y0][x1], dx)
         var f1 = this._cosineInterp(seed.matrix[y1][x0], seed.matrix[y1][x1], dx)
@@ -149,11 +149,11 @@ module.exports =  Class("WorldRenderer", {
     },
     'private _terrainGen': function (x,y) {
         var calc = this._computeCell(x,y)
-        var cell = {cellHeight: calc.val*10 + 1.0}
+        var cell = {cellHeight: calc.val*15 + 1.0}
 
-        if(calc.val <= 0.2)
+        if(calc.val <= 0.15)
             cell["type"] = "water"
-        else if(calc.grad > 0.45)
+        else if(calc.grad > 0.35)
             cell["type"] = "rock"
         else
             cell["type"] = "grass"
