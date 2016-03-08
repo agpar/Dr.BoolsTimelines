@@ -13,6 +13,6 @@
     "gulp": "latest",
     "lru-cache": "latest",
     "easejs": "latest",
-    "vinyl-source-stream": "lastest"
+    "vinyl-source-stream": "latest"
   }
 }
