@@ -12,6 +12,7 @@
     "browserify": "latest",
     "gulp": "latest",
     "lru-cache": "latest",
-    "easejs": "latest"
+    "easejs": "latest",
+    "vinyl-source-stream": "lastest"
   }
 }
