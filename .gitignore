@@ -6,3 +6,5 @@ c361.db
 c361/frontend/node_modules/
 c361/gamelogic/scripting_engine/parser.out
 c361/gamelogic/scripting_engine/parsetab.py
+Procfile
+runtime.txt
