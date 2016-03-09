@@ -8863,16 +8863,77 @@ var WorldRenderer = require("./world-renderer")
 //var WorldStateFetcher = require("../networking/world-state-fetcher").new()
 
 module.exports = Class("GraphicsEngineController", {
-    'private _camera': {x: 0, y: 0},
+    'private _renderEngine': null,
+    'private _camera': null,
+    'private _camPos': null,
+    'private _renderer': null,
     'private _smellMode': false,
     'private _timeLine': null,
     'private _turn': 0,
-    'private _renderer': null,
     'private _rtarget': null,
+    'private _setupKeys': function(scene) {
+        scene.actionManager = new BABYLON.ActionManager(scene)
+        scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger,
+            function (evt) {
+                if(evt.sourceEvent.code=="ShiftLeft") {
+                    this._camera.angularSensibilityX = 1000000000
+                }
+            }.bind(this)
+        ))
+
+        scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger,
+            function (evt) {
+                if(evt.sourceEvent.code=="ShiftLeft") {
+                    this._camera.angularSensibilityX = 1500
+                }
+            }.bind(this)
+        ))
+    },
     __construct: function(renderTarget) {
-        var renderer = WorldRenderer(renderTarget)
-        renderer.updateCam(0,0,true)
-        renderer.renderWorld()
+        var engine = new BABYLON.Engine(renderTarget, true)
+        var scene  = new BABYLON.Scene(engine)
+
+        var camera = new BABYLON.ArcRotateCamera("camera", Math.PI/8,Math.PI/8,45, new BABYLON.Vector3(0,0,0), scene)
+        camera.upperRadiusLimit = 55
+        camera.lowerRadiusLimit = 15
+        camera.upperBetaLimit = Math.PI/8
+        camera.lowerBetaLimit = Math.PI/8
+
+        camera.keysUp = []
+        camera.keysDown = []
+        camera.keysLeft = []
+        camera.keysRight = []
+
+        camera.panningSensibility = 70
+        camera.angularSensibilityX = 1500
+        camera.attachControl(renderTarget)
+
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene)
+
+        this._renderEngine = engine
+        this._camera = camera
+        this._renderer = renderer
+
+        this._setupKeys(scene)
+        this.startSimulationEngine()
+    },
+    'public startSimulationEngine': function() {
+        this._renderer.updateView(0,0,true)
+        this._camPos = {x: 0, y: 0}
+
+
+        this._renderEngine.runRenderLoop(function () {
+            this._renderer.renderWorld()
+
+            var camdist  = Math.abs(this._camPos.x - this._camera.target.x)
+                camdist += Math.abs(this._camPos.y - this._camera.target.z)
+            if(camdist > 2) {
+               var newx = Math.floor(this._camera.target.x)
+               var newy = Math.floor(this._camera.target.z)
+               this._renderer.updateView(newx, newy, false)
+               this._camPos = {x: newx, y: newy}
+            }
+        }.bind(this))
     },
     'public setDefaultRenderSettings': function() {
         this._smellMode = false
@@ -8887,9 +8948,6 @@ module.exports = Class("GraphicsEngineController", {
     'public getcellStatus': function(x,y) {
         return renderer.getCell(x,y)
     },
-    'public cameraPos': function() {
-        return this._camera
-    },
     'public moveCamera': function(x,y) {
         renderer.updateCam(x,y)
     },
@@ -8901,9 +8959,7 @@ var lru = require("lru-cache")
 
 
 module.exports =  Class("WorldRenderer", {
-    'private _renderEngine': null,
     'private _scene': null,
-    'private _camera': null,
     'private _sceneChunks': null,
     'private _worldState': null,
     'private _cellproto': {
@@ -8911,9 +8967,9 @@ module.exports =  Class("WorldRenderer", {
         'rock':  null,
         'grass': null
     },
-    __construct: function (renderTarget) {
+    __construct: function (renderTarget, engine, camera, scene) {
         var options = {
-            max: 1100,
+            max: 400,
             dispose: function (key, chunk) {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
@@ -8922,7 +8978,7 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
-                console.log("deleted")
+
             }
         }
         this._sceneChunks = lru(options)
@@ -8956,20 +9012,7 @@ module.exports =  Class("WorldRenderer", {
 
         this._worldState = tempstate
     //  end placeholder state
-
-        var engine = new BABYLON.Engine(renderTarget, true)
-        var scene  = new BABYLON.Scene(engine)
-
-        var camera = new BABYLON.TouchCamera("camera", new BABYLON.Vector3(0,10,0), scene)
-        camera.setTarget(new BABYLON.Vector3(10,0,10))
-        camera.attachControl(renderTarget)
-
-        var light = new BABYLON.PointLight("light", new BABYLON.Vector3(0,100,-5), scene)
-
-        this._renderEngine = engine
-        this._scene = scene
-        this._camera = camera
-
+        var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 
         var water = BABYLON.Mesh.CreateBox("water", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "rock", 1.0, scene)
@@ -8999,6 +9042,9 @@ module.exports =  Class("WorldRenderer", {
         this._cellproto["water"] = water
         this._cellproto["rock"]  = rock
         this._cellproto["grass"] = grass
+
+        this._scene = scene
+
     },
     'private _cosineInterp': function(v0, v1, t) {
         var phase = (1-Math.cos(t*Math.PI))/2
@@ -9059,9 +9105,41 @@ module.exports =  Class("WorldRenderer", {
         return cell
     },
     'public renderWorld': function() {
-        this._renderEngine.runRenderLoop(function () {
-            this._scene.render()
-        }.bind(this))
+        this._scene.render()
+    },
+    'public setWorldState': function (state) {
+        this._worldState = state
+    },
+    'public applyDeltas': function (deltas,backstep) {
+        if (backstep) {
+            for (delta in deltas) {
+
+            }
+        } else {
+            for (delta in deltas) {
+
+            }
+        }
+
+    },
+    'public getCell': function (x,y) {
+        return
+    },
+    'public updateView': function(x,y, force) {
+        var chunk_x
+        var chunk_y
+
+        for(var i = -4; i <= 4; i++) {
+            for(var  j = -4; j <= 4; j++) {
+                chunk_x = Math.floor(x/this._worldState.chunkSize) + j
+                chunk_y = Math.floor(y/this._worldState.chunkSize) + i
+
+                chunk_x *= this._worldState.chunkSize
+                chunk_y *= this._worldState.chunkSize
+
+                this.updateChunk(chunk_x, chunk_y, force)
+            }
+        }
     },
     'public updateChunk': function (x,y, force) {
         //Make sure to force key into chunk grid coordinates
@@ -9076,6 +9154,7 @@ module.exports =  Class("WorldRenderer", {
 
         var chunk = []
         var cell, mesh, meshx, meshy, meshz
+
         for(var i = 0; i < this._worldState.chunkSize; i++) {
             var row = []
             for(var j = 0; j < this._worldState.chunkSize; j++) {
@@ -9104,40 +9183,6 @@ module.exports =  Class("WorldRenderer", {
         }
 
         this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
-    },
-    'public setWorldState': function (state) {
-        this._worldState = state
-    },
-    'public applyDeltas': function (deltas,backstep) {
-        if (backstep) {
-            for (delta in deltas) {
-
-            }
-        } else {
-            for (delta in deltas) {
-
-            }
-        }
-
-    },
-    'public updateCam': function(x,y) {
-        var chunk_x
-        var chunk_y
-
-        for(var i = -4; i <= 4; i++) {
-            for(var  j = -4; j <= 4; j++) {
-                chunk_x = Math.floor(x/this._worldState.chunkSize) + j
-                chunk_y = Math.floor(y/this._worldState.chunkSize) + i
-
-                chunk_x *= this._worldState.chunkSize
-                chunk_y *= this._worldState.chunkSize
-
-                this.updateChunk(chunk_x, chunk_y, true)
-            }
-        }
-    },
-    'public getCell': function (x,y) {
-        return
     }
 })
 
