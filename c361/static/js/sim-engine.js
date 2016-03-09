@@ -8875,7 +8875,7 @@ module.exports = Class("GraphicsEngineController", {
         scene.actionManager = new BABYLON.ActionManager(scene)
         scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger,
             function (evt) {
-                if(evt.sourceEvent.code=="ShiftLeft") {
+                if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1000000000
                 }
             }.bind(this)
@@ -8883,7 +8883,7 @@ module.exports = Class("GraphicsEngineController", {
 
         scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger,
             function (evt) {
-                if(evt.sourceEvent.code=="ShiftLeft") {
+                if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1500
                 }
             }.bind(this)
@@ -8904,8 +8904,9 @@ module.exports = Class("GraphicsEngineController", {
         camera.keysLeft = []
         camera.keysRight = []
 
-        camera.panningSensibility = 70
+        camera.panningSensibility = 100
         camera.angularSensibilityX = 1500
+        camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
         var renderer = WorldRenderer(renderTarget, engine, camera, scene)
@@ -8957,6 +8958,7 @@ module.exports = Class("GraphicsEngineController", {
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
+window.disposelock = false
 
 module.exports =  Class("WorldRenderer", {
     'private _scene': null,
@@ -8969,8 +8971,11 @@ module.exports =  Class("WorldRenderer", {
     },
     __construct: function (renderTarget, engine, camera, scene) {
         var options = {
-            max: 400,
+            max: 100,
             dispose: function (key, chunk) {
+//                while(window.disposelock)
+
+//                window.disposelock = true
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
@@ -8978,6 +8983,7 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
+//                window.disposelock = false
 
             }
         }

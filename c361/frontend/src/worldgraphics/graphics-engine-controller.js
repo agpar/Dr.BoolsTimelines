@@ -16,7 +16,7 @@ module.exports = Class("GraphicsEngineController", {
         scene.actionManager = new BABYLON.ActionManager(scene)
         scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger,
             function (evt) {
-                if(evt.sourceEvent.code=="ShiftLeft") {
+                if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1000000000
                 }
             }.bind(this)
@@ -24,7 +24,7 @@ module.exports = Class("GraphicsEngineController", {
 
         scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger,
             function (evt) {
-                if(evt.sourceEvent.code=="ShiftLeft") {
+                if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1500
                 }
             }.bind(this)
@@ -45,8 +45,9 @@ module.exports = Class("GraphicsEngineController", {
         camera.keysLeft = []
         camera.keysRight = []
 
-        camera.panningSensibility = 70
+        camera.panningSensibility = 100
         camera.angularSensibilityX = 1500
+        camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
         var renderer = WorldRenderer(renderTarget, engine, camera, scene)

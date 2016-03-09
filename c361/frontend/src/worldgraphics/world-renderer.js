@@ -1,6 +1,7 @@
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
+window.disposelock = false
 
 module.exports =  Class("WorldRenderer", {
     'private _scene': null,
@@ -13,8 +14,11 @@ module.exports =  Class("WorldRenderer", {
     },
     __construct: function (renderTarget, engine, camera, scene) {
         var options = {
-            max: 400,
+            max: 100,
             dispose: function (key, chunk) {
+//                while(window.disposelock)
+
+//                window.disposelock = true
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
@@ -22,6 +26,7 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
+//                window.disposelock = false
 
             }
         }
