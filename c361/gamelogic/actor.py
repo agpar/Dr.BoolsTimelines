@@ -209,17 +209,17 @@ class Actor(WorldInhabitant):
                 "to": "East"
             }
             
-''' Don't think we need pickup considering we have harvest
-    def pickup(self):
-        return {
-            "type": "worldDelta",
-            "coords": {'x': self.x, 'y': self.y},
-            "actorID": self.uuid,
-            "varTarget": "food",
-            "from": False,
-            "to": True
-        }
-'''
+    ''' Don't think we need pickup considering we have harvest
+        def pickup(self):
+            return {
+                "type": "worldDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "food",
+                "from": False,
+                "to": True
+            }
+    '''
 
     def harvest(self):
         return [{
@@ -289,7 +289,6 @@ class Actor(WorldInhabitant):
         return {
                 
         }
-
 
     def sleep_action(self):
         if not self.is_sleeping:
