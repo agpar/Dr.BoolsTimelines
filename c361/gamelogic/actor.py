@@ -300,17 +300,3 @@ class Actor(WorldInhabitant):
                         "from": True,
                         "true": False
                     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
