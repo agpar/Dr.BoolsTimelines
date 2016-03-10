@@ -1,6 +1,6 @@
-from .actor import Actor
-from .cell import Cell, WorldInhabitant
-from .globals import VARIABLES
+from actor import Actor
+from cell import Cell, WorldInhabitant
+from globals import VARIABLES
 
 import random
 import uuid
