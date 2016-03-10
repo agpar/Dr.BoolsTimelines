@@ -1,8 +1,7 @@
-import bisect
 import uuid
 
-from. cell import WorldInhabitant
-from .scripting_engine.script_parser import AiScriptParser
+from cell import WorldInhabitant
+from scripting_engine.script_parser import AiScriptParser
 
 
 class Actor(WorldInhabitant):
@@ -26,6 +25,7 @@ class Actor(WorldInhabitant):
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.food = model.food
+            self.script = model.behaviour_script
         else:
             self.uuid = str(uuid.uuid4())
             self.name = name
@@ -36,10 +36,14 @@ class Actor(WorldInhabitant):
             self.is_sleeping = False
             self.direction = "North"
             self.food = False
+            self.script = script
 
         self.info = {}
         self.gameInstance = None
         self.sight_line = []
+
+        parser = AiScriptParser()
+        self.parse_tree = parser.parse(self.script)
 
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
@@ -276,25 +280,26 @@ class Actor(WorldInhabitant):
         return {
                 
         }
-        
+
     def sleep(self):
-        return {
-            if (self.is_sleeping = False):
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "actorID": self.uuid,
-                    "varTarget": "is_sleeping",
-                    "from": False,
-                    "true": True
-                } else:
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "actorID": self.uuid,
-                    "varTarget": "is_sleeping",
-                    "from": True,
-                    "true": False
-                }
-        }
+        if not self.is_sleeping:
+            return {
+                        "type": "actorDelta",
+                        "coords": {'x': self.x, 'y': self.y},
+                        "actorID": self.uuid,
+                        "varTarget": "is_sleeping",
+                        "from": False,
+                        "true": True
+                    }
+        else:
+            return {
+                        "type": "actorDelta",
+                        "coords": {'x': self.x, 'y': self.y},
+                        "actorID": self.uuid,
+                        "varTarget": "is_sleeping",
+                        "from": True,
+                        "true": False
+                    }
 
 
 

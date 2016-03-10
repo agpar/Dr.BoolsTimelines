@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
-import c361.gamelogic.scripting_engine.ast_nodes as ast
-from c361.gamelogic.scripting_engine.behaviour import Behaviour
+from .ast_nodes import *
+from .behaviour import Behaviour
 
 
 reserved = {
@@ -92,7 +92,7 @@ precedence = (
 
 def p_behaviour(p):
     "behaviour : rules"
-    p[0] = Behaviour(rules)
+    p[0] = Behaviour(p[1])
 
 
 def p_rules(p):
@@ -108,12 +108,12 @@ def p_rules(p):
 
 def p_rule_actions(p):
     "rule : IF boolexp THEN DO actions DONE ENDIF"
-    p[0] = ast.IfStatementAction(p[2],p[5])
+    p[0] = IfStatementAction(p[2],p[5])
 
 
 def p_rule_inference(p):
     "rule : IF boolexp THEN inferences ENDIF"
-    p[0] = ast.IfStatementInference(p[2], p[4])
+    p[0] = IfStatementInference(p[2], p[4])
 
 
 def p_actions(p):
@@ -143,7 +143,7 @@ def p_inference(p):
     inference : SYMBOL IS boolexp
               | SYMBOL IS numexp
     """
-    p[0] = ast.Assignment(p[1], p[3])
+    p[0] = Assignment(p[1], p[3])
 
 
 
@@ -154,12 +154,12 @@ def p_numexp_binop(p):
             | numexp MULT numexp
             | numexp DIVIDE numexp
     """
-    p[0] = ast.BinaryNumOperation(p[1], p[2], p[3])
+    p[0] = BinaryNumOperation(p[1], p[2], p[3])
 
 
 def p_numexp_unop(p):
     "numexp : MINUS numexp %prec UMINUS"
-    p[0] = ast.UnaryNumOperation(p[1], p[2])
+    p[0] = UnaryNumOperation(p[1], p[2])
 
 
 def p_numexp_atom(p):
@@ -182,7 +182,7 @@ def p_numrel(p):
            | numexp GEQT numexp
            | numexp EQ numexp
     """
-    p[0] = ast.NumRelationship(p[1], p[2], [3])
+    p[0] = NumRelationship(p[1], p[2], [3])
 
 
 def p_boolexp_binop(p):
@@ -190,12 +190,12 @@ def p_boolexp_binop(p):
     boolexp : boolexp AND boolexp
             | boolexp OR boolexp
     """
-    p[0] = ast.BinaryBoolOperation(p[1], p[2], p[3])
+    p[0] = BinaryBoolOperation(p[1], p[2], p[3])
 
 
 def p_boolexp_unop(p):
     "boolexp : NOT boolexp"
-    p[0] = ast.UnaryBoolOperation(p[1], p[2])
+    p[0] = UnaryBoolOperation(p[1], p[2])
 
 
 def p_boolexp_atom(p):
@@ -218,7 +218,7 @@ def p_error(p):
 
 
 class AiScriptParser(object):
-    def __init__(self, script):
+    def __init__(self):
         yacc.yacc()
         self.parse = yacc.parse
 
@@ -248,11 +248,11 @@ if __name__ == "__main__":
     tree = parser.parse(data)
     for inf in tree:
         print(inf.condition)
-        if isinstance(inf, ast.IfStatementAction):
+        if isinstance(inf, IfStatementAction):
             print(inf.actions)
         else:
             for i in inf.inferences:
-                if isinstance(i.value, ast.UnaryNumOperation):
+                if isinstance(i.value, UnaryNumOperation):
                     print(i.symbol + " is " + i.value.operation + str(i.value.operand))
                 else:
                     print(i.symbol + " is " + str(i.value))
