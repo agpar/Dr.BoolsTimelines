@@ -14,19 +14,31 @@ class Actor(WorldInhabitant):
     integrity and logic of the world.
     """
 
-    def __init__(self, model):
+    def __init__(self, x=-1, y=-1, name="Anonymous", script="", model=None):
         # TODO: Add parsing of script to this model.
-        self.uuid = str(model.uuid)
-        self.name = model.title
-        self._coords = model.coords
-        self.health = model.health
-        self.hunger = model.hunger
-        self.sleep = model.sleep
+        if model:
+            self.uuid = str(model.uuid)
+            self.name = model.title
+            self._coords = model.coords
+            self.health = model.health
+            self.hunger = model.hunger
+            self.sleep = model.sleep
+            self.is_sleeping = model.is_sleeping
+            self.direction = model.direction
+            self.food = model.food
+        else:
+            self.uuid = str(uuid.uuid4())
+            self.name = name
+            self._coords = (x, y)
+            self.health = 100
+            self.hunger = 100
+            self.sleep = 100
+            self.is_sleeping = False
+            self.direction = "North"
+            self.food = False
+
         self.info = {}
         self.gameInstance = None
-        self.is_sleeping = model.is_sleeping
-        self.direction = model.direction
-        self.food = model.food
         self.sight_line = []
 
     def __repr__(self):
@@ -198,7 +210,7 @@ class Actor(WorldInhabitant):
 
     def pickup(self):
         return {
-            "type": "worldDelta"
+            "type": "worldDelta",
             "coords": {'x': self.x, 'y': self.y},
             "actorID": self.uuid,
             "varTarget": "food",
