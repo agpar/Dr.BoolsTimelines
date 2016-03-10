@@ -89,14 +89,20 @@ class Actor(WorldInhabitant):
         }
 
     def eat(self):
-        return {
+        return [{
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
             "actorID": self.uuid,
             "varTarget": "food",
             "from": True,
             "to": False
-        }
+        }, {
+        "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "hunger",
+            "to": self.hunger + self.food
+        }]
 
     def walk(self):
         if self.direction == "North":
@@ -211,7 +217,8 @@ class Actor(WorldInhabitant):
                 "from": "South",
                 "to": "East"
             }
-
+            
+''' Don't think we need pickup considering we have harvest
     def pickup(self):
         return {
             "type": "worldDelta",
@@ -221,22 +228,33 @@ class Actor(WorldInhabitant):
             "from": False,
             "to": True
         }
+'''
 
     def harvest(self):
-        return {
+        return [{
             "type": "worldDelta",
             "coords": {'x': self.x, 'y': self.y},
             "varTarget": "plant",
             "to": None
-        }
+        }, {
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "varTarget": "food",
+            "to": True
+        }]
 
     def drop(self):
-        return {
+        return [{
             "type": "worldDelta",
             "coords": {'x': self.x, 'y': self.y},
             "varTarget": "cell",
             "to": "food"
-        }
+        }, {
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "varTarget": "food",
+            "to": False
+        }]
 
     def see(self):
         if self.direction == "North":
@@ -289,7 +307,7 @@ class Actor(WorldInhabitant):
                     "actorID": self.uuid,
                     "varTarget": "is_sleeping",
                     "from": False,
-                    "true": True
+                    "to": True
                 }
             else:
                 return {
@@ -298,5 +316,5 @@ class Actor(WorldInhabitant):
                     "actorID": self.uuid,
                     "varTarget": "is_sleeping",
                     "from": True,
-                    "true": False
+                    "to": False
                 }
