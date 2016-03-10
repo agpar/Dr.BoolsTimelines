@@ -51,9 +51,8 @@ t_EQ     = r'=='
 def t_SYMBOL(t):
     r'[a-z][a-z0-9]*'
     if t.value in reserved:
-        t.type = reserved.get(t.value,'SYMBOL')
+        t.type = reserved.get(t.value, 'SYMBOL')
     return t
-
 
 def t_NUMBER(t):
     r'\d+'
@@ -146,7 +145,6 @@ def p_inference(p):
     p[0] = Assignment(p[1], p[3])
 
 
-
 def p_numexp_binop(p):
     """
     numexp  : numexp PLUS numexp
@@ -169,9 +167,9 @@ def p_numexp_atom(p):
             | SYMBOL
     """
     if len(p) == 4:
-        p[0] = p[2]
+        p[0] = SymbolAtom(p[2])
     else:
-        p[0] = p[1]
+        p[0] = SymbolAtom(p[1])
 
 
 def p_numrel(p):
@@ -206,7 +204,11 @@ def p_boolexp_atom(p):
             | SYMBOL
             | numrel
     """
-    if len(p) == 4:
+    if p[1] == 'true':
+        p[0] = SymbolAtom(True)
+    elif p[1] == 'false':
+        p[0] = SymbolAtom(False)
+    elif len(p) == 4:
         p[0] = p[2]
     else:
         p[0] = p[1]

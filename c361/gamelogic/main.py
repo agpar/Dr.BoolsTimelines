@@ -7,7 +7,7 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-    if myhunger == 100
+    if myhunger == 100 and false
     then
         do
             sleep;

@@ -3,33 +3,34 @@
 
 
 def eq(left, right):
-    if left == right:
-        return True
-    return False
+    return left == right
 
 
 def lt(left, right):
-    if left < right:
-        return True
-    return False
+    return left < right
 
 
 def lte(left, right):
-    if left <= right:
-        return True
-    return False
+    return left <= right
 
 
 def gt(left, right):
-    if left > right:
-        return True
-    return False
+    return left > right
 
 
 def gte(left, right):
-    if left >= right:
-        return True
-    return False
+    return left >= right
+
+
+# Boolean Operations #
+# ================== #
+
+def or_fn(left, right):
+    return left or right
+
+
+def and_fn(left, right):
+    return left and right
 
 
 def actor_hunger(actor):
@@ -42,6 +43,8 @@ FUNC_MAP = {
     '>': gt,
     '>=': gte,
     '==': eq,
+    'or': or_fn,
+    'and': and_fn,
 }
 
 SYM_MAP = {

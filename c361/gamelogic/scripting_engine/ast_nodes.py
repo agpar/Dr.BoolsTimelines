@@ -1,7 +1,24 @@
 from .func_mappings import *
 
+
 class Node:
     pass
+
+
+class SymbolAtom:
+    """A node which holds a single symbol."""
+    def __init__(self, val):
+        self.value = val
+        self.func_val = SYM_MAP.get(val)
+
+    def __repr__(self):
+        return "SymbolAtom({})".format(self.value)
+
+    def eval(self, actor=None):
+        if self.func_val:
+            return self.func_val(actor)
+        return self.value
+
 
 class Assignment(Node):
     def __init__(self, symbol, value):
@@ -16,7 +33,7 @@ class IfStatementAction(Node):
         
     def eval(self, actor):
         """Test the condition."""
-        return self.condition.eval()
+        return self.condition.eval(actor)
 
 
 class IfStatementInference(Node):
@@ -36,22 +53,10 @@ class NumRelationship(Node):
     def __init__(self, left, relation, right):
         self.left = left
         self.right = right
-        self.left_func = SYM_MAP.get(left)
-        self.right_func = SYM_MAP.get(right)
         self.relation = FUNC_MAP[relation]
 
     def eval(self, actor):
-        # Check if operands are builtin symbols.
-        if self.left_func:
-            left = self.left_func(actor)
-        else:
-            left = self.left
-        if self.right_func:
-            right = self.right_func(actor)
-        else:
-            right = self.right
-
-        return self.relation(left, right)
+        return self.relation(self.left.eval(actor), self.left.eval(actor))
 
 
 class UnaryNumOperation(Node):
@@ -63,8 +68,11 @@ class UnaryNumOperation(Node):
 class BinaryBoolOperation(Node):
     def __init__(self, left, operation, right):
         self.left = left
-        self.operation = operation
+        self.operation = FUNC_MAP[operation]
         self.right = right
+
+    def eval(self, actor):
+        return self.operation(self.left.eval(actor), self.right.eval(actor))
 
 
 class UnaryBoolOperation(Node):
