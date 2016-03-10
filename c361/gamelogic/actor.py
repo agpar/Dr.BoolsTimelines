@@ -68,7 +68,8 @@ class Actor(WorldInhabitant):
             "harvest": self.harvest,
             "drop": self.drop,
             "see": self.see,
-            "smell": self.smell
+            "smell": self.smell,
+            "sleep": self.sleep
         }
 
     def eat(self):
@@ -261,7 +262,26 @@ class Actor(WorldInhabitant):
 
     def smell(self):
         return {
-
+                
+        }
+        
+    def sleep(self):
+        return {
+            if (self.is_sleeping = False):
+                    "type": "actorDelta",
+                    "coords": {'x': self.x, 'y': self.y},
+                    "actorID": self.uuid,
+                    "varTarget": "is_sleeping",
+                    "from": False,
+                    "true": True
+                } else:
+                    "type": "actorDelta",
+                    "coords": {'x': self.x, 'y': self.y},
+                    "actorID": self.uuid,
+                    "varTarget": "is_sleeping",
+                    "from": True,
+                    "true": False
+                }
         }
 
 
