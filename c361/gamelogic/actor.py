@@ -209,17 +209,15 @@ class Actor(WorldInhabitant):
                 "to": "East"
             }
             
-    ''' Don't think we need pickup considering we have harvest
         def pickup(self):
             return {
                 "type": "worldDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
-                "varTarget": "food",
-                "from": False,
+                "varTarget": "block",
                 "to": True
             }
-    '''
+
 
     def harvest(self):
         return [{
