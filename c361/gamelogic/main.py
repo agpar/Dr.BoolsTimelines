@@ -7,20 +7,12 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-    if myhunger == 100 and false
+    if not 4 > myhunger
     then
         do
             sleep;
         done
     endif
-
-    if 4 > 5
-    then
-        do
-            walknorth;
-        done
-    endif
-
     """
 
 a = Actor(1, 1, "Alex", testscript)

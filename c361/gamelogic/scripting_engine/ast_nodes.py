@@ -45,11 +45,15 @@ class IfStatementInference(Node):
 class BinaryNumOperation(Node):
     def __init__(self, left, operation, right):
         self.left = left
-        self.operation = operation
+        self.operation = FUNC_MAP[operation]
         self.right = right
+
+    def eval(self, actor):
+        return self.operation(self.left.eval(actor), self.right.eval(actor))
 
 
 class NumRelationship(Node):
+    """Evaluate a relationship between two numbers to True or False."""
     def __init__(self, left, relation, right):
         self.left = left
         self.right = right
@@ -60,12 +64,20 @@ class NumRelationship(Node):
 
 
 class UnaryNumOperation(Node):
+    """Unary operation on a number (such as negating) """
     def __init__(self, operation, operand):
         self.operation = operation
         self.operand = operand
 
+    def eval(self, actor):
+        if self.operation == '+':
+            return abs(self.operand.eval(actor))
+        elif self.operation == '-':
+            return -(self.operand.eval(actor))
+
 
 class BinaryBoolOperation(Node):
+    """Evaluate a boolean statement to True or False"""
     def __init__(self, left, operation, right):
         self.left = left
         self.operation = FUNC_MAP[operation]
@@ -76,6 +88,11 @@ class BinaryBoolOperation(Node):
 
 
 class UnaryBoolOperation(Node):
+    """Not or other unary boolean operators (are there others)?"""
     def __init__(self, operation, operand):
         self.operation = operation
         self.operand = operand
+
+    def eval(self, actor):
+        if self.operation == 'not':
+            return not self.operand.eval(actor)
