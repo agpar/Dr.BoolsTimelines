@@ -24,8 +24,6 @@ body
 #simulation-render-target
 {
     z-index: 1;
-    width: 100%;
-    height: 100%;
 }
 
 .row-content, .row-navbar
