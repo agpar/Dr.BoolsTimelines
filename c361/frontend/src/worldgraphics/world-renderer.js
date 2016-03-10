@@ -1,11 +1,10 @@
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
+window.disposelock = false
 
 module.exports =  Class("WorldRenderer", {
-    'private _renderEngine': null,
     'private _scene': null,
-    'private _camera': null,
     'private _sceneChunks': null,
     'private _worldState': null,
     'private _cellproto': {
@@ -13,10 +12,13 @@ module.exports =  Class("WorldRenderer", {
         'rock':  null,
         'grass': null
     },
-    __construct: function (renderTarget) {
+    __construct: function (renderTarget, engine, camera, scene) {
         var options = {
             max: 100,
             dispose: function (key, chunk) {
+//                while(window.disposelock)
+
+//                window.disposelock = true
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
@@ -24,21 +26,22 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
-                console.log("deleted")
+//                window.disposelock = false
+
             }
         }
         this._sceneChunks = lru(options)
 
     //  placeholder state
-        var width = 1200
-        var length = 1200
-        var chunkSize = 4
+        var width  = 120000
+        var length = 120000
+        var chunkSize = 6
 
         var seed = []
 
-        for (var i = 0; i < Math.ceil(length/1); i++){
+        for (var i = 0; i < Math.ceil(600); i++){
             var row = []
-            for (var j = 0; j < Math.ceil(width/1); j++){
+            for (var j = 0; j < Math.ceil(600); j++){
                 row.push(Math.random())
             }
             seed.push(row)
@@ -49,8 +52,8 @@ module.exports =  Class("WorldRenderer", {
             'wwidth': width,
             'wlength': length,
             'seed': {
-                'mwidth': Math.ceil(width/1),
-                'mlength': Math.ceil(length/1),
+                'mwidth': Math.ceil(600),
+                'mlength': Math.ceil(600),
                 'matrix': seed
             },
             'user_made': {}
@@ -58,20 +61,7 @@ module.exports =  Class("WorldRenderer", {
 
         this._worldState = tempstate
     //  end placeholder state
-
-        var engine = new BABYLON.Engine(renderTarget, true)
-        var scene  = new BABYLON.Scene(engine)
-
-        var camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0,10,0), scene)
-        camera.setTarget(new BABYLON.Vector3(4,0,4))
-        camera.attachControl(renderTarget)
-
-        var light = new BABYLON.PointLight("light", new BABYLON.Vector3(0,30,-5), scene)
-
-        this._renderEngine = engine
-        this._scene = scene
-        this._camera = camera
-
+        var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 
         var water = BABYLON.Mesh.CreateBox("water", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "rock", 1.0, scene)
@@ -101,6 +91,9 @@ module.exports =  Class("WorldRenderer", {
         this._cellproto["water"] = water
         this._cellproto["rock"]  = rock
         this._cellproto["grass"] = grass
+
+        this._scene = scene
+
     },
     'private _cosineInterp': function(v0, v1, t) {
         var phase = (1-Math.cos(t*Math.PI))/2
@@ -123,13 +116,13 @@ module.exports =  Class("WorldRenderer", {
         if(cellx >= worldWidth) return null
         if(celly >= worldLength) return null
 
-        var x0 = Math.floor(cellx/(worldWidth/seed.mwidth))
-        var x1 = x0 + 1
-        var dx = cellx/(worldWidth/seed.mwidth) - x0
+        var x0 = Math.floor(cellx/this._worldState.chunkSize) % seed.mwidth
+        var x1 = (x0 + 1) % seed.mwidth
+        var dx = cellx/this._worldState.chunkSize - x0
 
-        var y0 = Math.floor(celly/(worldLength/seed.mlength))
-        var y1 = y0 + 1
-        var dy = celly/(worldLength/seed.mlength) - y0
+        var y0 = Math.floor(celly/this._worldState.chunkSize) % seed.mlength
+        var y1 = (y0 + 1) % seed.mlength
+        var dy = celly/this._worldState.chunkSize - y0
 
         var f0 = this._cosineInterp(seed.matrix[y0][x0], seed.matrix[y0][x1], dx)
         var f1 = this._cosineInterp(seed.matrix[y1][x0], seed.matrix[y1][x1], dx)
@@ -149,11 +142,11 @@ module.exports =  Class("WorldRenderer", {
     },
     'private _terrainGen': function (x,y) {
         var calc = this._computeCell(x,y)
-        var cell = {cellHeight: calc.val*10 + 1.0}
+        var cell = {cellHeight: calc.val*15 + 1.0}
 
-        if(calc.val <= 0.2)
+        if(calc.val <= 0.15)
             cell["type"] = "water"
-        else if(calc.grad > 0.45)
+        else if(calc.grad > 0.35)
             cell["type"] = "rock"
         else
             cell["type"] = "grass"
@@ -161,9 +154,41 @@ module.exports =  Class("WorldRenderer", {
         return cell
     },
     'public renderWorld': function() {
-        this._renderEngine.runRenderLoop(function () {
-            this._scene.render()
-        }.bind(this))
+        this._scene.render()
+    },
+    'public setWorldState': function (state) {
+        this._worldState = state
+    },
+    'public applyDeltas': function (deltas,backstep) {
+        if (backstep) {
+            for (delta in deltas) {
+
+            }
+        } else {
+            for (delta in deltas) {
+
+            }
+        }
+
+    },
+    'public getCell': function (x,y) {
+        return
+    },
+    'public updateView': function(x,y, force) {
+        var chunk_x
+        var chunk_y
+
+        for(var i = -4; i <= 4; i++) {
+            for(var  j = -4; j <= 4; j++) {
+                chunk_x = Math.floor(x/this._worldState.chunkSize) + j
+                chunk_y = Math.floor(y/this._worldState.chunkSize) + i
+
+                chunk_x *= this._worldState.chunkSize
+                chunk_y *= this._worldState.chunkSize
+
+                this.updateChunk(chunk_x, chunk_y, force)
+            }
+        }
     },
     'public updateChunk': function (x,y, force) {
         //Make sure to force key into chunk grid coordinates
@@ -178,6 +203,7 @@ module.exports =  Class("WorldRenderer", {
 
         var chunk = []
         var cell, mesh, meshx, meshy, meshz
+
         for(var i = 0; i < this._worldState.chunkSize; i++) {
             var row = []
             for(var j = 0; j < this._worldState.chunkSize; j++) {
@@ -206,39 +232,5 @@ module.exports =  Class("WorldRenderer", {
         }
 
         this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
-    },
-    'public setWorldState': function (state) {
-        this._worldState = state
-    },
-    'public applyDeltas': function (deltas,backstep) {
-        if (backstep) {
-            for (delta in deltas) {
-
-            }
-        } else {
-            for (delta in deltas) {
-
-            }
-        }
-
-    },
-    'public updateCam': function(x,y) {
-        var chunk_x
-        var chunk_y
-
-        for(var i = -4; i <= 4; i++) {
-            for(var  j = -4; j <= 4; j++) {
-                chunk_x = Math.floor(x/this._worldState.chunkSize) + j
-                chunk_y = Math.floor(y/this._worldState.chunkSize) + i
-
-                chunk_x *= this._worldState.chunkSize
-                chunk_y *= this._worldState.chunkSize
-
-                this.updateChunk(chunk_x, chunk_y, true)
-            }
-        }
-    },
-    'public getCell': function (x,y) {
-        return
     }
 })
