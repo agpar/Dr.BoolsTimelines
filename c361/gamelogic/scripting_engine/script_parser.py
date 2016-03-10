@@ -182,7 +182,7 @@ def p_numrel(p):
            | numexp GEQT numexp
            | numexp EQ numexp
     """
-    p[0] = NumRelationship(p[1], p[2], [3])
+    p[0] = NumRelationship(p[1], p[2], p[3])
 
 
 def p_boolexp_binop(p):
