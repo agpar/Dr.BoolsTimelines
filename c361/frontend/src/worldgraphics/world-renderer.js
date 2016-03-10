@@ -1,7 +1,6 @@
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
-window.disposelock = false
 
 module.exports =  Class("WorldRenderer", {
     'private _scene': null,
@@ -16,9 +15,6 @@ module.exports =  Class("WorldRenderer", {
         var options = {
             max: 100,
             dispose: function (key, chunk) {
-//                while(window.disposelock)
-
-//                window.disposelock = true
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
@@ -26,8 +22,6 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
-//                window.disposelock = false
-
             }
         }
         this._sceneChunks = lru(options)
@@ -56,7 +50,7 @@ module.exports =  Class("WorldRenderer", {
                 'mlength': Math.ceil(600),
                 'matrix': seed
             },
-            'user_made': {}
+            'user_made': {"0 0": 5}
         }
 
         this._worldState = tempstate
@@ -94,6 +88,9 @@ module.exports =  Class("WorldRenderer", {
 
         this._scene = scene
 
+    },
+    'private _userTerrain': function(x,y) {
+        
     },
     'private _cosineInterp': function(v0, v1, t) {
         var phase = (1-Math.cos(t*Math.PI))/2
@@ -135,6 +132,7 @@ module.exports =  Class("WorldRenderer", {
             gradient += Math.pow(fout.slope, 2)
             gradient  = Math.sqrt(gradient)
 
+        var usermade = this._userTerrain(x,y)
         return {
             val: fout.val,
             grad: gradient
