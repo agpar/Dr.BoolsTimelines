@@ -11,6 +11,7 @@
   "dependencies": {
     "browserify": "latest",
     "gulp": "latest",
+    "gulp-util": "latest",
     "lru-cache": "latest",
     "easejs": "latest",
     "vinyl-source-stream": "latest"
