@@ -282,7 +282,7 @@ class Actor(WorldInhabitant):
         }
 
     def sleep(self):
-            if (self.is_sleeping = False):
+            if not self.is_sleeping:
                 return {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
@@ -300,17 +300,3 @@ class Actor(WorldInhabitant):
                     "from": True,
                     "true": False
                 }
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
