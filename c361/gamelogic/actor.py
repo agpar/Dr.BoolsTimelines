@@ -197,7 +197,12 @@ class Actor(WorldInhabitant):
 
     def pickup(self):
         return {
-
+            "type": "worldDelta"
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "food",
+            "from": False,
+            "to": True
         }
 
     def harvest(self):
