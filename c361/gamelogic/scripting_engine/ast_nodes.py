@@ -1,47 +1,98 @@
-class Assignment(object):
+from .func_mappings import *
+
+
+class Node:
+    pass
+
+
+class SymbolAtom:
+    """A node which holds a single symbol."""
+    def __init__(self, val):
+        self.value = val
+        self.func_val = SYM_MAP.get(val)
+
+    def __repr__(self):
+        return "SymbolAtom({})".format(self.value)
+
+    def eval(self, actor=None):
+        if self.func_val:
+            return self.func_val(actor)
+        return self.value
+
+
+class Assignment(Node):
     def __init__(self, symbol, value):
         self.symbol = symbol
         self.value = value
 
 
-class IfStatementAction(object):
+class IfStatementAction(Node):
     def __init__(self, condition, actions):
         self.condition = condition
         self.actions = actions
+        
+    def eval(self, actor):
+        """Test the condition."""
+        return self.condition.eval(actor)
 
 
-class IfStatementInference(object):
+class IfStatementInference(Node):
     def __init__(self, condition, inferences):
         self.condition = condition
         self.inferences = inferences
 
 
-class BinaryNumOperation(object):
+class BinaryNumOperation(Node):
     def __init__(self, left, operation, right):
         self.left = left
-        self.operation = operation
+        self.operation = FUNC_MAP[operation]
         self.right = right
 
-class NumRelationship(object):
+    def eval(self, actor):
+        return self.operation(self.left.eval(actor), self.right.eval(actor))
+
+
+class NumRelationship(Node):
+    """Evaluate a relationship between two numbers to True or False."""
     def __init__(self, left, relation, right):
         self.left = left
-        self.relation = relation
         self.right = right
+        self.relation = FUNC_MAP[relation]
 
-class UnaryNumOperation(object):
+    def eval(self, actor):
+        return self.relation(self.left.eval(actor), self.left.eval(actor))
+
+
+class UnaryNumOperation(Node):
+    """Unary operation on a number (such as negating) """
     def __init__(self, operation, operand):
         self.operation = operation
         self.operand = operand
 
+    def eval(self, actor):
+        if self.operation == '+':
+            return abs(self.operand.eval(actor))
+        elif self.operation == '-':
+            return -(self.operand.eval(actor))
 
-class BinaryBoolOperation(object):
+
+class BinaryBoolOperation(Node):
+    """Evaluate a boolean statement to True or False"""
     def __init__(self, left, operation, right):
         self.left = left
-        self.operation = operation
+        self.operation = FUNC_MAP[operation]
         self.right = right
 
+    def eval(self, actor):
+        return self.operation(self.left.eval(actor), self.right.eval(actor))
 
-class UnaryBoolOperation(object):
+
+class UnaryBoolOperation(Node):
+    """Not or other unary boolean operators (are there others)?"""
     def __init__(self, operation, operand):
         self.operation = operation
         self.operand = operand
+
+    def eval(self, actor):
+        if self.operation == 'not':
+            return not self.operand.eval(actor)

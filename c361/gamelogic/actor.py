@@ -43,7 +43,7 @@ class Actor(WorldInhabitant):
         self.sight_line = []
 
         parser = AiScriptParser()
-        self.parse_tree = parser.parse(self.script)
+        self.behaviours = parser.parse(self.script)
 
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
@@ -52,16 +52,7 @@ class Actor(WorldInhabitant):
     def do_turn(self):
         self._turn_stat_change()
         # TODO Replace this placeholder with actions based on a parsed behaviour script.
-        #action = self.behaviour.next_action()
-        #action = self._action_table()[action]
-        return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "_coords",
-                "from": self._coords,
-                "to": self.north()
-        }
+        return self.behaviours.get_action(self)
 
     def _turn_stat_change(self):
         self.hunger -= 5
@@ -218,17 +209,15 @@ class Actor(WorldInhabitant):
                 "to": "East"
             }
             
-''' Don't think we need pickup considering we have harvest
-    def pickup(self):
-        return {
-            "type": "worldDelta",
-            "coords": {'x': self.x, 'y': self.y},
-            "actorID": self.uuid,
-            "varTarget": "food",
-            "from": False,
-            "to": True
-        }
-'''
+        def pickup(self):
+            return {
+                "type": "worldDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "block",
+                "to": True
+            }
+
 
     def harvest(self):
         return [{
@@ -299,22 +288,22 @@ class Actor(WorldInhabitant):
                 
         }
 
-    def sleep(self):
-            if not self.is_sleeping:
-                return {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "actorID": self.uuid,
-                    "varTarget": "is_sleeping",
-                    "from": False,
-                    "to": True
-                }
-            else:
-                return {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "actorID": self.uuid,
-                    "varTarget": "is_sleeping",
-                    "from": True,
-                    "to": False
-                }
+    def sleep_action(self):
+        if not self.is_sleeping:
+            return {
+                        "type": "actorDelta",
+                        "coords": {'x': self.x, 'y': self.y},
+                        "actorID": self.uuid,
+                        "varTarget": "is_sleeping",
+                        "from": False,
+                        "to": True
+                    }
+        else:
+            return {
+                        "type": "actorDelta",
+                        "coords": {'x': self.x, 'y': self.y},
+                        "actorID": self.uuid,
+                        "varTarget": "is_sleeping",
+                        "from": True,
+                        "to": False
+                    }
