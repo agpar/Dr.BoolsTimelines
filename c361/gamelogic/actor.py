@@ -278,15 +278,17 @@ class Actor(WorldInhabitant):
         }
         
     def sleep(self):
-        return {
             if (self.is_sleeping = False):
+                return {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
                     "actorID": self.uuid,
                     "varTarget": "is_sleeping",
                     "from": False,
                     "true": True
-                } else:
+                }
+            else:
+                return {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
                     "actorID": self.uuid,
