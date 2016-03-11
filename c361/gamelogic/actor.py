@@ -24,7 +24,7 @@ class Actor(WorldInhabitant):
             self.sleep = model.sleep
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
-            self.food = model.food
+            self.isfood = model.food
             self.block = model.block
             self.script = model.behaviour_script
         else:
@@ -36,7 +36,7 @@ class Actor(WorldInhabitant):
             self.sleep = 100
             self.is_sleeping = False
             self.direction = "North"
-            self.food = False
+            self.isfood = False
             self.block = False
             self.script = script
 
@@ -83,22 +83,9 @@ class Actor(WorldInhabitant):
             "sleep": self.sleep
         }
 
-    # Return coords of one cell in front of avatar based on direction
-    def north():
-        return (self.x, (self.y)+1)
-
-    def south():
-        return (self.x, (self.y)-1)
-
-    def east():
-        return ((self.x) + 1, self.y)
-
-    def west():
-        return ((self.x) - 1, self.y)
-
 
     def eat(self):
-        if food :
+        if self.isfood :
             return [{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
@@ -111,7 +98,7 @@ class Actor(WorldInhabitant):
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
                 "varTarget": "hunger",
-                "to": self.hunger + self.food
+                "to": self.hunger + self.isfood
             }]
 
     def walk(self):
@@ -338,7 +325,7 @@ class Actor(WorldInhabitant):
                
 
     def drop(self):
-        if not self.food:
+        if not self.isfood:
             if self.direction == "North":
                 return [{
                     "type": "worldDelta",
