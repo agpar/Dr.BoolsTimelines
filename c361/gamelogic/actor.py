@@ -42,6 +42,8 @@ class Actor(WorldInhabitant):
         self.info = {}
         self.gameInstance = None
         self.smell_code = SMELL_CODES['ACTOR']
+        self.is_actor = True
+
         self.sight_line = []
         self.smell_measure = []
 

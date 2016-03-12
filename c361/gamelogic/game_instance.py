@@ -3,11 +3,9 @@ from globals import *
 
 import random
 import uuid
-from functools import partial
-import math
 
 
-class GameInstance:
+class GameInstance(CoordParseMixin):
     """Container for world and actors in world.
 
     GameInstance is responsible for tracking the world and the actors
@@ -47,77 +45,26 @@ class GameInstance:
             row = [[Cell(i, j, 1, 0)] for j in range(self.world_size)]
             self.world.append(row)
 
-    def coord_parse(self, x):
-        """Handle coord parsing for ints and WorldInhabitants.
-
-        If x is a WorldInhabitant, return it's coords. Otherwise,
-        ensure x is a legal coord before returning.
-
-        :param x: Integer tuple or WorldInhabitant with coords
-        :return: x,y integer tuple of coord
-        """
-        if isinstance(x, WorldInhabitant):
-            x, y = self.coord_parse(*x._coords)
-            return x, y
-        elif isinstance(x, tuple):
-            y, z = x
-            if isinstance(y, int) and isinstance(z, int):
-                return y, z
-        tmp = "Can't parse coords from ({}, {})."
-        raise ValueError(tmp.format(x))
-
-    def distance(self, xy_or_WI1, xy_or_WI2):
-        """Calculate distance between 2 (x,y) coords or WorldInhabitants
-        :return: Distance without possibility for diagonal movement.
-        """
-        x1, y1 = self.coord_parse(xy_or_WI1)
-        x2, y2 = self.coord_parse(xy_or_WI2)
-
-        d = abs(x2-x1) + abs(y2-y1) # No diagonal movement
-        return d
-
-    def circle_at(self, xy_or_WI, radius, dist_sort=True):
-        """Calculate the points of a circle around xy_or_WI
-
-        :param xy_or_WI: x,y tuple or a WorldInhabitant
-        :param radius: Integer for radius of circle.
-        :param dist_sort: Key to determine if tuples should be sorted
-        by distance from center.
-        :return: List of x,y tuples.
-        """
-        x, y = self.coord_parse(xy_or_WI)
-        scan_x = range(x-radius, x+radius)
-        scan_y = range(y-radius, y+radius)
-        area_tuples = []
-
-        for x in scan_x:
-            for y in scan_y:
-                area_tuples.append((x,y))
-
-        if dist_sort:
-            dist_key = partial(self.distance, xy_or_WI2=(x,y))
-            area_tuples = sorted(area_tuples, key=dist_key)
-
-        return area_tuples
-
-
-    def add_actor(self, a, x=0, y=0):
+    def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
 
         :param a: Actor object to be added.
-        :param x: x coord OR a WorldInhabitant (such as a Cell)
-        :param y: y coord
+        :param xy: x,y coord OR a WorldInhabitant (such as a Cell)
         """
         atest = self.actors.get(a.uuid)
-        x, y = self.coord_parse((x, y))
         if atest:
             tmp = "{} already in GameInstance."
             raise ValueError(tmp.format(atest))
 
+        if xy:
+            x, y = self.coord_parse(xy)
+        else:
+            x, y = self.coord_parse(a)
+
         # TEMP CODE FOR INSERTING MANY ACTORS INTO NEW WORLD
         if x==0 and y==0:
             for x, y in zip(range(10), range(10)):
-                atest = self.get_actor(x, y)
+                atest = self.get_actor((x, y))
                 if not atest:
                     self.actors[a.uuid] = a
                     a._coords = (x, y)
@@ -126,7 +73,7 @@ class GameInstance:
                     break
 
         else:
-            atest = self.get_actor(x, y)
+            atest = self.get_actor((x, y))
             if atest:
                 tmp = "{0} already at coord. Only 1 Actor on a cell at a time."
                 raise ValueError(tmp.format(atest))
@@ -180,22 +127,31 @@ class GameInstance:
             return world_inhab.is_food
         if attr == "DEADLY":
             return world_inhab.is_deadly
+        if attr == 'ACTOR':
+            return world_inhab.is_actor
+        if attr == 'WATER':
+            return world_inhab.is_water
+
         else:
             return False
 
-
     def find_nearest(self, xy_or_WI, attr):
-        """Find and return nearest cells.
+        """Find and return nearest coords of world where something with attr is.
 
         :param xy_or_UUID: x,y tuple OR a WorldInhabitant
         :param attr: A property defined in globals.ATTRIBUTES
-        :return: Coordinate tuple of nearest cell with something having that attriubte.
+        :return: Coordinate tuple of nearest cell with something having that attribute.
+                Returns original coords if not found.
         """
 
-        area = []
+        scan_area = self.circle_at(xy_or_WI, 2)
 
-        for item in self.world[x][y]:
-            pass
+        for x, y in scan_area:
+            coord_contents = self.world[x][y]
+            for content in coord_contents:
+                if self.has_attr(content, attr):
+                    return x, y
+        return self.coord_parse(xy_or_WI)
 
     def do_turn(self, up_to=0):
         all_turns = []
