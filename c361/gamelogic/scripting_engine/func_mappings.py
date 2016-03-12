@@ -85,7 +85,7 @@ def actor_location(actor):
 
     :return: 2-tuple of Integers.
     """
-    return actor.coords
+    return actor._coords
 
 
 def actor_health(actor):
