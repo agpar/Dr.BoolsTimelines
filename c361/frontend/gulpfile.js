@@ -14,3 +14,7 @@ gulp.task('make', function() {
         .pipe(gulp.dest('../static/js'))
     )
 })
+
+gulp.task('watch', function() {
+    gulp.watch('src/**/*.js', ['make'])
+})

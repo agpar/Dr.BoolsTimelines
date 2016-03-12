@@ -45,3 +45,12 @@ class Cell(WorldInhabitant):
     def __repr__(self):
         temp = "Cell({}, {}, {}, {})"
         return temp.format(self.x, self.y, self.ctype, self.elevation)
+
+    def toJson(self):
+        json_out  = "{"
+        json_out += "'type': '%s'," % self.TYPE_MAP[self.ctype]
+        json_out += "'elevation': %f," % self.elevation
+        json_out += "'coords': {'x':%d, 'y':%d}" % (self.x, self.y)
+        json_out += "}"
+
+        return json_out
