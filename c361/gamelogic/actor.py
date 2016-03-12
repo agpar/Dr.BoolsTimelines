@@ -1,6 +1,6 @@
 import uuid
 
-from cell import WorldInhabitant
+from globals import *
 from scripting_engine.script_parser import AiScriptParser
 
 
@@ -14,7 +14,6 @@ class Actor(WorldInhabitant):
     """
 
     def __init__(self, x=-1, y=-1, name="Anonymous", script="", model=None):
-        # TODO: Add parsing of script to this model.
         if model:
             self.uuid = str(model.uuid)
             self.name = model.title
@@ -24,7 +23,7 @@ class Actor(WorldInhabitant):
             self.sleep = model.sleep
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
-            self.isfood = model.food
+            self.is_food = model.food
             self.block = model.block
             self.script = model.behaviour_script
         else:
@@ -36,12 +35,13 @@ class Actor(WorldInhabitant):
             self.sleep = 100
             self.is_sleeping = False
             self.direction = "North"
-            self.isfood = False
+            self.is_food = False
             self.block = False
             self.script = script
 
         self.info = {}
         self.gameInstance = None
+        self.smell_code = SMELL_CODES['ACTOR']
         self.sight_line = []
         self.smell_measure = []
 
@@ -67,6 +67,9 @@ class Actor(WorldInhabitant):
         else:
             self.sleep -= 5
 
+    @property
+    def is_alive(self):
+        return True if self.health > 0 else False
 
     # Actions
     def _action_table(self):
@@ -85,7 +88,7 @@ class Actor(WorldInhabitant):
 
 
     def eat(self):
-        if self.isfood :
+        if self.is_food :
             return [{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
@@ -98,7 +101,7 @@ class Actor(WorldInhabitant):
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
                 "varTarget": "hunger",
-                "to": self.hunger + self.isfood
+                "to": self.hunger + self.is_food
             }]
 
     def walk(self):
@@ -325,7 +328,7 @@ class Actor(WorldInhabitant):
                
 
     def drop(self):
-        if not self.isfood:
+        if not self.is_food:
             if self.direction == "North":
                 return [{
                     "type": "worldDelta",
