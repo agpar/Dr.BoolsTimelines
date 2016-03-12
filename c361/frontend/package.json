@@ -14,5 +14,8 @@
     "lru-cache": "latest",
     "easejs": "latest",
     "vinyl-source-stream": "latest"
+  },
+  "devDependencies": {
+    "gulp-util": "~3.0.7"
   }
 }

@@ -6,8 +6,11 @@ $(document).ready(function () {
     var controller = GraphicsEngineController(canvas)
 
     var body = document.getElementsByTagName("body")[0]
-		canvas.height = window.innerHeight - body.style.height - 50
+		canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
 		window.onresize = function () {
-			canvas.height = window.innerHeight - body.style.height - 50
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
 		}
 })

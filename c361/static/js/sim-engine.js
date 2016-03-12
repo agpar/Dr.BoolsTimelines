@@ -8850,9 +8850,12 @@ $(document).ready(function () {
     var controller = GraphicsEngineController(canvas)
 
     var body = document.getElementsByTagName("body")[0]
-		canvas.height = window.innerHeight - body.style.height - 50
+		canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+
 		window.onresize = function () {
-			canvas.height = window.innerHeight - body.style.height - 50
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
 		}
 })
 
@@ -8958,24 +8961,20 @@ module.exports = Class("GraphicsEngineController", {
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
-window.disposelock = false
 
 module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
     'private _worldState': null,
     'private _cellproto': {
-        'water': null,
-        'rock':  null,
-        'grass': null
+        'WATER': null,
+        'ROCK':  null,
+        'GRASS': null
     },
     __construct: function (renderTarget, engine, camera, scene) {
         var options = {
             max: 100,
             dispose: function (key, chunk) {
-//                while(window.disposelock)
-
-//                window.disposelock = true
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
@@ -8983,8 +8982,6 @@ module.exports =  Class("WorldRenderer", {
                         cell = chunk[row].pop()
                     }
                 }
-//                window.disposelock = false
-
             }
         }
         this._sceneChunks = lru(options)
@@ -9013,16 +9010,16 @@ module.exports =  Class("WorldRenderer", {
                 'mlength': Math.ceil(600),
                 'matrix': seed
             },
-            'user_made': {}
+            'user_made': {"0 0": 5}
         }
 
         this._worldState = tempstate
     //  end placeholder state
         var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 
-        var water = BABYLON.Mesh.CreateBox("water", 1.0, scene)
-        var rock  = BABYLON.Mesh.CreateBox( "rock", 1.0, scene)
-        var grass = BABYLON.Mesh.CreateBox("grass", 1.0, scene)
+        var water = BABYLON.Mesh.CreateBox("WATER", 1.0, scene)
+        var rock  = BABYLON.Mesh.CreateBox( "ROCK", 1.0, scene)
+        var grass = BABYLON.Mesh.CreateBox("GRASS", 1.0, scene)
 
         var watermat = new BABYLON.StandardMaterial("watermat", scene)
         var rockmat  = new BABYLON.StandardMaterial( "rockmat", scene)
@@ -9041,20 +9038,23 @@ module.exports =  Class("WorldRenderer", {
         grassmat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.0)
 
 
-        water.position = new BABYLON.Vector3(-10000,-10000,-10000);
-        rock.position  = new BABYLON.Vector3(-10000,-10000,-10000);
-        grass.position = new BABYLON.Vector3(-10000,-10000,-10000);
+        water.position = new BABYLON.Vector3(-10000,-10000,-10000)
+        rock.position  = new BABYLON.Vector3(-10000,-10000,-10000)
+        grass.position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._cellproto["water"] = water
-        this._cellproto["rock"]  = rock
-        this._cellproto["grass"] = grass
+        this._cellproto["WATER"] = water
+        this._cellproto["ROCK"]  = rock
+        this._cellproto["GRASS"] = grass
 
         this._scene = scene
 
     },
+    'private _userTerrain': function(x,y) {
+
+    },
     'private _cosineInterp': function(v0, v1, t) {
-        var phase = (1-Math.cos(t*Math.PI))/2
-        var dphase = Math.sin(t*Math.PI)
+        var phase = (1-Math.cos(t*Math.PI))/2.0
+        var dphase = Math.sin(t*Math.PI)/2.0
         return {
             val: v0*(1-phase) + v1*phase,
             slope: -v0*dphase + v1*dphase,
@@ -9092,6 +9092,7 @@ module.exports =  Class("WorldRenderer", {
             gradient += Math.pow(fout.slope, 2)
             gradient  = Math.sqrt(gradient)
 
+        var usermade = this._userTerrain(x,y)
         return {
             val: fout.val,
             grad: gradient
@@ -9101,12 +9102,12 @@ module.exports =  Class("WorldRenderer", {
         var calc = this._computeCell(x,y)
         var cell = {cellHeight: calc.val*15 + 1.0}
 
-        if(calc.val <= 0.15)
-            cell["type"] = "water"
-        else if(calc.grad > 0.35)
-            cell["type"] = "rock"
+        if(calc.val <= 0.2)
+            cell["type"] = "WATER"
+        else if(calc.grad > 0.175)
+            cell["type"] = "ROCK"
         else
-            cell["type"] = "grass"
+            cell["type"] = "GRASS"
 
         return cell
     },

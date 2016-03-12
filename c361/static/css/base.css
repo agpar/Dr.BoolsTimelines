@@ -1,6 +1,8 @@
 body
 {
     padding-top: 50px;
+    width: 100%;
+    height: 100%;
 }
 
 .sim-ui-container
@@ -21,10 +23,7 @@ body
 
 #simulation-render-target
 {
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    margin-top: 50px
+    z-index: 1;
 }
 
 .row-content, .row-navbar
