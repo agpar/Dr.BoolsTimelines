@@ -86,10 +86,10 @@ class GameInstance(CoordParseMixin):
     def remove_actor(self, xy_or_WI):
         """Remove an actor from the GameInstance. Fail silently.
 
-        :param xy_or_WI: x,y coord OR a WorldInhabitant object.
+        :param xy_or_WI: x,y coord OR a WorldInhabitant object, OR a UUID.
         """
-        x, y = self.coord_parse(xy_or_WI)
-        actr = self.get_actor(x, y)
+        x,y = self.coord_parse(xy_or_WI)
+        actr = self.get_actor(xy_or_WI)
         if not actr:
             return
 
@@ -101,7 +101,7 @@ class GameInstance(CoordParseMixin):
     def get_actor(self, xy_or_UUID):
         """Get actor by _coords, UUID, or WorldInhabitant.
 
-        :param xy_or_UUID: x,y coord OR UUID of actor
+        :param xy_or_UUID: x,y coord OR UUID of actor, or WorldInhabitant
         :return: Actor that fits description, or None
         """
         if isinstance(xy_or_UUID, uuid.UUID):
@@ -117,7 +117,7 @@ class GameInstance(CoordParseMixin):
         return None
 
     def has_attr(self, world_inhab, attr):
-        """Determine if the wold_inhabitant has an attribute.
+        """Determine if the wold_inhab has an attribute.
 
         :param world_inhab: A WorldInhabitant.
         :param attr: A property defined in globals.ATTRIBUTES
@@ -131,7 +131,6 @@ class GameInstance(CoordParseMixin):
             return world_inhab.is_actor
         if attr == 'WATER':
             return world_inhab.is_water
-
         else:
             return False
 
