@@ -19,8 +19,11 @@ from django.conf.urls import url
 from django.contrib import admin
 from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.views import home
+from c361.views.game_actor import ActorList, ActorDetail, MyActorList
+from c361.views.game_instance import GameList, GameDetail, MyGameList
+from c361.views.turn import TurnList
+from c361.views.user import UserDetail, UserList
 from c361.views.views import simulation
-from c361.views.game_actor import ActorList, ActorDetail
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -29,8 +32,25 @@ urlpatterns = [
     url(r'^logout/', user_logout, name="logout"),
     url(r'^register/', UserRegister.as_view(), name="register"),
 
-    url(r'^actors/', ActorList.as_view(), name="actor-list"),
-    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(), name='actor-detail'),
+    url(r'^actors/$', ActorList.as_view(),
+        name="gameactormodel-list", kwargs={'model': "GameActorModel"}),
+    url(r'^actors/mine/$', MyActorList.as_view(),
+        name="my-gameactormodel-list"),
+    url(r'^actor/(?P<pk>[0-9a-z-]+)', ActorDetail.as_view(),
+        name='gameactormodel-detail', kwargs={'model': "GameActorModel"}),
+
+    url(r'^games/$', GameList.as_view(),
+        name="gameinstancemodel-list", kwargs={'model': "GameInstanceModel"}),
+    url(r'^games/mine/$', MyGameList.as_view(),
+        name="my-gameinstancemodel-list"),
+    url(r'^game/(?P<pk>[0-9a-z-]+)/$', GameDetail.as_view(),
+        name='gameinstancemodel-detail', kwargs={'model': "GameInstanceModel"}),
+
+    url(r'^game/(?P<pk>[0-9a-z-]+)/turns/', TurnList.as_view(),
+        name='turnmodel-list', kwargs={'model': "TurnModel"}),
+
+    url(r'^users/$', UserList.as_view(), name='user-list'),
+    url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail'),
 
     url(r'^simulation/', simulation, name="simulation")
 ]

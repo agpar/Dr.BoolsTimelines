@@ -1,6 +1,6 @@
 from random import random as rand
 import math
-from cell import Cell
+from globals import *
 
 class WorldState:
     SEED_SIZE = 600
