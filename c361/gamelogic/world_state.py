@@ -7,7 +7,7 @@ class WorldState:
     STANDARD_HEIGHT = 15
 
 
-    def __init__(self, size, chunk_size=6, water_threshold=0.2, rock_threshold=0.35):
+    def __init__(self, size=(1000,1000), chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         self._size = size
         self._chunk_size = chunk_size
         self._water_threshold = water_threshold
@@ -28,8 +28,12 @@ class WorldState:
 
         self._cells[coords[0]][coords[1]] = cell
 
-    def toJson(self):
-        json_out  = "{'width': %d," % self._size[0]
+    def __repr__(self):
+        return self.toJson(False)
+
+    def toJson(self, withseed=True):
+        json_out  = "{'standardHeight': %d," % self.STANDARD_HEIGHT
+        json_out += " 'width': %d," % self._size[0]
         json_out += " 'length': %d," % self._size[1]
         json_out += " 'chunkSize': %d," % self._chunk_size
         json_out += " 'waterThreshold': %f," % self._water_threshold
@@ -38,7 +42,7 @@ class WorldState:
 
         cells_json = []
 
-        for row in cells:
+        for row in self._cells:
              for c in cells[row]:
                  fmt = (self._cells[row][c].x,
                         self._cells[row][c].y,
@@ -48,28 +52,37 @@ class WorldState:
 
         cell_json = ""
 
-        for c in cells_json[:-1]:
-            cell_json += c + ", "
+        if len(self._cells) > 1:
+            for c in cells_json[:-1]:
+                cell_json += c + ", "
 
-        cell_json += cells_json[-1]
+        if len(self._cells) > 0:
+            cell_json += cells_json[-1]
+
         cell_json += "},"
 
         json_out += cell_json
-        json_out += " 'seedSize': %d," % self.SEED_SIZE
-        json_out += " 'seed': " + str(self._seed)
+
+        if withseed:
+            json_out += " 'seedSize': %d," % self.SEED_SIZE
+            json_out += " 'seed': " + str(self._seed)
+        else:
+            json_out += " 'seedSize': %d" % self.SEED_SIZE
+
         json_out += "}"
 
         return json_out
 
     def _terrainGen(self, x, y):
         height, slope = self._computeCell(x,y)
+        cellheight = height*self.STANDARD_HEIGHT + 1.0
 
         if height <= self._water_threshold:
-            return Cell(x, y, 3, height)
+            return Cell(x, y, 3, cellheight)
         if slope > self._rock_threshold:
-            return Cell(x, y, 2, height)
+            return Cell(x, y, 2, cellheight)
 
-        return Cell(x, y, 1, height)
+        return Cell(x, y, 1, cellheight)
 
     def _cosineInterp(self, v0, v1, t):
         phase = (1-math.cos(t*math.pi))/2.0
@@ -102,8 +115,8 @@ class WorldState:
         f1 = self._cosineInterp(self._seed[y1][x0], self._seed[y1][x1], dx)
 
         fout = self._cosineInterp(f0[0], f1[0], dy)
-        x_slope = self._cosineInterp(f0[1], f1[1], dy)
+        x_slope , _ = self._cosineInterp(f0[1], f1[1], dy)
 
         gradient = math.sqrt(x_slope**2 + fout[1]**2)
 
-        return (fout*self.STANDARD_HEIGHT  + 1.0, gradient)
+        return (fout[0], gradient)

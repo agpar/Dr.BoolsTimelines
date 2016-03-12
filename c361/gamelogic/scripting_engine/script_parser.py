@@ -19,7 +19,7 @@ reserved = {
 }
 
 tokens = list(reserved.values())
-tokens = tokens + ['SYMBOL', 'NUMBER', 'LPAREN', 'RPAREN', 'SEMI']
+tokens = tokens + ['SYMBOL', 'NUMBER', 'LPAREN', 'RPAREN', 'SEMI', 'COMMA']
 tokens = tokens + ['PLUS', 'MINUS', 'MULT', 'DIVIDE']
 tokens = tokens + ['LT', 'LEQT', 'GT', 'GEQT', 'EQ']
 
@@ -37,6 +37,7 @@ t_FALSE  = r'false'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_SEMI   = r';'
+t_COMMA  = r','
 t_PLUS   = r'\+'
 t_MINUS  = r'-'
 t_MULT   = r'\*'
@@ -50,31 +51,14 @@ t_EQ     = r'=='
 
 def t_SYMBOL(t):
     r'[a-z][a-z0-9]*'
-    if t.value in reserved:
-        t.type = reserved.get(t.value, 'SYMBOL')
+    t.type = reserved.get(t.value, 'SYMBOL')
     return t
 
 def t_NUMBER(t):
     r'\d+'
     t.value = int(t.value)
     return t
-
-
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
-
-
-t_ignore_COMMENT = r'\#.*'
-t_ignore = ' \t'
-
-
-def t_error(t):
-    err_info = (t.lexer.lineno, t.lexer.lexpos, t.value[0])
-    print("Syntax error at %d, %d, unknown: '%s'" % err_info)
-    t.lexer.skip(1)
-
-
+a
 lexer = lex.lex()
 
 
@@ -106,25 +90,41 @@ def p_rules(p):
 
 
 def p_rule_actions(p):
-    "rule : IF boolexp THEN DO actions DONE ENDIF"
-    p[0] = IfStatementAction(p[2],p[5])
+    """
+    rule : IF boolexp THEN inferences DO actions DONE ENDIF
+         | IF boolexp THEN DO actions DONE ENDIF
+    """
+    if len(p) == 9:
+        p[0] = IfStatement(p[2],p[4],p[6])
+    else:
+        p[0] = IfStatement(p[2],[],p[5])
 
 
 def p_rule_inference(p):
     "rule : IF boolexp THEN inferences ENDIF"
-    p[0] = IfStatementInference(p[2], p[4])
-
+    p[0] = IfStatement(p[2],p[4],[])
 
 def p_actions(p):
     """
-    actions : SYMBOL SEMI actions
-            | SYMBOL SEMI
+    actions : action SEMI actions
+            | action SEMI
     """
     if len(p) == 4:
         p[0] = [p[1]] + p[3]
     else:
         p[0] = [p[1]]
 
+def p_action(p):
+    """
+    action : function
+    """
+    p[0] = p[1]
+
+def p_function(p):
+    """
+    function : SYMBOL LPAREN arguments RPAREN
+    """
+    p[0] = Function(SymbolAtom(p[1]), p[3])
 
 def p_inferences(p):
     """
@@ -142,8 +142,28 @@ def p_inference(p):
     inference : SYMBOL IS boolexp
               | SYMBOL IS numexp
     """
-    p[0] = Assignment(p[1], p[3])
+    p[0] = Assignment(SymbolAtom(p[1]), p[3])
 
+def p_arguments(p):
+    """
+    arguments : argument COMMA arguments
+              | argument
+
+    arguments :
+    """
+    if len(p) == 4:
+        p[0] = [p[1]] + p[3]
+    elif len(p) > 1:
+        p[0] = [p[1]]
+    else:
+        p[0] = []
+
+def p_argument(p):
+    """
+    argument : boolexp
+             | numexp
+    """
+    p[0] = p[1]
 
 def p_numexp_binop(p):
     """
@@ -163,14 +183,16 @@ def p_numexp_unop(p):
 def p_numexp_atom(p):
     """
     numexp  : LPAREN numexp RPAREN
-            | NUMBER
             | SYMBOL
     """
     if len(p) == 4:
-        p[0] = SymbolAtom(p[2])
+        p[0] = p[2]
     else:
         p[0] = SymbolAtom(p[1])
 
+def p_numexp_number(p):
+    "numexp : NUMBER"
+    p[0] = p[1]
 
 def p_numrel(p):
     """
@@ -202,7 +224,6 @@ def p_boolexp_atom(p):
             | TRUE
             | FALSE
             | SYMBOL
-            | numrel
     """
     if p[1] == 'true':
         p[0] = SymbolAtom(True)
@@ -211,8 +232,11 @@ def p_boolexp_atom(p):
     elif len(p) == 4:
         p[0] = p[2]
     else:
-        p[0] = p[1]
+        p[0] = SymbolAtom(p[1])
 
+def p_boolexp_numrel(p):
+    "boolexp : numrel"
+    p[0] = [1]
 
 def p_error(p):
     err_info = (p.value, p.lineno, p.lexpos)
@@ -230,8 +254,9 @@ if __name__ == "__main__":
     data = """
     if true and true then
       do
-        sym1;
-        sym2;
+        sym1();
+        sym2(33,1,2);
+        sym3(sym1);
       done
     endif
 
@@ -250,11 +275,9 @@ if __name__ == "__main__":
     tree = parser.parse(data)
     for inf in tree:
         print(inf.condition)
-        if isinstance(inf, IfStatementAction):
-            print(inf.actions)
-        else:
-            for i in inf.inferences:
-                if isinstance(i.value, UnaryNumOperation):
-                    print(i.symbol + " is " + i.value.operation + str(i.value.operand))
-                else:
-                    print(i.symbol + " is " + str(i.value))
+        for i in inf.inferences:
+            if isinstance(i.value, UnaryNumOperation):
+                print(i.symbol.value + " is " + i.value.operation + str(i.value.operand))
+            else:
+                print(i.symbol.value + " is " + str(i.value))
+        print(inf.actions)

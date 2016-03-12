@@ -93,7 +93,7 @@ module.exports =  Class("WorldRenderer", {
 
     },
     'private _cosineInterp': function(v0, v1, t) {
-        var phase = (1-Math.cos(t*Math.PI))/2
+        var phase = (1-Math.cos(t*Math.PI))/2.0
         var dphase = Math.sin(t*Math.PI)/2.0
         return {
             val: v0*(1-phase) + v1*phase,
@@ -134,17 +134,17 @@ module.exports =  Class("WorldRenderer", {
 
         var usermade = this._userTerrain(x,y)
         return {
-            val: fout.val*15 + 1.0,
+            val: fout.val,
             grad: gradient
         }
     },
     'private _terrainGen': function (x,y) {
         var calc = this._computeCell(x,y)
-        var cell = {cellHeight: calc.val}
+        var cell = {cellHeight: calc.val*15 + 1.0}
 
-        if(calc.val <= 0.15)
+        if(calc.val <= 0.2)
             cell["type"] = "WATER"
-        else if(calc.grad > 0.35)
+        else if(calc.grad > 0.175)
             cell["type"] = "ROCK"
         else
             cell["type"] = "GRASS"

@@ -19,6 +19,13 @@ class SymbolAtom:
             return self.func_val(actor)
         return self.value
 
+class Function:
+    def __init__(self, symbol, arguments):
+        self.symbol = symbol
+        self.arguments = arguments
+
+    def __repr__(self):
+        return "{}({})".format(self.symbol.value, self.arguments)
 
 class Assignment(Node):
     def __init__(self, symbol, value):
@@ -26,20 +33,15 @@ class Assignment(Node):
         self.value = value
 
 
-class IfStatementAction(Node):
-    def __init__(self, condition, actions):
+class IfStatement(Node):
+    def __init__(self, condition, inferences, actions):
         self.condition = condition
+        self.inferences = inferences
         self.actions = actions
-        
+
     def eval(self, actor):
         """Test the condition."""
         return self.condition.eval(actor)
-
-
-class IfStatementInference(Node):
-    def __init__(self, condition, inferences):
-        self.condition = condition
-        self.inferences = inferences
 
 
 class BinaryNumOperation(Node):
