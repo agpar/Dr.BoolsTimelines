@@ -1,11 +1,11 @@
-from .func_mappings import *
+from func_mappings import *
 
 
 class Node:
     pass
 
 
-class SymbolAtom:
+class SymbolAtom(Node):
     """A node which holds a single symbol."""
     def __init__(self, val):
         self.value = val
@@ -19,7 +19,7 @@ class SymbolAtom:
             return self.func_val(actor)
         return self.value
 
-class Function:
+class Function(Node):
     def __init__(self, symbol, arguments):
         self.symbol = symbol
         self.arguments = arguments

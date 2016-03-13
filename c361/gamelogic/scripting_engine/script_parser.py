@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
-from .ast_nodes import *
-from .behaviour import Behaviour
+from ast_nodes import *
+from behaviour import Behaviour
 
 
 reserved = {
@@ -102,7 +102,6 @@ def p_rules(p):
     else:
         p[0] = [p[1]]
 
-
 def p_rule_actions(p):
     """
     rule : IF boolexp THEN inferences DO actions DONE ENDIF
@@ -113,10 +112,10 @@ def p_rule_actions(p):
     else:
         p[0] = IfStatement(p[2],[],p[5])
 
-
 def p_rule_inference(p):
     "rule : IF boolexp THEN inferences ENDIF"
     p[0] = IfStatement(p[2],p[4],[])
+
 
 def p_actions(p):
     """
@@ -134,11 +133,13 @@ def p_action(p):
     """
     p[0] = p[1]
 
+
 def p_function(p):
     """
-    function : SYMBOL LPAREN arguments RPAREN
+    function : p_symbol LPAREN arguments RPAREN
     """
-    p[0] = Function(SymbolAtom(p[1]), p[3])
+    p[0] = Function(p[1], p[3])
+
 
 def p_inferences(p):
     """
@@ -153,10 +154,11 @@ def p_inferences(p):
 
 def p_inference(p):
     """
-    inference : SYMBOL IS boolexp
-              | SYMBOL IS numexp
+    inference : p_symbol IS boolexp
+              | p_symbol IS numexp
     """
-    p[0] = Assignment(SymbolAtom(p[1]), p[3])
+    p[0] = Assignment(p[1], p[3])
+
 
 def p_arguments(p):
     """
@@ -179,6 +181,7 @@ def p_argument(p):
     """
     p[0] = p[1]
 
+
 def p_numexp_binop(p):
     """
     numexp  : numexp PLUS numexp
@@ -188,25 +191,21 @@ def p_numexp_binop(p):
     """
     p[0] = BinaryNumOperation(p[1], p[2], p[3])
 
-
 def p_numexp_unop(p):
     "numexp : MINUS numexp %prec UMINUS"
     p[0] = UnaryNumOperation(p[1], p[2])
 
-
 def p_numexp_atom(p):
     """
     numexp  : LPAREN numexp RPAREN
-            | SYMBOL
+            | NUMBER
+            | p_symbol
+            | function
     """
     if len(p) == 4:
         p[0] = p[2]
     else:
-        p[0] = SymbolAtom(p[1])
-
-def p_numexp_number(p):
-    "numexp : NUMBER"
-    p[0] = p[1]
+        p[0] = p[1]
 
 def p_numrel(p):
     """
@@ -226,18 +225,18 @@ def p_boolexp_binop(p):
     """
     p[0] = BinaryBoolOperation(p[1], p[2], p[3])
 
-
 def p_boolexp_unop(p):
     "boolexp : NOT boolexp"
     p[0] = UnaryBoolOperation(p[1], p[2])
-
 
 def p_boolexp_atom(p):
     """
     boolexp : LPAREN boolexp RPAREN
             | TRUE
             | FALSE
-            | SYMBOL
+            | p_symbol
+            | function
+            | numrel
     """
     if p[1] == 'true':
         p[0] = SymbolAtom(True)
@@ -245,16 +244,14 @@ def p_boolexp_atom(p):
         p[0] = SymbolAtom(False)
     elif len(p) == 4:
         p[0] = p[2]
-    else:
-        p[0] = SymbolAtom(p[1])
 
-def p_boolexp_numrel(p):
-    "boolexp : numrel"
-    p[0] = [1]
+def p_symbol(p):
+    "p_symbol : SYMBOL"
+    p[0] = SymbolAtom(p[1])
 
 def p_error(p):
-    err_info = (p.value, p.lineno, p.lexpos)
-    print("Syntax error: '%s' at: %d, %d" % err_info)
+    err_info = (p.value, p.lineno)
+    raise Exception("Syntax error: '%s' at: %d" % err_info)
 
 
 class AiScriptParser(object):
@@ -278,20 +275,23 @@ if __name__ == "__main__":
       sym4 is true;
     endif
 
-    if not sym5 then
-      sym6 is -2;
-      sym7 is 3;
+    if not sym5(1,2,3) < sym6(3+2-sym7,-1) then
+      sym7 is -2;
+      sym8 is 3;
     endif
     """
 
     print("\n\n")
     parser = AiScriptParser()
-    tree = parser.parse(data)
-    for inf in tree:
-        print(inf.condition)
-        for i in inf.inferences:
-            if isinstance(i.value, UnaryNumOperation):
-                print(i.symbol.value + " is " + i.value.operation + str(i.value.operand))
-            else:
-                print(i.symbol.value + " is " + str(i.value))
-        print(inf.actions)
+    try:
+        tree = parser.parse(data)
+        for inf in tree:
+            print(inf.condition)
+            for i in inf.inferences:
+                if isinstance(i.value, UnaryNumOperation):
+                    print(i.symbol.value + " is " + i.value.operation + str(i.value.operand))
+                else:
+                    print(i.symbol.value + " is " + str(i.value))
+            print(inf.actions)
+    except Exception as e:
+        print(e)

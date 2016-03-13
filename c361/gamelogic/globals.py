@@ -1,5 +1,5 @@
 from functools import partial
-
+from scripting_engine.script_parser import AiScriptParser
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
                1: 'ACTOR', 2: 'PLANT', 3: 'WATER'}
 CELL_TYPES = {'GRASS': 1, 'ROCK': 2, 'WATER': 3,
@@ -9,6 +9,7 @@ ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT'}
 
 DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
 
+PARSER = AiScriptParser()
 
 class CoordParseMixin:
     """A bunch of methods for reasoning about coordinates."""

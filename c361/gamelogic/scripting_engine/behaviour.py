@@ -1,4 +1,4 @@
-from .func_mappings import ACTION_MAP
+from func_mappings import ACTION_MAP
 
 class Behaviour(object):
     def __init__(self, rules):
