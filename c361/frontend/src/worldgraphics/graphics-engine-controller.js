@@ -3,6 +3,14 @@ var WorldRenderer = require("./world-renderer")
 //var TimelineFetcher = require("../networking/timeline-fetcher").new()
 //var WorldStateFetcher = require("../networking/world-state-fetcher").new()
 
+/*
+GraphicsEngineController: Holds the state of the camera, listens for input events
+and controlls the render engine accordingly. This class also keeps track of
+the time stream that the client's simulation is currently in and applies state
+change operations to the renderer to move the view through time.
+
+param renderTarget: The DOM element that the rendering engine will be bound to.
+*/
 module.exports = Class("GraphicsEngineController", {
     'private _renderEngine': null,
     'private _camera': null,
@@ -12,6 +20,11 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+    /*
+    Bind key events to camera or interaction actions
+
+    param scene: The scene for which the events are fire from.
+    */
     'private _setupKeys': function(scene) {
         scene.actionManager = new BABYLON.ActionManager(scene)
         scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger,
@@ -59,6 +72,10 @@ module.exports = Class("GraphicsEngineController", {
         this._setupKeys(scene)
         this.startSimulationEngine()
     },
+    /*
+    Initialize the simulation view and start the render loop. Update the viewable
+    chunks in the scene as the camera is moved
+    */
     'public startSimulationEngine': function() {
         this._renderer.updateView(0,0,true)
         this._camPos = {x: 0, y: 0}
@@ -77,19 +94,34 @@ module.exports = Class("GraphicsEngineController", {
             }
         }.bind(this))
     },
+    /*
+    Turn off smell field and close cell status window
+    */
     'public setDefaultRenderSettings': function() {
         this._smellMode = false
         this._cellStatus = null
     },
-    'public smellModeOn': function() {
-        return this._smellMode
-    },
+    /*
+    Turn the smell field on and off
+    */
     'public setSmellMode': function(setting) {
         this._smellMode = setting
     },
+    /*
+    Open the cell status window for the cell at point (x,y)
+
+    param x: cell x position
+    param y: cell y position
+    */
     'public getcellStatus': function(x,y) {
         return renderer.getCell(x,y)
     },
+    /*
+    Move the camera to the point (x,y) and update the scene.
+
+    param x: view x position
+    param y: view y position
+    */
     'public moveCamera': function(x,y) {
         renderer.updateCam(x,y)
     },
