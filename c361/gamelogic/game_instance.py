@@ -166,51 +166,54 @@ class GameInstance(CoordParseMixin):
     def turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
 
-        :param actor_turn: the turn that the actor wants to execute
+        :param actor_turn: the delta that the actor wants to execute
         :return: delta of the changes that have occured
         """
-        x = actor_turn["to"][0]
-        y = actor_turn["to"][1]
-        coord_contents = self.world[x][y]
 
-        if self.has_attr(coord_contents, "WATER"):
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
-                "varTarget": "health",
-                "from": self.health,
-                "to": 0
-            }
-        if self.has_attr(coord_contents,"DEADLY"):
-            return {
-                 "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
-                "varTarget": "health",
-                "from": self.health,
-                "to": self.health-50
-            }
-        if self.has_attr(coord_contents,"ACTOR"):
-            return {
-                 "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
-                "varTarget": None,
-                "from": None,
-                "to": None
-            }
-        if self.has_attr(coord_contents,"FOOD"):
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
-                "varTarget": None,
-                "from": None,
-                "to": None
-            }
+        actor = self.get_actor(actor_turn['actorID'])
+        if actor_turn['varTarget'] == "_coords":
+            new_x = actor_turn["to"][0]
+            new_y = actor_turn["to"][1]
+            coord_contents = self.world[new_x][new_y]
+
+            if self.has_attr(coord_contents, "WATER"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},  # The new position of the actor
+                    "actorID": actor.uuid,
+                    "varTarget": "health",
+                    "from": actor.health,
+                    "to": 0
+                }
+            if self.has_attr(coord_contents, "DEADLY"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": "health",
+                    "from": actor.health,
+                    "to": actor.health-50
+                }
+            if self.has_attr(coord_contents, "ACTOR"):
+                return {
+                     "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": None,
+                    "from": None,
+                    "to": None
+                }
+            if self.has_attr(coord_contents, "FOOD"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": None,
+                    "from": None,
+                    "to": None
+                }
         else:
-            return actor_turn
+            return None  # This method should only return new effects.
 
     def do_turn(self, up_to=0):
         all_turns = []
