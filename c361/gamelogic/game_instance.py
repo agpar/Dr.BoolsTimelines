@@ -1,8 +1,13 @@
-from actor import Actor
-from globals import *
-
 import random
 import uuid
+
+# Handle both relative and local importing schemes.
+try:
+    from .actor import Actor
+    from .globals import *
+except SystemError:
+    from actor import Actor
+    from globals import *
 
 
 class GameInstance(CoordParseMixin):
@@ -167,7 +172,7 @@ class GameInstance(CoordParseMixin):
         """ Receive a turn and determine if it has any reprocussions.
 
         :param actor_turn: the delta that the actor wants to execute
-        :return: delta of the changes that have occured
+        :return: delta of any direct changes that have occured.
         """
 
         actor = self.get_actor(actor_turn['actorID'])

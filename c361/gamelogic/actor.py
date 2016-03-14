@@ -1,7 +1,12 @@
 import uuid
 
-from globals import *
-from scripting_engine.script_parser import AiScriptParser
+# Handle both relative and local importing schemes.
+try:
+    from .globals import *
+    from .scripting_engine.script_parser import AiScriptParser
+except SystemError:
+    from globals import *
+    from scripting_engine.script_parser import AiScriptParser
 
 
 class Actor(WorldInhabitant):
