@@ -1,19 +1,33 @@
-from random import random as rand
 import math
+import json
+from random import random as rand
 from globals import *
+
 
 class WorldState:
     SEED_SIZE = 600
     STANDARD_HEIGHT = 15
 
 
-    def __init__(self, size=(1000,1000), chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
-        self._size = size
-        self._chunk_size = chunk_size
-        self._water_threshold = water_threshold
-        self._rock_threshold = rock_threshold
-        self._cells = {}
-        self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
+    def __init__(self, size=(1000,1000), json_dump=None, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
+        if json_dump is not None:
+            json_in = json.loads(json_dump)
+            self._size = (json_in["width"], json_in["length"])
+            self._chunk_size = json_in["chunkSize"]
+            self._water_threshold = json_in["waterThreshold"]
+            self._rock_threshold = json_in["rockThreshold"]
+            self._cells = [Cell(json_dump=cell_json) for cell_json in json_in["cells"]]
+            if json_in.get("seed") is not None:
+                self._seed = json_in["seed"]
+            else:
+                raise Exception("No seed present in JSON dump of world state.")
+        else:
+            self._size = size
+            self._chunk_size = chunk_size
+            self._water_threshold = water_threshold
+            self._rock_threshold = rock_threshold
+            self._cells = {}
+            self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
 
     def __getitem__(self, coords):
         if coords[0] in self._cells:
