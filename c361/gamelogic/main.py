@@ -10,7 +10,8 @@ testscript = """
     if not 4 > myhunger
     then
         do
-            sleep();
+            sleep(sleep(sleep, true, false),sleep(sleep(1,2,3)));
+            walk(direction(nearest(WATER)));
         done
     endif
     """

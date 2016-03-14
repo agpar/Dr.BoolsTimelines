@@ -1,5 +1,5 @@
 from functools import partial
-
+from scripting_engine.script_parser import AiScriptParser
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
                1: 'ACTOR', 2: 'PLANT', 3: 'WATER'}
 CELL_TYPES = {'GRASS': 1, 'ROCK': 2, 'WATER': 3,
@@ -9,6 +9,7 @@ ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS'}
 
 DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
 
+PARSER = AiScriptParser()
 
 class CoordParseMixin:
     """A bunch of methods for reasoning about coordinates."""
@@ -124,11 +125,11 @@ class WorldInhabitant(CoordParseMixin):
         return self.wrapper((self.x, y))
 
     def east(self, n=1):
-        x = self._coords[0] - n
+        x = self._coords[0] + n
         return self.wrapper((x, self.y))
 
     def west(self, n=1):
-        x = self._coords[0] + n
+        x = self._coords[0] - n
         return self.wrapper((x, self.y))
 
     def distance_to(self, other):

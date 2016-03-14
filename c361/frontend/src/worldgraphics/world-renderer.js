@@ -1,7 +1,18 @@
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
+/*
+World Renderer class contains the core functionality for
+rendering the simulation. It recieves State and changes
+from the graphics controller and updates the 3D view accordingly.
+An LRU cache is used to store the cells in the view. This reduces the risk
+of an unbounded growth of rendered chunks in the world.
 
+param renderTarget: DOM element containing the canvas that will be rendered to.
+param engine: An instance of the BABYLON.Engine class.
+param camera: The BABYLON.Camera instance which the user views through
+param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
+*/
 module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
@@ -12,6 +23,7 @@ module.exports =  Class("WorldRenderer", {
         'GRASS': null
     },
     __construct: function (renderTarget, engine, camera, scene) {
+        //Configure the LRU cache holding the scene chunks.
         var options = {
             max: 100,
             dispose: function (key, chunk) {
@@ -26,22 +38,29 @@ module.exports =  Class("WorldRenderer", {
         }
         this._sceneChunks = lru(options)
 
-    //  placeholder state
+        //  placeholder state
         var width  = 120000
         var length = 120000
         var chunkSize = 6
 
         var seed = []
 
-        for (var i = 0; i < Math.ceil(600); i++){
+        for (var i = 0; i < 600; i++){
             var row = []
-            for (var j = 0; j < Math.ceil(600); j++){
+            for (var j = 0; j < 600; j++){
                 row.push(Math.random())
             }
             seed.push(row)
         }
 
+        var cells = {}
+        for (var i = -5; i <= 5; i++) {
+          for(var j = -5; j <= 5; j++) {
+            cells[j + " " + i] = {"elevation": 10}
+          }
+        }
         var tempstate = {
+            'standardHeight': 15,
             'chunkSize': chunkSize,
             'wwidth': width,
             'wlength': length,
@@ -50,20 +69,25 @@ module.exports =  Class("WorldRenderer", {
                 'mlength': Math.ceil(600),
                 'matrix': seed
             },
-            'user_made': {"0 0": 5}
+            'cells': cells
         }
 
         this._worldState = tempstate
-    //  end placeholder state
+        //  end placeholder state
+
+        //Basic condiguration for the render engine.
         var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 
+        //Define cell block prototypes
         var water = BABYLON.Mesh.CreateBox("WATER", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "ROCK", 1.0, scene)
         var grass = BABYLON.Mesh.CreateBox("GRASS", 1.0, scene)
 
+        //Define materials for each cell type
         var watermat = new BABYLON.StandardMaterial("watermat", scene)
         var rockmat  = new BABYLON.StandardMaterial( "rockmat", scene)
         var grassmat = new BABYLON.StandardMaterial("grassmat", scene)
+
 
         water.material = watermat
         rock.material  = rockmat
@@ -77,7 +101,7 @@ module.exports =  Class("WorldRenderer", {
         rockmat.diffuseColor  = new BABYLON.Color3(0.3, 0.3, 0.3)
         grassmat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.0)
 
-
+        //Place prototype meshes out of sight.
         water.position = new BABYLON.Vector3(-10000,-10000,-10000)
         rock.position  = new BABYLON.Vector3(-10000,-10000,-10000)
         grass.position = new BABYLON.Vector3(-10000,-10000,-10000)
@@ -87,11 +111,70 @@ module.exports =  Class("WorldRenderer", {
         this._cellproto["GRASS"] = grass
 
         this._scene = scene
-
     },
+    /*
+    Terrain generation function. Produces a cell either from the ones defined
+    in the world's state or otherwise generated formulaically.
+
+    param x: Cell x coordinate
+    param y: Cell y coordinate
+
+    out: Configured WorldCell object.
+    */
+    'private _terrainGen': function (x,y) {
+        var calc = this._userTerrain(x,y)
+        var cell = {cellHeight: calc.val + 1.0}
+
+        if(calc.val <= 0.2*this._worldState.standardHeight)
+            cell["type"] = "WATER"
+        else if(calc.grad > 0.175)
+            cell["type"] = "ROCK"
+        else
+            cell["type"] = "GRASS"
+
+        return cell
+    },
+    /*
+    Compute the generated cell and apply the user made changes offsetting the
+    field.
+
+    param x: x position for cell
+    param y: y position for cell
+
+    Out.val: Height of the cell.
+    Out.grad: Magnitude of the gradient at the cell position.
+    */
     'private _userTerrain': function(x,y) {
+        var cx = Math.floor(x)
+        var cy = Math.floor(y)
 
+        var val = 0
+        var cell = this._worldState.cells[cx + " " + cy]
+        var tgen = this._computeCell(cx,cy)
+
+        if(cell != undefined)
+          var val = cell["elevation"]
+
+        val = val + tgen.val*this._worldState.standardHeight
+
+        if(val < 1)
+          val = 1
+
+        return {
+            'val': val,
+            'grad': tgen.grad
+        }
     },
+    /*
+    Cosine interpolation used for smoooth terrain map generation.
+
+    param v0: Inital value
+    param v1: Final value
+    param t: Amount between 0 and 1 from inital value to final value.
+
+    Out.val: Interpolated value
+    Out.slope: Derivative of interpolation
+    */
     'private _cosineInterp': function(v0, v1, t) {
         var phase = (1-Math.cos(t*Math.PI))/2.0
         var dphase = Math.sin(t*Math.PI)/2.0
@@ -100,6 +183,16 @@ module.exports =  Class("WorldRenderer", {
             slope: -v0*dphase + v1*dphase,
         }
     },
+    /*
+    Core terrain map generation by interpolating between points in a randomly
+    generated matrix.
+
+    param x: Cell x coordinate
+    param y: Cell y coordinate
+
+    Out.val: Height of the cell between 0 and 1.
+    Out.grad: Gradient magniute of the terrain field.
+    */
     'private _computeCell': function (x,y) {
         var seed = this._worldState.seed
         var worldWidth = this._worldState.wwidth*this._worldState.chunkSize
@@ -132,32 +225,33 @@ module.exports =  Class("WorldRenderer", {
             gradient += Math.pow(fout.slope, 2)
             gradient  = Math.sqrt(gradient)
 
-        var usermade = this._userTerrain(x,y)
         return {
             val: fout.val,
             grad: gradient
         }
     },
-    'private _terrainGen': function (x,y) {
-        var calc = this._computeCell(x,y)
-        var cell = {cellHeight: calc.val*15 + 1.0}
-
-        if(calc.val <= 0.2)
-            cell["type"] = "WATER"
-        else if(calc.grad > 0.175)
-            cell["type"] = "ROCK"
-        else
-            cell["type"] = "GRASS"
-
-        return cell
-    },
+    /*
+    Render the geometry in the scene.
+    */
     'public renderWorld': function() {
         this._scene.render()
     },
+    /*
+    Set the entire state of the world to the new state.
+
+    param state: The new state to replace the state of the world.
+    */
     'public setWorldState': function (state) {
         this._worldState = state
     },
-    'public applyDeltas': function (deltas,backstep) {
+    /*
+    Update the world with the changes specified by a list of state change
+    operations.
+
+    param deltas: List of state change operations.
+    param backstep: If true then the operations will be applied backwards.
+    */
+    'public applyDeltas': function (deltas, backstep) {
         if (backstep) {
             for (delta in deltas) {
 
@@ -169,9 +263,27 @@ module.exports =  Class("WorldRenderer", {
         }
 
     },
+    /*
+    Return the cell information at the inputted grid position.
+
+    param x: x coordinate of cell
+    param y: y coordinate of cell
+
+    out: Cell object at point (x,y)
+    */
     'public getCell': function (x,y) {
-        return
+        if(this._worldState.cells[x + " " + y] != undefined)
+            return this._worldState.cells[x + " " + y]
+
+        return this._terrainGen(x,y)
     },
+    /*
+    Update the chunks in the lru cache based on the position inputted.
+
+    param x: x position of view.
+    param y: y position of view.
+    param force: Force update over already defined chunks in the view.
+    */
     'public updateView': function(x,y, force) {
         var chunk_x
         var chunk_y
@@ -188,6 +300,14 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
+    /*
+    Update a single chunk into the lru cache by either looking up the chunk in the world state
+    or otherwise generating it formulaically.
+
+    param x: x position of chunk
+    param y: y position of chunk
+    param force: Force update the chunk even if it's already loaded.
+    */
     'public updateChunk': function (x,y, force) {
         //Make sure to force key into chunk grid coordinates
         var chunk_x = Math.floor(x/this._worldState.chunkSize)

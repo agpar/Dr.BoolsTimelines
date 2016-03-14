@@ -25,7 +25,6 @@ class SymbolAtom(Node):
             return self.symb(actor)
         return self.value
 
-
 class Function(Node):
     def __init__(self, symbol, arguments):
         self.symbol = symbol

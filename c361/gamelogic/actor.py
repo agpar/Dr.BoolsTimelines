@@ -1,13 +1,6 @@
 import uuid
 
-# Handle both relative and local importing schemes.
-try:
-    from .globals import *
-    from .scripting_engine.script_parser import AiScriptParser
-except SystemError:
-    from globals import *
-    from scripting_engine.script_parser import AiScriptParser
-
+from globals import *
 
 class Actor(WorldInhabitant):
     """The animated inhabitants of a GameInstance
@@ -16,6 +9,16 @@ class Actor(WorldInhabitant):
     themselves. All interactions with the world and other actors
     MUST be passed through the GameInstance in order to maintain
     integrity and logic of the world.
+
+    Actions output a world state change delta similar to
+    {
+        "type": "actorDelta",
+        "coords": {'x': self.x, 'y': self.y},
+        "actorID": self.uuid,
+        "varTarget": "_coords",
+        "from": self._coords,
+        "to": self.east()
+    }
     """
 
     def __init__(self, x=-1, y=-1, name="Anonymous", script="", model=None):
@@ -52,8 +55,7 @@ class Actor(WorldInhabitant):
         self.sight_line = []
         self.smell_measure = []
 
-        parser = AiScriptParser()
-        self.behaviours = parser.parse(self.script)
+        self.behaviours = PARSER.parse(self.script)
 
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
@@ -116,7 +118,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "_coords",
                 "from": self._coords,
                 "to": self.north()
@@ -125,7 +127,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "_coords",
                 "from": self._coords,
                 "to": self.east()
@@ -134,7 +136,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "_coords",
                 "from": self._coords,
                 "to": self.west()
@@ -154,7 +156,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "North",
                 "to": "East"
@@ -163,7 +165,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "East",
                 "to": "South"
@@ -172,7 +174,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "West",
                 "to": "North"
@@ -192,7 +194,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "North",
                 "to": "West"
@@ -201,7 +203,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "East",
                 "to": "North"
@@ -210,7 +212,7 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  
+                "actorID": self.uuid,
                 "varTarget": "direction",
                 "from": "West",
                 "to": "South"
@@ -224,7 +226,7 @@ class Actor(WorldInhabitant):
                 "from": "South",
                 "to": "East"
             }
-    # For picking up blocks only        
+    # For picking up blocks only
     def pickup(self):
         if self.direction == "North":
             return [{
@@ -233,7 +235,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "block",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "block",
@@ -246,7 +248,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "block",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "block",
@@ -259,7 +261,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "block",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "block",
@@ -272,7 +274,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "block",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "block",
@@ -287,7 +289,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "plant",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "food",
@@ -300,7 +302,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "plant",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "food",
@@ -313,7 +315,7 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "plant",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "food",
@@ -326,13 +328,13 @@ class Actor(WorldInhabitant):
                 "actorID": self.uuid,
                 "varTarget": "plant",
                 "to": None
-            },{ 
+            },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "varTarget": "food",
                 "to": True
             }]
-               
+
 
     def drop(self):
         if not self.is_food:
@@ -384,7 +386,7 @@ class Actor(WorldInhabitant):
                     "varTarget": "food",
                     "to": False
                 }]
-               
+
         else:
             if self.direction == "North":
                 return [{
