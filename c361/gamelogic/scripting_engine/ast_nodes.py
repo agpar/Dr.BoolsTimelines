@@ -1,4 +1,5 @@
 from .func_mappings import *
+import collections
 
 
 class Node:
@@ -10,14 +11,17 @@ class SymbolAtom(Node):
     """A node which holds a single symbol."""
     def __init__(self, val):
         self.value = val
-        self.symb = SYM_MAP.get(val)
-        self.func = FUNC_MAP.get(val)
+        if isinstance(val, collections.Hashable):
+            self.symb = SYM_MAP.get(val)
+            self.func = FUNC_MAP.get(val)
 
     def __repr__(self):
         return "SymbolAtom({})".format(self.value)
 
     def eval(self, actor):
         if self.func:
+            import pdb
+            pdb.set_trace()
             return self.func
         if self.symb:
             return self.symb(actor)
@@ -34,11 +38,14 @@ class Function(Node):
 
     def eval(self, actor):
         evaluated_args = [x.eval(actor) for x in self.arguments]
-        import pdb
-        pdb.set_trace()
+        for i, arg in enumerate(evaluated_args):
+            while isinstance(arg, Node):
+                arg = arg.eval(actor)
+                evaluated_args[i] = arg
+
         fn = self.symbol.eval(actor)
 
-        return fn(actor, *evaluated_args)
+        return SymbolAtom(fn(actor, *evaluated_args))
 
 
 class Assignment(Node):
