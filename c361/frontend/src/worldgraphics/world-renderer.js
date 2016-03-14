@@ -56,7 +56,7 @@ module.exports =  Class("WorldRenderer", {
         var cells = {}
         for (var i = -5; i <= 5; i++) {
           for(var j = -5; j <= 5; j++) {
-            cells[j + " " + i] = {"elevation": 30}
+            cells[j + " " + i] = {"elevation": 10}
           }
         }
         var tempstate = {
@@ -147,62 +147,22 @@ module.exports =  Class("WorldRenderer", {
     'private _userTerrain': function(x,y) {
         var cx = Math.floor(x)
         var cy = Math.floor(y)
+
+        var val = 0
+        var cell = this._worldState.cells[cx + " " + cy]
         var tgen = this._computeCell(cx,cy)
 
-        var val = -Number.MAX_VALUE //output height
-        var p_val = val //previous value
-        var xgrad = 0
-        var ygrad = 0
-        var h
-        var otx //x offset
-        var oty //y offset
-        var split
-        for (cell in this._worldState.cells){
-            split = cell.split(" ")
-
-            otx = cx - Number(split[0])
-            oty = cy - Number(split[1])
-
-
-            h = this._worldState.cells[cell]["elevation"]
-            abs_h = Math.abs(h) + 0.0001
-
-            if(otx*otx + oty*oty > 2*abs_h)
-                continue
-
-            p_val = val
-
-            val = Math.max(val, h*Math.exp(-(otx*otx + oty*oty)/abs_h))
-            if (val != p_val) {
-                xgrad = -otx*Math.exp(-(otx*otx + oty*oty)/abs_h)/6
-                ygrad = -oty*Math.exp(-(otx*otx + oty*oty)/abs_h)/6
-            }
-        }
+        if(cell != undefined)
+          var val = cell["elevation"]
 
         val = val + tgen.val*this._worldState.standardHeight
 
-        var grad  = xgrad*xgrad
-            grad += ygrad*ygrad
-            grad += tgen.grad["x"]*tgen.grad["x"]
-            grad += tgen.grad["y"]*tgen.grad["y"]
-
-        grad = Math.sqrt(grad)
-
-        if (val == -Number.MAX_VALUE) {
-            return {
-                'val': tgen.val*this._worldState.standardHeight,
-                'grad': Math.sqrt(tgen.grad["x"]*tgen.grad["x"] + tgen.grad["y"]*tgen.grad["y"])
-            }
-        }
-
-        if(val < 1) {
+        if(val < 1)
           val = 1
-          grad = 0
-        }
 
         return {
-          'val': val,
-          'grad': grad
+            'val': val,
+            'grad': tgen.grad
         }
     },
     /*
@@ -231,7 +191,7 @@ module.exports =  Class("WorldRenderer", {
     param y: Cell y coordinate
 
     Out.val: Height of the cell between 0 and 1.
-    Out.grad: Gradient of the terrain field.
+    Out.grad: Gradient magniute of the terrain field.
     */
     'private _computeCell': function (x,y) {
         var seed = this._worldState.seed
@@ -267,7 +227,7 @@ module.exports =  Class("WorldRenderer", {
 
         return {
             val: fout.val,
-            grad: {'x': xslope.val, 'y': fout.slope}
+            grad: gradient
         }
     },
     /*
