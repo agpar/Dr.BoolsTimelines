@@ -10,7 +10,7 @@ testscript = """
     if not 4 > myhunger
     then
         do
-            sleep;
+            sleep();
         done
     endif
     """

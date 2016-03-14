@@ -2,14 +2,15 @@ from .func_mappings import *
 
 
 class Node:
-    pass
+    def eval(self, actor):
+        raise NotImplemented
 
 
-class SymbolAtom:
+class SymbolAtom(Node):
     """A node which holds a single symbol."""
     def __init__(self, val):
         self.value = val
-        self.func_val = SYM_MAP.get(val)
+        self.func_val = FUNC_MAP.get(val)
 
     def __repr__(self):
         return "SymbolAtom({})".format(self.value)
@@ -19,13 +20,20 @@ class SymbolAtom:
             return self.func_val(actor)
         return self.value
 
-class Function:
+
+class Function(Node):
     def __init__(self, symbol, arguments):
         self.symbol = symbol
         self.arguments = arguments
 
     def __repr__(self):
         return "{}({})".format(self.symbol.value, self.arguments)
+
+    def eval(self, actor):
+        evaluated_args = [x.eval(actor) for x in self.arguments]
+        fn = self.symbol.eval(actor)
+        return fn(*evaluated_args)
+
 
 class Assignment(Node):
     def __init__(self, symbol, value):

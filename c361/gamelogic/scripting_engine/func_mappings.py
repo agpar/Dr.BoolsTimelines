@@ -111,15 +111,10 @@ FUNC_MAP = {
     '+': add_fn,
     '-': minus_fn,
     '/': div_fn,
-    '*': mult_fn
-}
-
-SYM_MAP = {
+    '*': mult_fn,
+    'sleep': sleep_fn,
     'myhunger': actor_hunger,
     'mylocation': actor_location,
     'myhealth': actor_health
 }
 
-ACTION_MAP = {
-    'sleep': sleep_fn
-}
