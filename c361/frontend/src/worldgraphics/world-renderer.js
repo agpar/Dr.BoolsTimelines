@@ -45,15 +45,22 @@ module.exports =  Class("WorldRenderer", {
 
         var seed = []
 
-        for (var i = 0; i < Math.ceil(600); i++){
+        for (var i = 0; i < 600; i++){
             var row = []
-            for (var j = 0; j < Math.ceil(600); j++){
+            for (var j = 0; j < 600; j++){
                 row.push(Math.random())
             }
             seed.push(row)
         }
 
+        var cells = {}
+        for (var i = -5; i <= 5; i++) {
+          for(var j = -5; j <= 5; j++) {
+            cells[j + " " + i] = {"elevation": 30}
+          }
+        }
         var tempstate = {
+            'standardHeight': 15,
             'chunkSize': chunkSize,
             'wwidth': width,
             'wlength': length,
@@ -62,7 +69,7 @@ module.exports =  Class("WorldRenderer", {
                 'mlength': Math.ceil(600),
                 'matrix': seed
             },
-            'user_made': {"0 0": 5}
+            'cells': cells
         }
 
         this._worldState = tempstate
@@ -105,10 +112,99 @@ module.exports =  Class("WorldRenderer", {
 
         this._scene = scene
     },
-    'private _userTerrain': function(x,y) {
+    /*
+    Terrain generation function. Produces a cell either from the ones defined
+    in the world's state or otherwise generated formulaically.
 
+    param x: Cell x coordinate
+    param y: Cell y coordinate
+
+    out: Configured WorldCell object.
+    */
+    'private _terrainGen': function (x,y) {
+        var calc = this._userTerrain(x,y)
+        var cell = {cellHeight: calc.val + 1.0}
+
+        if(calc.val <= 0.2*this._worldState.standardHeight)
+            cell["type"] = "WATER"
+        else if(calc.grad > 0.175)
+            cell["type"] = "ROCK"
+        else
+            cell["type"] = "GRASS"
+
+        return cell
     },
+    /*
+    Compute the generated cell and apply the user made changes offsetting the
+    field.
 
+    param x: x position for cell
+    param y: y position for cell
+
+    Out.val: Height of the cell.
+    Out.grad: Magnitude of the gradient at the cell position.
+    */
+    'private _userTerrain': function(x,y) {
+        var cx = Math.floor(x)
+        var cy = Math.floor(y)
+        var tgen = this._computeCell(cx,cy)
+
+        var val = -Number.MAX_VALUE //output height
+        var p_val = val //previous value
+        var xgrad = 0
+        var ygrad = 0
+        var h
+        var otx //x offset
+        var oty //y offset
+        var split
+        for (cell in this._worldState.cells){
+            split = cell.split(" ")
+
+            otx = cx - Number(split[0])
+            oty = cy - Number(split[1])
+
+
+            h = this._worldState.cells[cell]["elevation"]
+            abs_h = Math.abs(h) + 0.0001
+
+            if(otx*otx + oty*oty > 2*abs_h)
+                continue
+
+            p_val = val
+
+            val = Math.max(val, h*Math.exp(-(otx*otx + oty*oty)/abs_h))
+            if (val != p_val) {
+                xgrad = -otx*Math.exp(-(otx*otx + oty*oty)/abs_h)/6
+                ygrad = -oty*Math.exp(-(otx*otx + oty*oty)/abs_h)/6
+            }
+        }
+
+        val = val + tgen.val*this._worldState.standardHeight
+
+        var grad  = xgrad*xgrad
+            grad += ygrad*ygrad
+            grad += tgen.grad["x"]*tgen.grad["x"]
+            grad += tgen.grad["y"]*tgen.grad["y"]
+
+        grad = Math.sqrt(grad)
+
+        if (val == -Number.MAX_VALUE) {
+            return {
+                'val': tgen.val*this._worldState.standardHeight,
+                'grad': Math.sqrt(tgen.grad["x"]*tgen.grad["x"] + tgen.grad["y"]*tgen.grad["y"])
+            }
+        }
+
+        if(val < 1) {
+          val = 1
+          grad = 0
+        }
+
+        return {
+          'val': val,
+          'grad': grad
+        }
+    },
     /*
     Cosine interpolation used for smoooth terrain map generation.
 
@@ -135,7 +231,7 @@ module.exports =  Class("WorldRenderer", {
     param y: Cell y coordinate
 
     Out.val: Height of the cell between 0 and 1.
-    Out.grad: Magnitude of the gradient at the cell position.
+    Out.grad: Gradient of the terrain field.
     */
     'private _computeCell': function (x,y) {
         var seed = this._worldState.seed
@@ -169,33 +265,10 @@ module.exports =  Class("WorldRenderer", {
             gradient += Math.pow(fout.slope, 2)
             gradient  = Math.sqrt(gradient)
 
-        var usermade = this._userTerrain(x,y)
         return {
             val: fout.val,
-            grad: gradient
+            grad: {'x': xslope.val, 'y': fout.slope}
         }
-    },
-    /*
-    Terrain generation function. Produces a cell either from the ones defined
-    in the world's state or otherwise generated formulaically.
-
-    param x: Cell x coordinate
-    param y: Cell y coordinate
-
-    out: Configured WorldCell object.
-    */
-    'private _terrainGen': function (x,y) {
-        var calc = this._computeCell(x,y)
-        var cell = {cellHeight: calc.val*15 + 1.0}
-
-        if(calc.val <= 0.2)
-            cell["type"] = "WATER"
-        else if(calc.grad > 0.175)
-            cell["type"] = "ROCK"
-        else
-            cell["type"] = "GRASS"
-
-        return cell
     },
     /*
     Render the geometry in the scene.
