@@ -198,6 +198,7 @@ def p_numexp_atom(p):
     """
     numexp  : LPAREN numexp RPAREN
             | SYMBOL
+            | function
     """
     if len(p) == 4:
         p[0] = p[2]
