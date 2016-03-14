@@ -19,4 +19,6 @@ testscript = """
 a = Actor(1, 1, "Alex", testscript)
 g = GameInstance()
 g.init_empty_world()
+g.add_actor(a)
+print(a.behaviours.rules[0].condition.eval(a))
 IPython.embed()

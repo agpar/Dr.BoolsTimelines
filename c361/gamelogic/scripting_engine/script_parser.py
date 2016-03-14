@@ -136,9 +136,9 @@ def p_action(p):
 
 def p_function(p):
     """
-    function : p_symbol LPAREN arguments RPAREN
+    function : SYMBOL LPAREN arguments RPAREN
     """
-    p[0] = Function(p[1], p[3])
+    p[0] = Function(SymbolAtom(p[1]), p[3])
 
 
 def p_inferences(p):
@@ -154,10 +154,10 @@ def p_inferences(p):
 
 def p_inference(p):
     """
-    inference : p_symbol IS boolexp
-              | p_symbol IS numexp
+    inference : SYMBOL IS boolexp
+              | SYMBOL IS numexp
     """
-    p[0] = Assignment(p[1], p[3])
+    p[0] = Assignment(SymbolAtom(p[1]), p[3])
 
 
 def p_arguments(p):
@@ -199,9 +199,7 @@ def p_numexp_unop(p):
 def p_numexp_atom(p):
     """
     numexp  : LPAREN numexp RPAREN
-            | NUMBER
-            | p_symbol
-            | function
+            | lvalue
     """
     if len(p) == 4:
         p[0] = p[2]
@@ -235,8 +233,7 @@ def p_boolexp_atom(p):
     boolexp : LPAREN boolexp RPAREN
             | TRUE
             | FALSE
-            | p_symbol
-            | function
+            | lvalue
             | numrel
     """
     if p[1] == 'true':
@@ -245,9 +242,15 @@ def p_boolexp_atom(p):
         p[0] = SymbolAtom(False)
     elif len(p) == 4:
         p[0] = p[2]
+    else:
+        p[0] = p[1]
 
-def p_symbol(p):
-    "p_symbol : SYMBOL"
+def p_lvalue(p):
+    """
+    lvalue : SYMBOL
+           | NUMBER
+           | function
+    """
     p[0] = SymbolAtom(p[1])
 
 
