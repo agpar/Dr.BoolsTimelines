@@ -193,7 +193,6 @@ def p_numexp_unop(p):
     "numexp : MINUS numexp %prec UMINUS"
     p[0] = UnaryNumOperation(p[1], p[2])
 
-
 def p_numexp_atom(p):
     """
     numexp  : LPAREN numexp RPAREN
@@ -204,9 +203,11 @@ def p_numexp_atom(p):
     else:
         p[0] = SymbolAtom(p[1])
 
+
 def p_numexp_number(p):
     "numexp : NUMBER"
-    p[0] = p[1]
+    p[0] = SymbolAtom(p[1])
+
 
 def p_numrel(p):
     """
@@ -248,9 +249,11 @@ def p_boolexp_atom(p):
     else:
         p[0] = SymbolAtom(p[1])
 
+
 def p_boolexp_numrel(p):
     "boolexp : numrel"
-    p[0] = [1]
+    p[0] = p[1]
+
 
 def p_error(p):
     err_info = (p.value, p.lineno, p.lexpos)
