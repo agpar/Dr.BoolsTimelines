@@ -1,7 +1,7 @@
 import ply.lex as lex
 import ply.yacc as yacc
-from ast_nodes import *
-from behaviour import Behaviour
+from .ast_nodes import *
+from .behaviour import Behaviour
 
 
 reserved = {

@@ -1,4 +1,4 @@
-from func_mappings import *
+from .func_mappings import *
 
 
 class Node:

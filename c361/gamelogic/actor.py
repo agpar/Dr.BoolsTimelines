@@ -1,8 +1,6 @@
 import uuid
 
 from globals import *
-from scripting_engine.script_parser import AiScriptParser
-
 
 class Actor(WorldInhabitant):
     """The animated inhabitants of a GameInstance
@@ -57,8 +55,7 @@ class Actor(WorldInhabitant):
         self.sight_line = []
         self.smell_measure = []
 
-        parser = AiScriptParser()
-        self.behaviours = parser.parse(self.script)
+        self.behaviours = PARSER.parse(self.script)
 
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
