@@ -124,11 +124,11 @@ class WorldInhabitant(CoordParseMixin):
         return self.wrapper((self.x, y))
 
     def east(self, n=1):
-        x = self._coords[0] - n
+        x = self._coords[0] + n
         return self.wrapper((x, self.y))
 
     def west(self, n=1):
-        x = self._coords[0] + n
+        x = self._coords[0] - n
         return self.wrapper((x, self.y))
 
     def distance_to(self, other):
