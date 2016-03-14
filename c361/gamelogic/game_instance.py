@@ -163,7 +163,7 @@ class GameInstance(CoordParseMixin):
 
         return True
 
-    def turn_effects(actor_turn):
+    def turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
 
         :param actor_turn: the turn that the actor wants to execute
