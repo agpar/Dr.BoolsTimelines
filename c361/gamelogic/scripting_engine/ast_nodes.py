@@ -20,8 +20,6 @@ class SymbolAtom(Node):
 
     def eval(self, actor):
         if self.func:
-            import pdb
-            pdb.set_trace()
             return self.func
         if self.symb:
             return self.symb(actor)
