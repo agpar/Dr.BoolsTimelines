@@ -1,4 +1,4 @@
-from .func_mappings import ACTION_MAP
+from .func_mappings import FUNC_MAP
 
 class Behaviour(object):
     def __init__(self, rules):
@@ -11,4 +11,4 @@ class Behaviour(object):
         """return the first action whos conditions eval to True"""
         for rule in self.rules:
             if rule.eval(actor):
-                return ACTION_MAP[rule.actions[0]](actor)
+                return FUNC_MAP[rule.actions[0]](actor)

@@ -5,7 +5,7 @@ SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
 CELL_TYPES = {'GRASS': 1, 'ROCK': 2, 'WATER': 3,
               1: 'GRASS', 2: 'ROCK', 3: 'WATER'}
 
-ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT'}
+ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS'}
 
 DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
 
@@ -32,7 +32,7 @@ class CoordParseMixin:
         tmp = "Can't parse coords from ({}, {})."
         raise ValueError(tmp.format(x))
 
-    def direction(self, from_coord, to_coord):
+    def direction_fn(self, from_coord, to_coord):
         """Calculate directions that lead from from_coord to to_coord.
 
         This won't check anything about the world... It just gives
@@ -46,7 +46,7 @@ class CoordParseMixin:
 
         if x2 > x1:
             dirs.append('EAST')
-        if x2 < x2:
+        if x2 < x1:
             dirs.append('WEST')
         if y2 > y1:
             dirs.append('NORTH')
@@ -55,7 +55,7 @@ class CoordParseMixin:
 
         return dirs
 
-    def distance(self, from_coord, to_coord):
+    def distance_fn(self, from_coord, to_coord):
         """Calculate distance between tow coords."""
 
         x1, y1 = self.coord_parse(from_coord)
@@ -86,7 +86,7 @@ class CoordParseMixin:
                 area_tuples.append((x1, y1))
 
         if dist_sort:
-            dist_key = partial(self.distance, xy_or_WI2=(x, y))
+            dist_key = partial(self.distance_fn, to_coord=(x, y))
             area_tuples = sorted(area_tuples, key=dist_key)
 
         return area_tuples
@@ -99,6 +99,7 @@ class WorldInhabitant(CoordParseMixin):
     is_deadly = False
     is_actor = False
     is_water = False
+    is_grass = False
     is_plant = False
     smell_code = None
 
@@ -144,7 +145,7 @@ class WorldInhabitant(CoordParseMixin):
         :return list of directions that lead to other. Empty list if you are
                 standing on other.
         """
-        return self.direction(self, other)
+        return self.direction_fn(self, other)
 
 
 class Cell(WorldInhabitant):
@@ -161,6 +162,11 @@ class Cell(WorldInhabitant):
     @property
     def is_water(self):
         if self.ctype == CELL_TYPES['WATER']:
+            return True
+        return False
+
+    def is_grass(self):
+        if self.ctype == CELL_TYPES['GRASS']:
             return True
         return False
 

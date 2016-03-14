@@ -136,6 +136,8 @@ class GameInstance(CoordParseMixin):
             return world_inhab.is_actor
         if attr == 'WATER':
             return world_inhab.is_water
+        if attr == 'GRASS':
+            return world_inhab.is_grass
         else:
             return False
 
