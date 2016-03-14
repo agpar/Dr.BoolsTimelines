@@ -2,21 +2,25 @@ from .func_mappings import *
 
 
 class Node:
-    pass
+    def eval(self, actor):
+        raise NotImplemented
 
 
 class SymbolAtom(Node):
     """A node which holds a single symbol."""
     def __init__(self, val):
         self.value = val
-        self.func_val = SYM_MAP.get(val)
+        self.symb = SYM_MAP.get(val)
+        self.func = FUNC_MAP.get(val)
 
     def __repr__(self):
         return "SymbolAtom({})".format(self.value)
 
-    def eval(self, actor=None):
-        if self.func_val:
-            return self.func_val(actor)
+    def eval(self, actor):
+        if self.func:
+            return self.func
+        if self.symb:
+            return self.symb(actor)
         return self.value
 
 class Function(Node):
@@ -26,6 +30,15 @@ class Function(Node):
 
     def __repr__(self):
         return "{}({})".format(self.symbol.value, self.arguments)
+
+    def eval(self, actor):
+        evaluated_args = [x.eval(actor) for x in self.arguments]
+        import pdb
+        pdb.set_trace()
+        fn = self.symbol.eval(actor)
+
+        return fn(actor, *evaluated_args)
+
 
 class Assignment(Node):
     def __init__(self, symbol, value):

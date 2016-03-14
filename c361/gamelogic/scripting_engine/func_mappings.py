@@ -99,6 +99,30 @@ def sleep_fn(actor):
     return actor.sleep_action()
 
 
+def direction_fn(actor, xy, y=None):
+    """Can accept input from nearest_fn, or 2 numbers.
+    So, in a script you can call it like:
+
+    direction(nearest(WATER))
+    direction(0, 3)
+
+    :return List of directions to the coord.
+    """
+    if not y:
+        xy, y = xy
+    return actor.direction_to((xy, y))
+
+
+def nearest_fn(actor, attr):
+    """Call from script like:
+
+    nearest(ATTRIBUTE)
+
+    :return
+    """
+
+    return actor.gameInstance.find_nearest(actor, attr)
+
 FUNC_MAP = {
     '<': lt,
     '<=': lte,
@@ -111,15 +135,14 @@ FUNC_MAP = {
     '+': add_fn,
     '-': minus_fn,
     '/': div_fn,
-    '*': mult_fn
+    '*': mult_fn,
+    'sleep': sleep_fn,
+    'direction': direction_fn,
+    'nearest': nearest_fn,
 }
 
 SYM_MAP = {
     'myhunger': actor_hunger,
     'mylocation': actor_location,
     'myhealth': actor_health
-}
-
-ACTION_MAP = {
-    'sleep': sleep_fn
 }

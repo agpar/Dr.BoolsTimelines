@@ -50,7 +50,7 @@ t_EQ     = r'=='
 
 
 def t_SYMBOL(t):
-    r'[a-z][a-z0-9]*'
+    r'[a-zA-Z][a-zA-Z0-9]*'
     t.type = reserved.get(t.value, 'SYMBOL')
     return t
 
@@ -178,6 +178,7 @@ def p_argument(p):
     """
     argument : boolexp
              | numexp
+             | function
     """
     p[0] = p[1]
 
@@ -248,6 +249,7 @@ def p_boolexp_atom(p):
 def p_symbol(p):
     "p_symbol : SYMBOL"
     p[0] = SymbolAtom(p[1])
+
 
 def p_error(p):
     err_info = (p.value, p.lineno)

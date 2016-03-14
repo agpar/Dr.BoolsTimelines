@@ -1,8 +1,13 @@
-from actor import Actor
-from globals import *
-
 import random
 import uuid
+
+# Handle both relative and local importing schemes.
+try:
+    from .actor import Actor
+    from .globals import *
+except SystemError:
+    from actor import Actor
+    from globals import *
 
 
 class GameInstance(CoordParseMixin):
@@ -131,6 +136,8 @@ class GameInstance(CoordParseMixin):
             return world_inhab.is_actor
         if attr == 'WATER':
             return world_inhab.is_water
+        if attr == 'GRASS':
+            return world_inhab.is_grass
         else:
             return False
 
@@ -152,6 +159,69 @@ class GameInstance(CoordParseMixin):
                     return x, y
         return self.coord_parse(xy_or_WI)
 
+    def valid_turn(actor_turn):
+        """ Receive a turn and check whether or not the turn is valid.
+
+        :param actor_turn: the turn that the actor wants to execute
+        :return: boolean on validity of the turn attempted
+        """
+
+
+
+        return True
+
+    def turn_effects(self, actor_turn):
+        """ Receive a turn and determine if it has any reprocussions.
+
+        :param actor_turn: the delta that the actor wants to execute
+        :return: delta of any direct changes that have occured.
+        """
+
+        actor = self.get_actor(actor_turn['actorID'])
+        if actor_turn['varTarget'] == "_coords":
+            new_x = actor_turn["to"][0]
+            new_y = actor_turn["to"][1]
+            coord_contents = self.world[new_x][new_y]
+
+            if self.has_attr(coord_contents, "WATER"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},  # The new position of the actor
+                    "actorID": actor.uuid,
+                    "varTarget": "health",
+                    "from": actor.health,
+                    "to": 0
+                }
+            if self.has_attr(coord_contents, "DEADLY"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": "health",
+                    "from": actor.health,
+                    "to": actor.health-50
+                }
+            if self.has_attr(coord_contents, "ACTOR"):
+                return {
+                     "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": None,
+                    "from": None,
+                    "to": None
+                }
+            if self.has_attr(coord_contents, "FOOD"):
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': new_x, 'y': new_y},
+                    "actorID": actor.uuid,
+                    "varTarget": None,
+                    "from": None,
+                    "to": None
+                }
+        else:
+            return None  # This method should only return new effects.
+
     def do_turn(self, up_to=0):
         all_turns = []
         while self.current_turn <= up_to:
@@ -159,6 +229,8 @@ class GameInstance(CoordParseMixin):
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in random.shuffle(list(self.actors.items())):
                 this_turn['deltas'].append(actor.do_turn())
+                print(actor.do_turn())
+
 
             all_turns.append(this_turn)
 
@@ -166,3 +238,13 @@ class GameInstance(CoordParseMixin):
             # TODO Calculate other effects that result from the delta (health changes, deaths, etc)
 
         return all_turns
+
+  
+
+
+
+
+
+
+
+
