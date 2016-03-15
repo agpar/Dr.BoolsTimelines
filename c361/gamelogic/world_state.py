@@ -1,7 +1,12 @@
 from random import random as rand
 import math
-from globals import *
 
+try:
+    from .globals import *
+except SystemError:
+    from globals import *
+
+    
 class WorldState:
     SEED_SIZE = 600
     STANDARD_HEIGHT = 15
