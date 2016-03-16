@@ -35,7 +35,7 @@ class Actor(WorldInhabitant):
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.is_food = model.food
-            self.block = model.block
+            self.is_rock = model.rock
             self.script = model.behaviour_script
         else:
             self.uuid = str(uuid.uuid4())
@@ -47,7 +47,7 @@ class Actor(WorldInhabitant):
             self.is_sleeping = False
             self.direction = "North"
             self.is_food = False
-            self.block = False
+            self.is_rock = False
             self.script = script
 
         self.info = {}
@@ -56,7 +56,7 @@ class Actor(WorldInhabitant):
         self.is_actor = True
 
         self.sight_line = []
-        self.smell_measure = []
+        self.smells_near = []
 
         self.behaviours = PARSER.parse(self.script)
 
@@ -95,7 +95,7 @@ class Actor(WorldInhabitant):
             "drop": self.drop,
             "see": self.see,
             "smell": self.smell,
-            "sleep": self.sleep
+            "sleep": self.sleep_action
         }
 
 
@@ -236,12 +236,12 @@ class Actor(WorldInhabitant):
                 "type": "worldDelta",
                 "coords": self.north(),
                 "actorID": self.uuid,
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": None
             },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": True
             }]
         elif self.direction == "East":
@@ -249,12 +249,12 @@ class Actor(WorldInhabitant):
                 "type": "worldDelta",
                 "coords": self.east(),
                 "actorID": self.uuid,
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": None
             },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": True
             }]
         elif self.direction == "West":
@@ -262,12 +262,12 @@ class Actor(WorldInhabitant):
                 "type": "worldDelta",
                 "coords": self.west(),
                 "actorID": self.uuid,
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": None
             },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": True
             }]
         elif self.direction == "South":
@@ -275,12 +275,12 @@ class Actor(WorldInhabitant):
                 "type": "worldDelta",
                 "coords": self.south(),
                 "actorID": self.uuid,
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": None
             },{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "block",
+                "varTarget": "ROCK",
                 "to": True
             }]
 
@@ -340,17 +340,17 @@ class Actor(WorldInhabitant):
 
 
     def drop(self):
-        if not self.is_food:
+        if self.is_food:
             if self.direction == "North":
                 return [{
                     "type": "worldDelta",
                     "coords": self.north(),
                     "varTarget": "cell",
-                    "to": "food"
+                    "to": "FOOD"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "food",
+                    "varTarget": "is_food",
                     "to": False
                 }]
             elif self.direction == "East":
@@ -358,11 +358,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.east(),
                     "varTarget": "cell",
-                    "to": "food"
+                    "to": "FOOD"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "food",
+                    "varTarget": "is_food",
                     "to": False
                 }]
             elif self.direction == "West":
@@ -370,11 +370,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.west(),
                     "varTarget": "cell",
-                    "to": "food"
+                    "to": "FOOD"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "food",
+                    "varTarget": "is_food",
                     "to": False
                 }]
             elif self.direction == "South":
@@ -382,11 +382,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.south(),
                     "varTarget": "cell",
-                    "to": "food"
+                    "to": "FOOD"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "food",
+                    "varTarget": "is_food",
                     "to": False
                 }]
 
@@ -396,11 +396,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.north(),
                     "varTarget": "cell",
-                    "to": "block"
+                    "to": "ROCK"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "block",
+                    "varTarget": "is_rock",
                     "to": False
                 }]
             elif self.direction == "East":
@@ -408,11 +408,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.east(),
                     "varTarget": "cell",
-                    "to": "block"
+                    "to": "ROCK"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "block",
+                    "varTarget": "is_rock",
                     "to": False
                 }]
             elif self.direction == "West":
@@ -420,11 +420,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.west(),
                     "varTarget": "cell",
-                    "to": "block"
+                    "to": "ROCK"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "block",
+                    "varTarget": "is_rock",
                     "to": False
                 }]
             elif self.direction == "South":
@@ -432,11 +432,11 @@ class Actor(WorldInhabitant):
                     "type": "worldDelta",
                     "coords": self.south(),
                     "varTarget": "cell",
-                    "to": "block"
+                    "to": "ROCK"
                 }, {
                     "type": "actorDelta",
                     "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "block",
+                    "varTarget": "is_rock",
                     "to": False
                 }]
 
@@ -476,29 +476,42 @@ class Actor(WorldInhabitant):
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "smell_measure",
-                "to": []
+                "varTarget": "smells_near",
+                "to": [{
+
+
+
+                }]
             }
         elif self.direction == "East":
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "smell_measure",
-                "to": []
+                "varTarget": "smells_near",
+                "to": [{
+
+
+                }]
             }
         elif self.direction == "West":
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "smell_measure",
-                "to": []
+                "varTarget": "smells_near",
+                "to": [{
+
+
+                }]
             }
         elif self.direction == "South":
             return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "smell_measure",
-                "to": []
+                "varTarget": "smells_near",
+                "to": [{
+
+                
+                }]
             }
 
     def sleep_action(self):
