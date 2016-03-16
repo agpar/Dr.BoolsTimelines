@@ -1,6 +1,10 @@
 var Class = require("easejs").Class
 var lru = require("lru-cache")
 
+var WorldState = require("./primitives/world-state")
+var Cell = require("./primitives/world-cell")
+
+
 /*
 World Renderer class contains the core functionality for
 rendering the simulation. It recieves State and changes
@@ -39,38 +43,42 @@ module.exports =  Class("WorldRenderer", {
         this._sceneChunks = lru(options)
 
         //  placeholder state
-        var width  = 120000
-        var length = 120000
-        var chunkSize = 6
-
         var seed = []
-
-        for (var i = 0; i < 600; i++){
+        var seedsize = 600
+        for (var i = 0; i < seedsize; i++){
             var row = []
-            for (var j = 0; j < 600; j++){
+            for (var j = 0; j < seedsize; j++){
                 row.push(Math.random())
             }
             seed.push(row)
         }
 
         var cells = {}
+        var key
         for (var i = -5; i <= 5; i++) {
-          for(var j = -5; j <= 5; j++) {
-            cells[j + " " + i] = {"elevation": 10}
-          }
+            for(var j = -5; j <= 5; j++) {
+                key = j + " " + i
+                cells[key] = {
+                    elevation: 10,
+                    contents: [],
+                    coords: {'x': j, 'y': i},
+                    type: "GRASS",
+                    mesh: undefined,
+                }
+            }
         }
-        var tempstate = {
-            'standardHeight': 15,
-            'chunkSize': chunkSize,
-            'wwidth': width,
-            'wlength': length,
-            'seed': {
-                'mwidth': Math.ceil(600),
-                'mlength': Math.ceil(600),
-                'matrix': seed
-            },
-            'cells': cells
-        }
+
+        var tempstate = WorldState({
+            "standardHeight": 15,
+            "width": 100000,
+            "length": 100000,
+            "chunkSize": 6,
+            "waterThreshold": 0.2,
+            "rockThreshold": 0.175,
+            "seed": seed,
+            "seedSize": seedsize,
+            "cells": []
+        })
 
         this._worldState = tempstate
         //  end placeholder state
@@ -119,51 +127,42 @@ module.exports =  Class("WorldRenderer", {
     param x: Cell x coordinate
     param y: Cell y coordinate
 
-    out: Configured WorldCell object.
+    out: Cell configuration data.
     */
-    'private _terrainGen': function (x,y) {
-        var calc = this._userTerrain(x,y)
-        var cell = {cellHeight: calc.val + 1.0}
-
-        if(calc.val <= 0.2*this._worldState.standardHeight)
-            cell["type"] = "WATER"
-        else if(calc.grad > 0.175)
-            cell["type"] = "ROCK"
-        else
-            cell["type"] = "GRASS"
-
-        return cell
-    },
-    /*
-    Compute the generated cell and apply the user made changes offsetting the
-    field.
-
-    param x: x position for cell
-    param y: y position for cell
-
-    Out.val: Height of the cell.
-    Out.grad: Magnitude of the gradient at the cell position.
-    */
-    'private _userTerrain': function(x,y) {
+    'private _terrainGen': function(x,y) {
         var cx = Math.floor(x)
         var cy = Math.floor(y)
 
         var val = 0
-        var cell = this._worldState.cells[cx + " " + cy]
+        var cell = this._worldState.get("cells")[cx + " " + cy]
         var tgen = this._computeCell(cx,cy)
 
-        if(cell != undefined)
-          var val = cell["elevation"]
+        if(tgen == null)
+            return null
 
-        val = val + tgen.val*this._worldState.standardHeight
+        if(cell != undefined)
+            return cell
+
+        val = val + tgen.val*this._worldState.get("standardHeight")
+        var tpe = "GRASS"
+
+        if(tgen.val <= 0.2)
+            tpe = "WATER"
+        else if(tgen.grad > 0.175)
+            tpe = "ROCK"
 
         if(val < 1)
           val = 1
 
-        return {
-            'val': val,
-            'grad': tgen.grad
+        cell = {
+            elevation: val + 1.0,
+            contents: [],
+            coords: {'x': x, 'y': y},
+            type: tpe,
+            mesh: undefined,
         }
+
+        return cell
     },
     /*
     Cosine interpolation used for smoooth terrain map generation.
@@ -194,9 +193,11 @@ module.exports =  Class("WorldRenderer", {
     Out.grad: Gradient magniute of the terrain field.
     */
     'private _computeCell': function (x,y) {
-        var seed = this._worldState.seed
-        var worldWidth = this._worldState.wwidth*this._worldState.chunkSize
-        var worldLength = this._worldState.wlength*this._worldState.chunkSize
+        var seed = this._worldState.get("seed")
+        var seedsize = this._worldState.get("seedSize")
+        var worldWidth = this._worldState.get("width")
+        var worldLength = this._worldState.get("length")
+        var chunksize = this._worldState.get("chunkSize")
 
         var cellx = Math.round(x + worldWidth/2)
         var celly = Math.round(y + worldLength/2)
@@ -206,16 +207,16 @@ module.exports =  Class("WorldRenderer", {
         if(cellx >= worldWidth) return null
         if(celly >= worldLength) return null
 
-        var x0 = Math.floor(cellx/this._worldState.chunkSize) % seed.mwidth
-        var x1 = (x0 + 1) % seed.mwidth
-        var dx = cellx/this._worldState.chunkSize - x0
+        var x0 = Math.floor(cellx/chunksize) % seedsize
+        var x1 = (x0 + 1) % seedsize
+        var dx = cellx/chunksize - x0
 
-        var y0 = Math.floor(celly/this._worldState.chunkSize) % seed.mlength
-        var y1 = (y0 + 1) % seed.mlength
-        var dy = celly/this._worldState.chunkSize - y0
+        var y0 = Math.floor(celly/chunksize) % seedsize
+        var y1 = (y0 + 1) % seedsize
+        var dy = celly/chunksize - y0
 
-        var f0 = this._cosineInterp(seed.matrix[y0][x0], seed.matrix[y0][x1], dx)
-        var f1 = this._cosineInterp(seed.matrix[y1][x0], seed.matrix[y1][x1], dx)
+        var f0 = this._cosineInterp(seed[y0][x0], seed[y0][x1], dx)
+        var f1 = this._cosineInterp(seed[y1][x0], seed[y1][x1], dx)
 
 
         var fout = this._cosineInterp(f0.val, f1.val, dy)
@@ -272,8 +273,8 @@ module.exports =  Class("WorldRenderer", {
     out: Cell object at point (x,y)
     */
     'public getCell': function (x,y) {
-        if(this._worldState.cells[x + " " + y] != undefined)
-            return this._worldState.cells[x + " " + y]
+        if(this._worldState.get("cells")[x + " " + y] != undefined)
+            return this._worldState.get("cells")[x + " " + y]
 
         return this._terrainGen(x,y)
     },
@@ -285,16 +286,18 @@ module.exports =  Class("WorldRenderer", {
     param force: Force update over already defined chunks in the view.
     */
     'public updateView': function(x,y, force) {
+        var chunksize = this._worldState.get("chunkSize")
+
         var chunk_x
         var chunk_y
 
         for(var i = -4; i <= 4; i++) {
             for(var  j = -4; j <= 4; j++) {
-                chunk_x = Math.floor(x/this._worldState.chunkSize) + j
-                chunk_y = Math.floor(y/this._worldState.chunkSize) + i
+                chunk_x = Math.floor(x/chunksize) + j
+                chunk_y = Math.floor(y/chunksize) + i
 
-                chunk_x *= this._worldState.chunkSize
-                chunk_y *= this._worldState.chunkSize
+                chunk_x *= chunksize
+                chunk_y *= chunksize
 
                 this.updateChunk(chunk_x, chunk_y, force)
             }
@@ -309,12 +312,13 @@ module.exports =  Class("WorldRenderer", {
     param force: Force update the chunk even if it's already loaded.
     */
     'public updateChunk': function (x,y, force) {
-        //Make sure to force key into chunk grid coordinates
-        var chunk_x = Math.floor(x/this._worldState.chunkSize)
-        var chunk_y = Math.floor(y/this._worldState.chunkSize)
+        //Make sure to round key into chunk grid coordinates
+        var chunksize = this._worldState.get("chunkSize")
+        var chunk_x = Math.floor(x/chunksize)
+        var chunk_y = Math.floor(y/chunksize)
 
-        var cellx = chunk_x*this._worldState.chunkSize
-        var celly = chunk_y*this._worldState.chunkSize
+        var cellx = chunk_x*chunksize
+        var celly = chunk_y*chunksize
 
         if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y) != undefined)
             return
@@ -322,30 +326,31 @@ module.exports =  Class("WorldRenderer", {
         var chunk = []
         var cell, mesh, meshx, meshy, meshz
 
-        for(var i = 0; i < this._worldState.chunkSize; i++) {
+        for(var i = 0; i < chunksize; i++) {
             var row = []
-            for(var j = 0; j < this._worldState.chunkSize; j++) {
+            for(var j = 0; j < chunksize; j++) {
                 cell = this._terrainGen(cellx, celly)
 
                 if(cell == null)
                     continue
 
-                meshx  = chunk_x*this._worldState.chunkSize + j
-                meshz  = chunk_y*this._worldState.chunkSize + i
-                meshy  = cell.cellHeight/4
+                meshx = chunk_x*chunksize + j
+                meshz = chunk_y*chunksize + i
+                meshy = cell["elevation"]/4
 
                 mesh = this._cellproto[cell["type"]]
                            .createInstance(cellx + " " + celly)
 
-                mesh.scaling.y = cell.cellHeight/2
+                mesh.scaling.y = cell["elevation"]/2
 
                 mesh.position = new BABYLON.Vector3(meshx, meshy, meshz)
+
                 cell["mesh"] = mesh
                 row.push(cell)
                 cellx++
             }
             celly++
-            cellx = chunk_x*this._worldState.chunkSize
+            cellx = chunk_x*chunksize
             chunk.push(row)
         }
 
