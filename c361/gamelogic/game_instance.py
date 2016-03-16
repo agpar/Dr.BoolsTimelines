@@ -181,11 +181,12 @@ class GameInstance(CoordParseMixin):
 
             if self.has_attr(check_coord, "ROCK"):
                 return False
-
-            if self.has_attr(check_coord, "ACTOR")
+                
+            elif self.has_attr(check_coord, "ACTOR"):
                 return False
                 
-            return True
+            else:
+                return True
 
 
     def turn_effects(self, actor_turn):
