@@ -1,6 +1,9 @@
 import uuid
 
-from globals import *
+try:
+    from .globals import *
+except SystemError:
+    from globals import *
 
 class Actor(WorldInhabitant):
     """The animated inhabitants of a GameInstance

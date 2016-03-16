@@ -29,12 +29,14 @@ class GameInstance(CoordParseMixin):
             self.actors = {}
             self.world = []
             self.world_size = 250
+            self.current_turn = 0
         else:
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
             self.actors = {}
             self.world = []
             self.world_size = 250
+            self.current_turn = 0
 
             self.init_empty_world()
             for a in model.actors.all():
@@ -49,6 +51,7 @@ class GameInstance(CoordParseMixin):
         for i in range(self.world_size):
             row = [[Cell(i, j, 1, 0)] for j in range(self.world_size)]
             self.world.append(row)
+
 
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
@@ -132,12 +135,16 @@ class GameInstance(CoordParseMixin):
             return world_inhab.is_food
         if attr == "DEADLY":
             return world_inhab.is_deadly
-        if attr == 'ACTOR':
+        if attr == "ACTOR":
             return world_inhab.is_actor
-        if attr == 'WATER':
+        if attr == "WATER":
             return world_inhab.is_water
-        if attr == 'GRASS':
+        if attr == "GRASS":
             return world_inhab.is_grass
+        if attr == "ROCK":
+            return world_inhab.is_rock
+        if attr == "PLANT":
+            return world_inhab.is_plant
         else:
             return False
 
@@ -159,16 +166,28 @@ class GameInstance(CoordParseMixin):
                     return x, y
         return self.coord_parse(xy_or_WI)
 
-    def valid_turn(actor_turn):
+    def valid_turn(self, actor_turn):
         """ Receive a turn and check whether or not the turn is valid.
 
         :param actor_turn: the turn that the actor wants to execute
         :return: boolean on validity of the turn attempted
         """
 
+        actor = self.get_actor(actor_turn['actorID'])
+        if actor_turn['varTarget'] == "_coords":
+            check_x = actor_turn["to"][0]
+            check_y = actor_turn["to"][1]
+            check_coord = self.world[check_x][check_y]
 
+            if self.has_attr(check_coord, "ROCK"):
+                return False
+                
+            elif self.has_attr(check_coord, "ACTOR"):
+                return False
+                
+            else:
+                return True
 
-        return True
 
     def turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
@@ -228,6 +247,7 @@ class GameInstance(CoordParseMixin):
             self.current_turn += 1
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in random.shuffle(list(self.actors.items())):
+
                 this_turn['deltas'].append(actor.do_turn())
                 print(actor.do_turn())
 

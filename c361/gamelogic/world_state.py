@@ -1,8 +1,11 @@
 import math
 import json
 from random import random as rand
-from globals import *
 
+try:
+    from .globals import *
+except SystemError:
+    from globals import *
 
 class WorldState:
     SEED_SIZE = 600
