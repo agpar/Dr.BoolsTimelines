@@ -20,7 +20,9 @@ body
 {
     pointer-events: all;
 }
-
+#babylonjsLoadingDiv {
+    visibility: hidden;
+}
 #simulation-render-target
 {
     z-index: 1;

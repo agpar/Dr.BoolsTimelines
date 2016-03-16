@@ -8849,10 +8849,8 @@ $(document).ready(function () {
     var canvas = document.getElementById("simulation-render-target")
     var controller = GraphicsEngineController(canvas)
 
-    var body = document.getElementsByTagName("body")[0]
-		canvas.width = window.innerWidth
+    canvas.width = window.innerWidth
     canvas.height = window.innerHeight
-
 		window.onresize = function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -8908,6 +8906,7 @@ module.exports = Class("GraphicsEngineController", {
     __construct: function(renderTarget) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
+        var loader = new BABYLON.AssetsManager(scene)
 
         var camera = new BABYLON.ArcRotateCamera("camera", Math.PI/8,Math.PI/8,45, new BABYLON.Vector3(0,0,0), scene)
         camera.upperRadiusLimit = 55
@@ -8925,7 +8924,7 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene)
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader)
 
         this._renderEngine = engine
         this._camera = camera
@@ -8939,22 +8938,29 @@ module.exports = Class("GraphicsEngineController", {
     chunks in the scene as the camera is moved
     */
     'public startSimulationEngine': function() {
-        this._renderer.updateView(0,0,true)
-        this._camPos = {x: 0, y: 0}
+        var loader = this._renderer.loadAssets()
+        var control = this
 
+        loader.onFinish = function() {
+            this._renderer.updateView(0,0,true)
+            this._camPos = {x: 0, y: 0}
 
-        this._renderEngine.runRenderLoop(function () {
-            this._renderer.renderWorld()
+            this._renderEngine.runRenderLoop(function () {
+                this._renderer.renderWorld()
 
-            var camdist  = Math.abs(this._camPos.x - this._camera.target.x)
-                camdist += Math.abs(this._camPos.y - this._camera.target.z)
-            if(camdist > 2) {
-               var newx = Math.floor(this._camera.target.x)
-               var newy = Math.floor(this._camera.target.z)
-               this._renderer.updateView(newx, newy, false)
-               this._camPos = {x: newx, y: newy}
-            }
-        }.bind(this))
+                var camdist  = Math.abs(this._camPos.x - this._camera.target.x)
+                    camdist += Math.abs(this._camPos.y - this._camera.target.z)
+
+                if(camdist > 2) {
+                    var newx = Math.floor(this._camera.target.x)
+                    var newy = Math.floor(this._camera.target.z)
+                    this._renderer.updateView(newx, newy, false)
+                    this._camPos = {x: newx, y: newy}
+                }
+            }.bind(this))
+        }.bind(this)
+
+        loader.load()
     },
     /*
     Turn off smell field and close cell status window
@@ -9134,10 +9140,36 @@ module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
     'private _worldState': null,
-    'private _cellproto': {
+    'private _proto': {
         'WATER': null,
         'ROCK':  null,
-        'GRASS': null
+        'GRASS': null,
+        'BLOCK': null,
+        'MUSH':  null,
+        'PLANT': null
+    },
+    /*
+    Load the prototype mesh assets and return an event handle to be bound to
+    a render loop initialtion function.
+    */
+    'public loadAssets': function() {
+        var meta = document.querySelector("meta[name='mesh-dir']").getAttribute('content')
+        var boletus_link = meta + "boletus_obj/"
+
+        var loader = new BABYLON.AssetsManager(this._scene)
+        /*
+
+        var mushloader = loader.addMeshTask("MUSH", "", boletus_link, "boletus.obj")
+
+        mushloader.onSuccess = function(t) {
+            t.loadMeshes.forEach(function(m) {
+                m.position = new BABYLON.Vector3(-10000,-10000,-10000)
+                this._proto["MUSH"] = m
+            }.bind(this))
+        }.bind(this)
+        */
+
+        return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
         //Configure the LRU cache holding the scene chunks.
@@ -9147,7 +9179,12 @@ module.exports =  Class("WorldRenderer", {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
-                        cell.mesh.dispose()
+                        if(cell.mesh != undefined)
+                            cell.mesh.dispose()
+                        for(c in cell.contents) {
+                            if(c.mesh != undefined)
+                                c.mesh.dispose()
+                        }
                         cell = chunk[row].pop()
                     }
                 }
@@ -9178,6 +9215,13 @@ module.exports =  Class("WorldRenderer", {
                     type: "GRASS",
                     mesh: undefined,
                 }
+                if(Math.random < 0.1) {
+                    cell.contents.push({
+                        "type": "MUSH",
+                        "mesh": undefined
+                    })
+                }
+
             }
         }
 
@@ -9203,7 +9247,6 @@ module.exports =  Class("WorldRenderer", {
         var water = BABYLON.Mesh.CreateBox("WATER", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "ROCK", 1.0, scene)
         var grass = BABYLON.Mesh.CreateBox("GRASS", 1.0, scene)
-
         //Define materials for each cell type
         var watermat = new BABYLON.StandardMaterial("watermat", scene)
         var rockmat  = new BABYLON.StandardMaterial( "rockmat", scene)
@@ -9227,9 +9270,9 @@ module.exports =  Class("WorldRenderer", {
         rock.position  = new BABYLON.Vector3(-10000,-10000,-10000)
         grass.position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._cellproto["WATER"] = water
-        this._cellproto["ROCK"]  = rock
-        this._cellproto["GRASS"] = grass
+        this._proto["WATER"] = water
+        this._proto["ROCK"]  = rock
+        this._proto["GRASS"] = grass
 
         this._scene = scene
     },
@@ -9451,13 +9494,18 @@ module.exports =  Class("WorldRenderer", {
                 meshz = chunk_y*chunksize + i
                 meshy = cell["elevation"]/4
 
-                mesh = this._cellproto[cell["type"]]
+                mesh = this._proto[cell["type"]]
                            .createInstance(cellx + " " + celly)
 
                 mesh.scaling.y = cell["elevation"]/2
 
                 mesh.position = new BABYLON.Vector3(meshx, meshy, meshz)
 
+                for(c in cell.contents) {
+                    c.mesh = this._proto[c["type"]]
+                                 .createInstance(cellx + " " + celly + " " + c["type"])
+                    c.mesh.position = new BABYLON.Vector3(meshx, meshy+1.0, meshz)
+                }
                 cell["mesh"] = mesh
                 row.push(cell)
                 cellx++

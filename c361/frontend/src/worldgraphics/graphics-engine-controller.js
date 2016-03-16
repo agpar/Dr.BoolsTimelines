@@ -46,6 +46,7 @@ module.exports = Class("GraphicsEngineController", {
     __construct: function(renderTarget) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
+        var loader = new BABYLON.AssetsManager(scene)
 
         var camera = new BABYLON.ArcRotateCamera("camera", Math.PI/8,Math.PI/8,45, new BABYLON.Vector3(0,0,0), scene)
         camera.upperRadiusLimit = 55
@@ -63,7 +64,7 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene)
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader)
 
         this._renderEngine = engine
         this._camera = camera
@@ -77,22 +78,29 @@ module.exports = Class("GraphicsEngineController", {
     chunks in the scene as the camera is moved
     */
     'public startSimulationEngine': function() {
-        this._renderer.updateView(0,0,true)
-        this._camPos = {x: 0, y: 0}
+        var loader = this._renderer.loadAssets()
+        var control = this
 
+        loader.onFinish = function() {
+            this._renderer.updateView(0,0,true)
+            this._camPos = {x: 0, y: 0}
 
-        this._renderEngine.runRenderLoop(function () {
-            this._renderer.renderWorld()
+            this._renderEngine.runRenderLoop(function () {
+                this._renderer.renderWorld()
 
-            var camdist  = Math.abs(this._camPos.x - this._camera.target.x)
-                camdist += Math.abs(this._camPos.y - this._camera.target.z)
-            if(camdist > 2) {
-               var newx = Math.floor(this._camera.target.x)
-               var newy = Math.floor(this._camera.target.z)
-               this._renderer.updateView(newx, newy, false)
-               this._camPos = {x: newx, y: newy}
-            }
-        }.bind(this))
+                var camdist  = Math.abs(this._camPos.x - this._camera.target.x)
+                    camdist += Math.abs(this._camPos.y - this._camera.target.z)
+
+                if(camdist > 2) {
+                    var newx = Math.floor(this._camera.target.x)
+                    var newy = Math.floor(this._camera.target.z)
+                    this._renderer.updateView(newx, newy, false)
+                    this._camPos = {x: newx, y: newy}
+                }
+            }.bind(this))
+        }.bind(this)
+
+        loader.load()
     },
     /*
     Turn off smell field and close cell status window

@@ -21,10 +21,36 @@ module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
     'private _worldState': null,
-    'private _cellproto': {
+    'private _proto': {
         'WATER': null,
         'ROCK':  null,
-        'GRASS': null
+        'GRASS': null,
+        'BLOCK': null,
+        'MUSH':  null,
+        'PLANT': null
+    },
+    /*
+    Load the prototype mesh assets and return an event handle to be bound to
+    a render loop initialtion function.
+    */
+    'public loadAssets': function() {
+        var meta = document.querySelector("meta[name='mesh-dir']").getAttribute('content')
+        var boletus_link = meta + "boletus_obj/"
+
+        var loader = new BABYLON.AssetsManager(this._scene)
+        /*
+
+        var mushloader = loader.addMeshTask("MUSH", "", boletus_link, "boletus.obj")
+
+        mushloader.onSuccess = function(t) {
+            t.loadMeshes.forEach(function(m) {
+                m.position = new BABYLON.Vector3(-10000,-10000,-10000)
+                this._proto["MUSH"] = m
+            }.bind(this))
+        }.bind(this)
+        */
+
+        return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
         //Configure the LRU cache holding the scene chunks.
@@ -34,7 +60,12 @@ module.exports =  Class("WorldRenderer", {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
-                        cell.mesh.dispose()
+                        if(cell.mesh != undefined)
+                            cell.mesh.dispose()
+                        for(c in cell.contents) {
+                            if(c.mesh != undefined)
+                                c.mesh.dispose()
+                        }
                         cell = chunk[row].pop()
                     }
                 }
@@ -65,6 +96,13 @@ module.exports =  Class("WorldRenderer", {
                     type: "GRASS",
                     mesh: undefined,
                 }
+                if(Math.random < 0.1) {
+                    cell.contents.push({
+                        "type": "MUSH",
+                        "mesh": undefined
+                    })
+                }
+
             }
         }
 
@@ -90,7 +128,6 @@ module.exports =  Class("WorldRenderer", {
         var water = BABYLON.Mesh.CreateBox("WATER", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "ROCK", 1.0, scene)
         var grass = BABYLON.Mesh.CreateBox("GRASS", 1.0, scene)
-
         //Define materials for each cell type
         var watermat = new BABYLON.StandardMaterial("watermat", scene)
         var rockmat  = new BABYLON.StandardMaterial( "rockmat", scene)
@@ -114,9 +151,9 @@ module.exports =  Class("WorldRenderer", {
         rock.position  = new BABYLON.Vector3(-10000,-10000,-10000)
         grass.position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._cellproto["WATER"] = water
-        this._cellproto["ROCK"]  = rock
-        this._cellproto["GRASS"] = grass
+        this._proto["WATER"] = water
+        this._proto["ROCK"]  = rock
+        this._proto["GRASS"] = grass
 
         this._scene = scene
     },
@@ -338,13 +375,18 @@ module.exports =  Class("WorldRenderer", {
                 meshz = chunk_y*chunksize + i
                 meshy = cell["elevation"]/4
 
-                mesh = this._cellproto[cell["type"]]
+                mesh = this._proto[cell["type"]]
                            .createInstance(cellx + " " + celly)
 
                 mesh.scaling.y = cell["elevation"]/2
 
                 mesh.position = new BABYLON.Vector3(meshx, meshy, meshz)
 
+                for(c in cell.contents) {
+                    c.mesh = this._proto[c["type"]]
+                                 .createInstance(cellx + " " + celly + " " + c["type"])
+                    c.mesh.position = new BABYLON.Vector3(meshx, meshy+1.0, meshz)
+                }
                 cell["mesh"] = mesh
                 row.push(cell)
                 cellx++
