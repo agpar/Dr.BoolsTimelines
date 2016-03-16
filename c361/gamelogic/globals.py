@@ -5,7 +5,7 @@ SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
 CELL_TYPES = {'GRASS': 1, 'ROCK': 2, 'WATER': 3,
               1: 'GRASS', 2: 'ROCK', 3: 'WATER'}
 
-ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS'}
+ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK'}
 
 DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST"}
 
@@ -102,6 +102,7 @@ class WorldInhabitant(CoordParseMixin):
     is_water = False
     is_grass = False
     is_plant = False
+    is_rock = False
     smell_code = None
 
     @property
@@ -168,6 +169,16 @@ class Cell(WorldInhabitant):
 
     def is_grass(self):
         if self.ctype == CELL_TYPES['GRASS']:
+            return True
+        return False
+
+    def is_plant(self):
+        if self.ctype == CELL_TYPES['PLANT']:
+            return True
+        return False
+
+    def is_rock(self):
+        if self.ctype == CELL_TYPES['ROCK']:
             return True
         return False
 
