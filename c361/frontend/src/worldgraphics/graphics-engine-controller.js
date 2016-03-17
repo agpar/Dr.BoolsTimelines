@@ -31,6 +31,7 @@ module.exports = Class("GraphicsEngineController", {
             function (evt) {
                 if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1000000000
+                    this._camera.angularSensibilityY = 1000000000
                 }
             }.bind(this)
         ))
@@ -39,6 +40,7 @@ module.exports = Class("GraphicsEngineController", {
             function (evt) {
                 if(evt.sourceEvent.keyCode==16) {
                     this._camera.angularSensibilityX = 1500
+                    this._camera.angularSensibilityY = 1500
                 }
             }.bind(this)
         ))
@@ -51,7 +53,7 @@ module.exports = Class("GraphicsEngineController", {
         var camera = new BABYLON.ArcRotateCamera("camera", Math.PI/8,Math.PI/8,45, new BABYLON.Vector3(0,0,0), scene)
         camera.upperRadiusLimit = 55
         camera.lowerRadiusLimit = 15
-        camera.upperBetaLimit = Math.PI/8
+        camera.upperBetaLimit = Math.PI/3
         camera.lowerBetaLimit = Math.PI/8
 
         camera.keysUp = []

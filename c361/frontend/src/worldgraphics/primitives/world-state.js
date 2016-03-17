@@ -20,12 +20,8 @@ module.exports = Class("WorldState", {
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
         this._seedSize       = json_dump["seedSize"]
+        this._cells          = json_dump["cells"]
 
-        var cells = []
-        for(cell in json_dump["cells"])
-            cells.push(WorldCell(cell, this._cells))
-
-        this._cells = cells
     },
     'public get': function(key) {
         return this["_" + key]

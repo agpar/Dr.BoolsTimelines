@@ -49,7 +49,8 @@ module.exports =  Class("WorldRenderer", {
             }.bind(this))
         }.bind(this)
         */
-
+        this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
+        this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
         return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
@@ -84,8 +85,10 @@ module.exports =  Class("WorldRenderer", {
             seed.push(row)
         }
 
-        var cells = {}
+
         var key
+        var cells = {}
+
         for (var i = -5; i <= 5; i++) {
             for(var j = -5; j <= 5; j++) {
                 key = j + " " + i
@@ -96,15 +99,16 @@ module.exports =  Class("WorldRenderer", {
                     type: "GRASS",
                     mesh: undefined,
                 }
-                if(Math.random < 0.1) {
-                    cell.contents.push({
+
+                if(Math.random() < 0.1) {
+                    cells[key].contents.push({
                         "type": "MUSH",
                         "mesh": undefined
                     })
                 }
-
             }
         }
+
 
         var tempstate = WorldState({
             "standardHeight": 15,
@@ -115,7 +119,7 @@ module.exports =  Class("WorldRenderer", {
             "rockThreshold": 0.175,
             "seed": seed,
             "seedSize": seedsize,
-            "cells": []
+            "cells": cells
         })
 
         this._worldState = tempstate
@@ -230,11 +234,11 @@ module.exports =  Class("WorldRenderer", {
     Out.grad: Gradient magniute of the terrain field.
     */
     'private _computeCell': function (x,y) {
-        var seed = this._worldState.get("seed")
-        var seedsize = this._worldState.get("seedSize")
-        var worldWidth = this._worldState.get("width")
+        var seed        = this._worldState.get("seed")
+        var seedsize    = this._worldState.get("seedSize")
+        var worldWidth  = this._worldState.get("width")
         var worldLength = this._worldState.get("length")
-        var chunksize = this._worldState.get("chunkSize")
+        var chunksize   = this._worldState.get("chunkSize")
 
         var cellx = Math.round(x + worldWidth/2)
         var celly = Math.round(y + worldLength/2)
@@ -382,11 +386,14 @@ module.exports =  Class("WorldRenderer", {
 
                 mesh.position = new BABYLON.Vector3(meshx, meshy, meshz)
 
-                for(c in cell.contents) {
-                    c.mesh = this._proto[c["type"]]
-                                 .createInstance(cellx + " " + celly + " " + c["type"])
-                    c.mesh.position = new BABYLON.Vector3(meshx, meshy+1.0, meshz)
+                var cont
+                for(k in cell.contents) {
+                    cont = cell.contents[k]
+                    cont.mesh = this._proto[cont["type"]]
+                                    .createInstance(cellx + " " + celly + " " + cont["type"])
+                    cont.mesh.position = new BABYLON.Vector3(meshx, cell["elevation"]/2, meshz)
                 }
+
                 cell["mesh"] = mesh
                 row.push(cell)
                 cellx++
