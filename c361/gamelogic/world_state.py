@@ -36,7 +36,6 @@ class WorldState(CoordParseMixin):
             self._inhabitants = defaultdict(list)
 
     def __getitem__(self, key):
-        """Note, must be called with a tuple."""
         return self.PartialTerrainGen(self, key)
 
     def __setitem__(self, key, item):
