@@ -1,16 +1,17 @@
 import math
 import json
 from random import random as rand
+from collections import defaultdict
 
 try:
     from .globals import *
 except SystemError:
     from globals import *
 
-class WorldState:
+
+class WorldState(CoordParseMixin):
     SEED_SIZE = 600
     STANDARD_HEIGHT = 15
-
 
     def __init__(self, size=(1000,1000), json_dump=None, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         if json_dump is not None:
@@ -20,6 +21,7 @@ class WorldState:
             self._water_threshold = json_in["waterThreshold"]
             self._rock_threshold = json_in["rockThreshold"]
             self._cells = [Cell(json_dump=cell_json) for cell_json in json_in["cells"]]
+            self._inhabitants = defaultdict(list)
             if json_in.get("seed") is not None:
                 self._seed = json_in["seed"]
             else:
@@ -31,19 +33,14 @@ class WorldState:
             self._rock_threshold = rock_threshold
             self._cells = {}
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
+            self._inhabitants = defaultdict(list)
 
-    def __getitem__(self, coords):
-        if coords[0] in self._cells:
-            if coords[1] in self.cells[coords[0]]:
-                return self.cells[coords[0]][coords[1]]
+    def __getitem__(self, key):
+        """Note, must be called with a tuple."""
+        return self.PartialTerrainGen(self, key)
 
-        return self._terrainGen(coords[0], coords[1])
-
-    def __setitem__(self, coords, cell):
-        if coords[0] not in  self._cells:
-            self._cells[coords[0]] = {}
-
-        self._cells[coords[0]][coords[1]] = cell
+    def __setitem__(self, key, item):
+        return self.PartialTerrainGen(self, key)
 
     def __repr__(self):
         return self.toJson(False)
@@ -137,3 +134,56 @@ class WorldState:
         gradient = math.sqrt(x_slope**2 + fout[1]**2)
 
         return (fout[0], gradient)
+
+    def get_inhabitants(self, xy):
+        """Get all the inhabitants at a location.
+
+        :param xy: A coordinate tuple.
+        :return: A list of inhabitants at (x,y) (not including Cell)
+        """
+        x, y = self.coord_parse(xy)
+        return self._inhabitants[x, y]
+
+    def add_inhabitant(self, worldinhabitant):
+        """Remove a WI from the inhabitants using their current coord."""
+        x, y = self.coord_parse(worldinhabitant)
+        self._inhabitants[x, y].append(worldinhabitant)
+
+    def remove_inhabitant(self, worldinhabitant):
+        """Add a WI to the inhabitants using their current coord."""
+        x, y = self.coord_parse(worldinhabitant)
+        self._inhabitants[x, y].remove(worldinhabitant)
+
+    class PartialTerrainGen:
+        """A class solely for storing half of a request to get or set a cell
+
+        Allows for proper getting and setting of world locations.
+
+        w[0][0] instead of w[0,0]
+
+        When you call w[x][y], the w[x] returns a PartialTerrainGen with
+        it's row set to x. After this is evaluated, the rest of the statement
+        (which you should imagine as PartialTerrainGen()[y]) returns it's yth
+        item, which is the yth item of the xth row of the world.
+
+        Also places cells into lists and includes inhabitants at the location.
+        """
+        def __init__(self, world, row):
+            self.world = world
+            self.row = row
+
+        def __getitem__(self, key):
+            col = self.world._cells.get(self.row)
+            if col and key in col:
+                val = [col[key]]
+            val = [self.world._terrainGen(self.row, key)]
+            val.extend(self.world._inhabitants[self.row, key])
+            return val
+
+        def __setitem__(self, key, value):
+            col = self.world._cells.get(self.row)
+            if not col:
+                self.world._cells[self.row] = {}
+            self.world._cells[self.row][key] = value
+
+

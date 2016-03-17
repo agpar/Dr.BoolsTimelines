@@ -5,9 +5,12 @@ import uuid
 try:
     from .actor import Actor
     from .globals import *
+    from .world_state import WorldState
 except SystemError:
     from actor import Actor
     from globals import *
+    from world_state import WorldState
+
 
 
 class GameInstance(CoordParseMixin):
@@ -27,8 +30,7 @@ class GameInstance(CoordParseMixin):
         if not model:
             # For testing.
             self.actors = {}
-            self.world = []
-            self.world_size = 250
+            self.world = WorldState()
             self.current_turn = 0
         else:
             self.uuid = str(model.uuid)
@@ -38,20 +40,14 @@ class GameInstance(CoordParseMixin):
             self.world_size = 250
             self.current_turn = 0
 
-            self.init_empty_world()
             for a in model.actors.all():
                 self.add_actor(Actor(a))
 
     def __getitem__(self, item):
-        x = self.world[item]
-        return x
+        return self.world[item]
 
-    def init_empty_world(self):
-        """Create an empty 50x50 cell grid for testing."""
-        for i in range(self.world_size):
-            row = [[Cell(i, j, 1, 0)] for j in range(self.world_size)]
-            self.world.append(row)
-
+    def __setitem__(self, key, item):
+        self.world[key] = item
 
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
@@ -77,7 +73,7 @@ class GameInstance(CoordParseMixin):
                     self.actors[a.uuid] = a
                     a._coords = (x, y)
                     a.gameInstance = self
-                    self.world[x][y].append(a)
+                    self.world.add_inhabitant(a)
                     break
 
         else:
@@ -89,12 +85,12 @@ class GameInstance(CoordParseMixin):
             self.actors[a.uuid] = a
             a._coords = (x, y)
             a.gameInstance = self
-            self.world[x][y].append(a)
+            self.world.add_inhabitant(a)
 
     def remove_actor(self, xy_or_WI):
         """Remove an actor from the GameInstance. Fail silently.
 
-        :param xy_or_WI: x,y coord OR a WorldInhabitant object, OR a UUID.
+        :param xy_or_WI: x,y coord OR a WorldInhabitant object.
         """
         x,y = self.coord_parse(xy_or_WI)
         actr = self.get_actor(xy_or_WI)
@@ -102,7 +98,7 @@ class GameInstance(CoordParseMixin):
             return
 
         del self.actors[actr.uuid]
-        self.world[x][y].remove(actr)
+        self.world.remove_inhabitant(actr)
         actr._coords = (-1, -1)
         return
 
@@ -123,6 +119,24 @@ class GameInstance(CoordParseMixin):
                 if isinstance(z, Actor):
                     return z
         return None
+
+    def move_actor(self, actor_or_UUID_or_coords, xy_or_WI):
+        """Move an actor to a location.
+
+        :param actor_or_UUID_or_coords: Exactly what it says.
+        :param xy_or_WI: Coords or a WorldInhabitant (cell)
+        :return: None.
+        """
+        if isinstance(actor_or_UUID_or_coords, Actor):
+            actor = actor_or_UUID_or_coords
+        else:
+            actor = self.get_actor(actor_or_UUID_or_coords)
+
+        x,y = self.coord_parse(xy_or_WI)
+
+        self.world.remove_inhabitant(actor)
+        actor._coords = (x,y)
+        self.world.add_inhabitant(actor)
 
     def has_attr(self, world_inhab, attr):
         """Determine if the wold_inhab has an attribute.
