@@ -9,6 +9,31 @@
 $(document).ready(function() {
     console.log( "ready!" );
 
+    //Open the actorInfo on the page.
+    $("#open-actorinfo").click(function (event){
+        $("#opened-actorinfo").show();
+        $("#closed-actorinfo").hide();
+        // $.ajax({
+        //     type: "get",
+        //     url: "/actors",
+        //     contentType:"application/json",
+        //     statusCode: {
+        //         200: function(data)
+        //         {
+        //             $("#actorinfo-content").html(JSON.stringify(data, null, 4));
+        //             $("#actorinfo").show();
+        //             console.log(data);
+        //         }
+        //     }
+        // })
+    });
+
+    //Close the actorInfo on the page
+    $("#close-actorinfo").click(function (event){
+        $("#opened-actorinfo").hide();
+        $("#closed-actorinfo").show();
+    });
+
     //Close the sidemenu on the page.
     $("#close-sidemenu").click(function (event){
         $("#opened-sidemenu").hide();
@@ -44,13 +69,24 @@ $(document).ready(function() {
         })
     });
     $("#closed-sidemenu").hide();
+    $("#opened-actorinfo").hide();
 });
 </script>
 
 <canvas id="simulation-render-target"></canvas>
 <div class="sim-ui-container container">
     <div class="row fill">
-        <div class="col-xs-9 fill">
+
+        <div class="col-xs-1">
+            <div class="closed-actorinfo" id="closed-actorinfo">
+                <button class="btn btn-default sim-ui-element" id="open-actorinfo">Actor Info</button>
+            </div>
+            <div class="opened-actorinfo sim-ui-element" id="opened-actorinfo">
+                <button class="btn btn-default" id="close-actorinfo">Close</button>
+            </div>
+        </div>
+
+        <div class="col-xs-8 fill">
             <div class="main-menu sim-ui-element" id="mainmenu">
                 <button type="button" class="close" id="close-mainmenu">×</button>
                 <h3 id="mainmenu-header">Main Menu </h3>
@@ -72,6 +108,8 @@ $(document).ready(function() {
                 <hr>
                 <button class="btn btn-default btn-sidemenu">Create Actor</button>
                 <button class="btn btn-default btn-sidemenu">Modify Actor</button>
+                <button class="btn btn-default btn-sidemenu">Add Actor</button>
+                <button class="btn btn-default btn-sidemenu">Add Plants/Obstacles</button>
                 <hr>
                 <div class="push-to-bottom">
                     <button class="btn btn-default" id="close-sidemenu">Close Menu</button>
