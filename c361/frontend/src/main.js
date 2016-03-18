@@ -11,6 +11,32 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
+
+    //Open the actorInfo on the page.
+    $("#open-actorinfo").click(function (event){
+        $("#opened-actorinfo").show();
+        $("#closed-actorinfo").hide();
+        // $.ajax({
+        //     type: "get",
+        //     url: "/actors",
+        //     contentType:"application/json",
+        //     statusCode: {
+        //         200: function(data)
+        //         {
+        //             $("#actorinfo-content").html(JSON.stringify(data, null, 4));
+        //             $("#actorinfo").show();
+        //             console.log(data);
+        //         }
+        //     }
+        // })
+    });
+
+    //Close the actorInfo on the page
+    $("#close-actorinfo").click(function (event){
+        $("#opened-actorinfo").hide();
+        $("#closed-actorinfo").show();
+    });
+
     //Close the sidemenu on the page.
     $("#close-sidemenu").click(function (event){
         $("#opened-sidemenu").hide();
@@ -46,4 +72,5 @@ $(document).ready(function () {
         })
     });
     $("#closed-sidemenu").hide();
+    $("#opened-actorinfo").hide();
 })
