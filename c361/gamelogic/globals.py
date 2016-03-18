@@ -1,3 +1,4 @@
+import json
 from functools import partial
 from scripting_engine.script_parser import AiScriptParser
 
@@ -154,10 +155,16 @@ class WorldInhabitant(CoordParseMixin):
 
 class Cell(WorldInhabitant):
 
-    def __init__(self, x, y, ctype, elevation):
-        self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
-        self._coords = (x, y)
-        self.elevation = elevation
+    def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
+        if json_dump is not None:
+            json_in = json.loads(json_dump)
+            self.ctype = CELL_TYPES[json_in["ctype"]]
+            self._coords = (json_in["coords"]["x"], json_in["coords"]["y"])
+            self.elevation = json_in["elevation"]
+        else:
+            self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
+            self._coords = (x, y)
+            self.elevation = elevation
 
     def __repr__(self):
         temp = "Cell({}, {}, {}, {})"
@@ -169,26 +176,29 @@ class Cell(WorldInhabitant):
             return True
         return False
 
+    @property
     def is_grass(self):
         if self.ctype == CELL_TYPES['GRASS']:
             return True
         return False
 
+    @property
     def is_plant(self):
         if self.ctype == CELL_TYPES['PLANT']:
             return True
         return False
 
+    @property
     def is_rock(self):
         if self.ctype == CELL_TYPES['ROCK']:
             return True
         return False
 
     def toJson(self):
-        json_out  = "{"
-        json_out += "'type': '%s'," % self.TYPE_MAP[self.ctype]
-        json_out += "'elevation': %f," % self.elevation
-        json_out += "'coords': {'x':%d, 'y':%d}" % (self.x, self.y)
-        json_out += "}"
+        serialized = {
+            "type": CELL_TYPES[self.ctype],
+            "coords": {"x": self.x, "y": self.y},
+            "elevation": self.elevation
+        }
 
-        return json_out
+        return json.dumps(serialized)

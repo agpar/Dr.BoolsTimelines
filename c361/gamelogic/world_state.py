@@ -45,46 +45,28 @@ class WorldState(CoordParseMixin):
         return self.toJson(False)
 
     def toJson(self, withseed=True):
-        json_out  = "{'standardHeight': %d," % self.STANDARD_HEIGHT
-        json_out += " 'width': %d," % self._size[0]
-        json_out += " 'length': %d," % self._size[1]
-        json_out += " 'chunkSize': %d," % self._chunk_size
-        json_out += " 'waterThreshold': %f," % self._water_threshold
-        json_out += " 'rockThreshold': %f," % self._rock_threshold
-        json_out += " 'cells': { "
+        serialized = {
+            "standardHeight": self.STANDARD_HEIGHT,
+            "width": self._size[0],
+            "length": self._size[1],
+            "chunkSize": self._chunk_size,
+            "waterThreshold": self._water_threshold,
+            "rockThreshold": self._rock_threshold,
+            "seedsize": self.SEED_SIZE
+        }
 
-        cells_json = []
+        if withseed:
+            serialized["seed"] = self._seed
 
+        cell_dict = {}
         for row in self._cells:
              for c in cells[row]:
                  fmt = (self._cells[row][c].x,
-                        self._cells[row][c].y,
-                        self._cells[row][c].toJson())
+                        self._cells[row][c].y)
+                 cell_dict["%d %d" % fmt] = self._cells[row][c].toJson()
 
-                 cells_json.append("'%d %d': %s" % fmt)
-
-        cell_json = ""
-
-        if len(self._cells) > 1:
-            for c in cells_json[:-1]:
-                cell_json += c + ", "
-
-        if len(self._cells) > 0:
-            cell_json += cells_json[-1]
-
-        cell_json += "},"
-
-        json_out += cell_json
-
-        if withseed:
-            json_out += " 'seedSize': %d," % self.SEED_SIZE
-            json_out += " 'seed': " + str(self._seed)
-        else:
-            json_out += " 'seedSize': %d" % self.SEED_SIZE
-
-        json_out += "}"
-
-        return json_out
+        serialized["cells"] = cell_dict
+        return json.dumps(serialized)
 
     def _terrainGen(self, x, y):
         height, slope = self._computeCell(x,y)
@@ -184,5 +166,3 @@ class WorldState(CoordParseMixin):
             if not col:
                 self.world._cells[self.row] = {}
             self.world._cells[self.row][key] = value
-
-
