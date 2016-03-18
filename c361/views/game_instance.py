@@ -12,10 +12,14 @@ class MyGameList(BaseDetailView):
     serializer_class = GameInstanceFullSerializer
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated():
             username = request.user.username
             return HttpResponseRedirect("/games/?creator={0}".format(username))
-        return HttpResponseRedirect("/login")
+        else:
+            if request.META['CONTENT_TYPE'] == "application/json":
+                return Response(data={"ERROR: You are not logged in."})
+            else:
+                return HttpResponseRedirect("/login")
 
 
 class GameList(BaseListCreateView):
