@@ -44,6 +44,7 @@ class WorldState(CoordParseMixin):
     def __repr__(self):
         return self.toJson(False)
 
+
     def toJson(self, withseed=True):
         serialized = {
             "standardHeight": self.STANDARD_HEIGHT,
@@ -166,3 +167,6 @@ class WorldState(CoordParseMixin):
             if not col:
                 self.world._cells[self.row] = {}
             self.world._cells[self.row][key] = value
+
+        def __iter__(self):
+            return (self[x] for x in range(int(self.world._size[1]/2)))

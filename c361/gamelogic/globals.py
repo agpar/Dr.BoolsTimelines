@@ -1,5 +1,6 @@
 import json
 from functools import partial
+import json
 from scripting_engine.script_parser import AiScriptParser
 
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
@@ -202,3 +203,20 @@ class Cell(WorldInhabitant):
         }
 
         return json.dumps(serialized)
+
+
+class Plant(WorldInhabitant):
+    def __init__(self, x=0, y=0, type="MUSH", from_dict=None):
+        if not from_dict:
+            self.type = type
+            self.health = 100
+            self._coords = (x, y)
+        else:
+            self.type = from_dict['type']
+            self.health = from_dict['health']
+            self._coords = (from_dict['x'], from_dict['y'])
+
+    def toJson(self):
+        to_dict = {'type': self.type, 'health': self.health,
+                   'x': self.x, 'y': self.y}
+        return json.dumps(to_dict)
