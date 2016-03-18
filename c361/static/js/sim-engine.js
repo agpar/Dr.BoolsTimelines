@@ -8855,6 +8855,41 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
+    //Close the sidemenu on the page.
+    $("#close-sidemenu").click(function (event){
+        $("#opened-sidemenu").hide();
+        $("#closed-sidemenu").show();
+
+    });
+
+    //Open the sideemnu on the page.
+    $("#open-sidemenu").click(function (event){
+        $("#opened-sidemenu").show();
+        $("#closed-sidemenu").hide();
+    });
+
+    //Tiny button for closing the mainmenu.
+    $("#close-mainmenu").click(function (event){
+        $("#mainmenu").hide();
+    });
+
+    $("#load-game-side-btn").click(function (event){
+        $("#mainmenu-header").html("Load a Game");
+        $.ajax({
+            type: "get",
+            url: "/games/mine",
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    $("#mainmenu-content").html(JSON.stringify(data, null, 4));
+                    $("#mainmenu").show();
+                    console.log(data);
+                }
+            }
+        })
+    });
+    $("#closed-sidemenu").hide();
 })
 
 },{"./worldgraphics/graphics-engine-controller":35}],35:[function(require,module,exports){

@@ -9,6 +9,7 @@ class Behaviour(object):
 
     def get_action(self, actor):
         """return the first action whos conditions eval to True"""
-        for rule in self.rules:
-            if rule.eval(actor):
-                return FUNC_MAP[rule.actions[0]](actor)
+        while True:
+            for rule in self.rules:
+                if rule.eval(actor):
+                    return rule.actions[0].eval(actor)

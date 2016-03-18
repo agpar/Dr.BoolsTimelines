@@ -41,7 +41,6 @@ class Function(Node):
                 evaluated_args[i] = arg
 
         fn = self.symbol.eval(actor)
-
         return SymbolAtom(fn(actor, *evaluated_args))
 
 
