@@ -4,7 +4,90 @@
 <style>
   body{padding: 0 0; overflow: hidden}
 </style>
+
+<script>
+$(document).ready(function() {
+    console.log( "ready!" );
+
+    //Close the sidemenu on the page.
+    $("#close-sidemenu").click(function (event){
+        $("#opened-sidemenu").hide();
+        $("#closed-sidemenu").show();
+
+    });
+
+    //Open the sideemnu on the page.
+    $("#open-sidemenu").click(function (event){
+        $("#opened-sidemenu").show();
+        $("#closed-sidemenu").hide();
+    });
+
+    //Tiny button for closing the mainmenu.
+    $("#close-mainmenu").click(function (event){
+        $("#mainmenu").hide();
+    });
+
+    $("#load-game-side-btn").click(function (event){
+        $("#mainmenu-header").html("Load a Game");
+        $.ajax({
+            type: "get",
+            url: "/games/mine",
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    $("#mainmenu-content").html(JSON.stringify(data, null, 4));
+                    $("#mainmenu").show();
+                    console.log(data);
+                }
+            }
+        })
+    });
+    $("#closed-sidemenu").hide();
+});
+</script>
+
 <canvas id="simulation-render-target"></canvas>
-<div class="sim-ui-container container-fluid">
+<div class="sim-ui-container container">
+    <div class="row fill">
+        <div class="col-xs-9">
+            <div class="main-menu sim-ui-element well" id="mainmenu">
+                <button type="button" class="close" id="close-mainmenu">×</button>
+                <h3 id="mainmenu-header">Main Menu </h3>
+                <hr>
+                <div id="mainmenu-content">
+                    <ul>
+                        <li>First thing.</li>
+                        <li>Next thing.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-xs-3 sim-ui-element fill">
+            <div class="opened-sidemenu" id="opened-sidemenu">
+                <button class="btn btn-default btn-sidemenu">Start New Game</button>
+                <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
+                <button class="btn btn-default btn-sidemenu">Spectate Game</button>
+                <hr>
+                <button class="btn btn-default btn-sidemenu">Create Actor</button>
+                <button class="btn btn-default btn-sidemenu">Modify Actor</button>
+                <hr>
+                <div class="push-to-bottom">
+                    <button class="btn btn-default" id="close-sidemenu">Close Menu</button>
+                </div>
+            </div>
+            <div class="closed-sidemenu" id="closed-sidemenu">
+                <div class="push-to-bottom ">
+                    <button class="btn btn-default sim-ui-element" id="open-sidemenu">Open Menu</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
+
+
+
+
 {% endblock %}
