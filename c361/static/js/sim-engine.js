@@ -8855,6 +8855,32 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
+
+    //Open the actorInfo on the page.
+    $("#open-actorinfo").click(function (event){
+        $("#opened-actorinfo").show();
+        $("#closed-actorinfo").hide();
+        // $.ajax({
+        //     type: "get",
+        //     url: "/actors",
+        //     contentType:"application/json",
+        //     statusCode: {
+        //         200: function(data)
+        //         {
+        //             $("#actorinfo-content").html(JSON.stringify(data, null, 4));
+        //             $("#actorinfo").show();
+        //             console.log(data);
+        //         }
+        //     }
+        // })
+    });
+
+    //Close the actorInfo on the page
+    $("#close-actorinfo").click(function (event){
+        $("#opened-actorinfo").hide();
+        $("#closed-actorinfo").show();
+    });
+
     //Close the sidemenu on the page.
     $("#close-sidemenu").click(function (event){
         $("#opened-sidemenu").hide();
@@ -8890,6 +8916,7 @@ $(document).ready(function () {
         })
     });
     $("#closed-sidemenu").hide();
+    $("#opened-actorinfo").hide();
 })
 
 },{"./worldgraphics/graphics-engine-controller":35}],35:[function(require,module,exports){
@@ -8915,6 +8942,9 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+    'private _popupStats': function (stats) {
+
+    },
     /*
     Bind key events to camera or interaction actions
 
@@ -9036,6 +9066,7 @@ module.exports = Class("GraphicsEngineController", {
 var Class = require("easejs").Class
 
 module.exports = Class("WorldCell", {
+    'private _health': 0,
     'private _type': null,
     'private _mesh': undefined,
     __construct: function(json_dump) {

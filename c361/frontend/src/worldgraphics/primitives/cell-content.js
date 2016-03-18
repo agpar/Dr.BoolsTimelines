@@ -1,6 +1,7 @@
 var Class = require("easejs").Class
 
 module.exports = Class("WorldCell", {
+    'private _health': 0,
     'private _type': null,
     'private _mesh': undefined,
     __construct: function(json_dump) {

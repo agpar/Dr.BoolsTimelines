@@ -20,6 +20,9 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+    'private _popupStats': function (stats) {
+
+    },
     /*
     Bind key events to camera or interaction actions
 
