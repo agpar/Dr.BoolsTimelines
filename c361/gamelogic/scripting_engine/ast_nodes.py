@@ -28,6 +28,7 @@ class SymbolAtom(Node):
         return "SymbolAtom({})".format(self.value)
 
     def eval(self, actor):
+
         if isinstance(self.value, str) and \
                 not (self.symb or self.func or self.value in ATTRIBUTES):
             raise SyntaxError("Unknown symbol: '{}'".format(self.value))
@@ -53,13 +54,15 @@ class Function(Node):
             while isinstance(arg, Node):
                 arg = arg.eval(actor)
                 evaluated_args[i] = arg
+            if hasattr(arg, '__call__'): # If the argument is not evaluated down to a value.
+                raise(SyntaxError("Function error: '{}' was improperly called.".format(self.arguments[i].value)))
 
         fn = self.symbol.eval(actor)
-
         try:
             return SymbolAtom(fn(actor, *evaluated_args))
         except Exception as e:
-            raise SyntaxError("Function error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(evaluated_args)))
+            strargs = [str(arg) for arg in evaluated_args]
+            raise SyntaxError("Function error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(strargs)))
 
 
 class Assignment(Node):
@@ -97,7 +100,7 @@ class NumRelationship(Node):
         self.relation = FUNC_MAP[relation]
 
     def eval(self, actor):
-        return self.relation(self.left.eval(actor), self.left.eval(actor))
+        return self.relation(self.left.eval(actor), self.right.eval(actor))
 
 
 class UnaryNumOperation(Node):

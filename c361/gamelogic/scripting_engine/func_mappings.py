@@ -113,6 +113,7 @@ def direction_fn(actor, xy, y=None):
     return actor.direction_to((xy, y))
 
 
+
 def nearest_fn(actor, attr):
     """Call from script like:
 
@@ -120,8 +121,8 @@ def nearest_fn(actor, attr):
 
     :return
     """
-
     return actor.gameInstance.find_nearest(actor, attr)
+
 
 FUNC_MAP = {
     '<': lt,

@@ -45,17 +45,21 @@ class ScriptSyntaxChecker(APIView):
         try:
             res = PARSER.parse(aiscript)
 
-            g = GameInstance()
-            a = Actor(x=1, y=1, script=aiscript)
-            g.add_actor(a)
-            for rule in a.behaviours.rules:
-                rule.eval(a)
+            game = GameInstance()
+            actor = Actor(x=1, y=1, script=aiscript)
+            game.add_actor(actor)
+            for rule in actor.behaviours.rules:
+                rule.eval(actor)
                 for action in rule.actions:
-                    action.eval(a)
+                    action.eval(actor)
 
         # Our custom written functions throw a SyntaxError when things go bad.
         except SyntaxError as e:
-            badsyntax = re.findall("'([^']*)'", str(e))[0]
+            badsyntax = re.findall("'([^']*)'", str(e))
+            if not badsyntax:
+                return Response({'error': "Unknown error! '{}'".format(e)})
+            else:
+                badsyntax = badsyntax[0]
 
             for i, l in enumerate(lines):
                 if badsyntax in l:
@@ -64,7 +68,11 @@ class ScriptSyntaxChecker(APIView):
             return Response({"error":  "Line {}: {}".format(i+1, e)})
         # Our parser library throws unspecified Exceptions :/
         except Exception as e:
-            badsyntax = re.findall("'([^']*)'", str(e))[0]
+            badsyntax = re.findall("'([^']*)'", str(e))
+            if not badsyntax:
+                return Response({'error': "Unknown error! '{}'".format(e)})
+            else:
+                badsyntax = badsyntax[0]
 
             for i, l in enumerate(lines):
                 if badsyntax in l:
