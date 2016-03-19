@@ -23,23 +23,7 @@ module.exports = Class("GraphicsEngineController", {
 
     'private _popupStats': function (stats) {
 
-        var statContentList = {
-            healthList: [],
-            typeList: []
-        }
-
-        for (var i in stats.contents) {
-            var item  = stats.contents[i];
-
-            statContentList.healthList.push({
-                "health" : item.health
-            })
-
-            statContentList.typeList.push({
-                "type" : item.type
-            })
-        }
-
+        
         $("div#cell-statinfo span#elevation").html(stats.elevation);
         $("div#cell-statinfo span#cell-type").html(stats.type);
         $("div#cell-statinfo span#heath").html(statContentList.healthList.join());
