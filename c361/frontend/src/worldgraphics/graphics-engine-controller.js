@@ -24,7 +24,6 @@ module.exports = Class("GraphicsEngineController", {
         $("div#cell-statinfo span#elevation").html(stats.elevation);
         $("div#cell-statinfo span#cell-type").html(stats.type);
         $("div#cell-statinfo span#heath").html(stats.contents.health);
-        $("div#cell-statinfo span#mesh").html(stats..contents.mesh);
         $("div#cell-statinfo span#coords").html(stats.coords);
         $("div#cell-statinfo span#type").html(stats.contents.type);
     },
