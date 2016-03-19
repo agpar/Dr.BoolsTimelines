@@ -4,6 +4,134 @@
 <style>
   body{padding: 0 0; overflow: hidden}
 </style>
+<script>
+
+$(document).ready(function () {
+
+    var mainMenuCache = {}; //Used to cache Ajax request results.
+
+    var $mainmenu = $("#mainmenu");
+    var $mainmenu_content = $("#mainmenu-content");
+    var $mainmenu_scroller = $("#mainmenu-scroller");
+    var $mainmenu_buttons = $("#mainmenu-buttons");
+    var $mainmenu_header = $("#mainmenu-header");
+
+    //Open the actorInfo on the page.
+    $("#open-actorinfo").click(function (event){
+        $("#opened-actorinfo").show();
+        $("#closed-actorinfo").hide();
+        // $.ajax({
+        //     type: "get",
+        //     url: "/actors",
+        //     contentType:"application/json",
+        //     statusCode: {
+        //         200: function(data)
+        //         {
+        //             $("#actorinfo-content").html(JSON.stringify(data, null, 4));
+        //             $("#actorinfo").show();
+        //             console.log(data);
+        //         }
+        //     }
+        // })
+    });
+
+    //Close the actorInfo on the page
+    $("#close-actorinfo").click(function (event){
+        $("#opened-actorinfo").hide();
+        $("#closed-actorinfo").show();
+    });
+
+    //Close the sidemenu on the page.
+    $("#close-sidemenu").click(function (event){
+        $("#opened-sidemenu").hide();
+        $("#closed-sidemenu").show();
+
+    });
+
+    //Open the sideemnu on the page.
+    $("#open-sidemenu").click(function (event){
+        $("#opened-sidemenu").show();
+        $("#closed-sidemenu").hide();
+    });
+
+    //Tiny button for closing the mainmenu.
+    $("#close-mainmenu").click(function (event){
+        flush_mainmenu();
+        $("#mainmenu").hide();
+    });
+
+
+    //Open main menu with options for choosing a game to load.
+    $("#load-game-side-btn").click(function (event){
+        if (mainMenuCache['menu-loadgame'])
+        {
+            console.log("Fetched info from cache.");
+            setup_loadgame_menu(mainMenuCache['menu-loadgame']);
+        }
+        else {
+            $.ajax({
+                type: "get",
+                url: "/games/mine",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        console.log("Fetched infro from Ajax.");
+                        set_buffer('menu-loadgame', data);
+                        setup_loadgame_menu(data);
+                    }
+                }
+            });
+        }
+
+    });
+
+    //Use a dict to hold on to results for 30 seconds.
+    function set_buffer(key, value)
+    {
+        mainMenuCache[key] = value;
+        window.setTimeout(function()
+        {
+            mainMenuCache[key] = null;
+        }, 30000);
+    }
+
+
+    function flush_mainmenu()
+    {
+        $mainmenu_content.html("");
+        $mainmenu_buttons.html("");
+        $mainmenu_scroller.html("");
+    }
+
+    function setup_loadgame_menu(data)
+    {
+        mainMenuCache['loadgame'] = null;
+        var gamelist = [];
+        for (var i = 0; i < data.length; i++)
+        {
+            gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
+                    "id='loadable-game-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
+        }
+
+        flush_mainmenu();
+        $("#mainmenu-header").html("Load a Game");
+        $mainmenu_scroller.html(gamelist.join(""));
+        $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
+        $mainmenu.show();
+
+        $(".loadable-game-select").click(function (event)
+        {
+            var gameid = event['currentTarget']['id'];
+            console.log(gameid);
+        });
+
+    }
+
+    $("#closed-sidemenu").hide();
+    $("#opened-actorinfo").hide();
+});
+</script>
 
 <canvas id="simulation-render-target"></canvas>
 <div class="sim-ui-container container">
@@ -28,6 +156,21 @@
                         <li>First thing.</li>
                         <li>Next thing.</li>
                     </ul>
+                </div>
+                <ul class="list-group scrollable-menu" id="mainmenu-scroller">
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                    <button type="button" class="list-group-item">1</button>
+                </ul>
+                <hr>
+
+                <div id="mainmenu-buttons" class="container">
+
                 </div>
 
             </div>
