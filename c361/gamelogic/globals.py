@@ -1,7 +1,10 @@
 import json
 from functools import partial
 import json
-from scripting_engine.script_parser import AiScriptParser
+try:
+    from .scripting_engine.script_parser import AiScriptParser
+except ImportError:
+    from c361.gamelogic.scripting_engine.script_parser import AiScriptParser
 
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
                1: 'ACTOR', 2: 'PLANT', 3: 'WATER'}

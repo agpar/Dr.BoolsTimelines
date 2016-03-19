@@ -142,6 +142,10 @@ FUNC_MAP = {
 }
 
 SYM_MAP = {
+    'NORTH': lambda x: 'NORTH',
+    'EAST': lambda x: 'EAST',
+    'SOUTH': lambda x: 'SOUTH',
+    'WEST': lambda x: 'WEST',
     'myhunger': actor_hunger,
     'mylocation': actor_location,
     'myhealth': actor_health

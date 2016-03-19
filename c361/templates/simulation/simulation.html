@@ -204,11 +204,41 @@ $(document).ready(function () {
         lines.push("<input type='text' class='form-control' id='new-actor-name' placeholder='Geoffry'>");
         lines.push("</div><br>");
         lines.push("<b>Behaviour Script</b><br>");
-        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'>if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nfi</textarea>");
+        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'>if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nendif</textarea>");
 
         $mainmenu_header.html("Create Actor");
         $mainmenu_content.html(lines.join(""));
+        $mainmenu_buttons.html("<button class='btn btn-default' id='new-actor-validate-btn'>Validate Script</button>" +
+                "<button class='btn btn-default' id='new-actor-create-btn'>Create Actor</button>");
         $mainmenu.show();
+
+        $("#new-actor-validate-btn").click(function(even){
+            var nameval = $("#new-actor-name").val();
+            var scriptval = $("#new-actor-script").val();
+            if (namehash[nameval])
+            {
+                console.log("You already have an actor named " + nameval);
+            }
+            $.ajax({
+                type: "post",
+                url: "/syntax-checker/",
+                data: {'script': scriptval},
+                statusCode: {
+                    200: function(data)
+                    {
+                        if (data['error'])
+                        {
+                            $("#mainmenu-content2").html(data['error']);
+                        }
+                        else {
+                            $("#mainmenu-content2").html("Syntax OK");
+                        }
+
+                    }
+                }
+            });
+
+        })
     }
 
     $("#closed-sidemenu").hide();
@@ -271,8 +301,8 @@ $(document).ready(function () {
                     <button type="button" class="list-group-item">1</button>
                     <button type="button" class="list-group-item">1</button>
                 </ul>
+                <div id="mainmenu-content2"></div>
                 <hr>
-
                 <div id="mainmenu-buttons" class="container">
 
                 </div>

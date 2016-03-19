@@ -1,6 +1,12 @@
-from .func_mappings import *
+
 import collections
 
+try:
+    from .func_mappings import *
+except ImportError:
+    from c361.gamelogic.scripting_engine.func_mappings import *
+
+ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK'}
 
 class Node:
     def eval(self, actor):
@@ -14,16 +20,24 @@ class SymbolAtom(Node):
         if isinstance(val, collections.Hashable):
             self.symb = SYM_MAP.get(val)
             self.func = FUNC_MAP.get(val)
+        else:
+            self.symb = None
+            self.func = None
 
     def __repr__(self):
         return "SymbolAtom({})".format(self.value)
 
     def eval(self, actor):
+        if isinstance(self.value, str) and \
+                not (self.symb or self.func or self.value in ATTRIBUTES):
+            raise SyntaxError("Unknown symbol: '{}'".format(self.value))
+
         if self.func:
             return self.func
         if self.symb:
             return self.symb(actor)
         return self.value
+
 
 class Function(Node):
     def __init__(self, symbol, arguments):
@@ -41,7 +55,11 @@ class Function(Node):
                 evaluated_args[i] = arg
 
         fn = self.symbol.eval(actor)
-        return SymbolAtom(fn(actor, *evaluated_args))
+
+        try:
+            return SymbolAtom(fn(actor, *evaluated_args))
+        except Exception as e:
+            raise SyntaxError("Function error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(evaluated_args)))
 
 
 class Assignment(Node):
