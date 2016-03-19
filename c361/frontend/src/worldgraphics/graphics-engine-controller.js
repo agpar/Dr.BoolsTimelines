@@ -21,7 +21,12 @@ module.exports = Class("GraphicsEngineController", {
     'private _turn': 0,
     'private _rtarget': null,
     'private _popupStats': function (stats) {
-
+        $("div#cell-statinfo span#elevation").html(stats.elevation);
+        $("div#cell-statinfo span#cell-type").html(stats.type);
+        $("div#cell-statinfo span#heath").html(stats.contents.health);
+        $("div#cell-statinfo span#mesh").html(stats..contents.mesh);
+        $("div#cell-statinfo span#coords").html(stats.coords);
+        $("div#cell-statinfo span#type").html(stats.contents.type);
     },
     /*
     Bind key events to camera or interaction actions
