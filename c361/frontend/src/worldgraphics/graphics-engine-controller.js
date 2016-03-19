@@ -20,12 +20,34 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+
     'private _popupStats': function (stats) {
+
+        var statContentList = {
+            healthList: [],
+            typeList: []
+        }
+
+        for (var i in stats.contents) {
+            var item  = stats.contents[i];
+
+            statContentList.healthList.push({
+                "health" : item.health
+            })
+
+            statContentList.typeList.push({
+                "type" : item.type
+            })
+        }
+
         $("div#cell-statinfo span#elevation").html(stats.elevation);
         $("div#cell-statinfo span#cell-type").html(stats.type);
-        $("div#cell-statinfo span#heath").html(stats.contents.health);
+        $("div#cell-statinfo span#heath").html(statContentList.healthList.join());
         $("div#cell-statinfo span#coords").html(stats.coords);
-        $("div#cell-statinfo span#type").html(stats.contents.type);
+        $("div#cell-statinfo span#type").html(statContentList.typeList.join());
+
+
+
     },
     /*
     Bind key events to camera or interaction actions
