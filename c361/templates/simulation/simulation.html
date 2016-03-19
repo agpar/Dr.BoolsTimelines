@@ -60,6 +60,21 @@ $(document).ready(function () {
         $("#mainmenu").hide();
     });
 
+    //if 'w' or 's' anywhere on document, adding/deleting is enabled
+    $(document).keypress(function (e) {
+        console.log("Handler for .keypress() called.");
+        //119 is the keycode for 'w' AND 87 is 'W'
+        if (e.which == 119 || e.which == 87) {
+            console.log("w was pressed");
+            document.getElementById("adding").click();
+        }
+        //83 is the keycode for 'S' AND 115 is 's'
+        if (e.which == 83 || e.which == 115) {
+             console.log("s was pressed");
+            document.getElementById("deleting").click();
+        }
+
+    })
 
     //Open main menu with options for choosing a game to load.
     $("#load-game-side-btn").click(function (event){
@@ -199,93 +214,24 @@ $(document).ready(function () {
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-xs-7 fill">
-            <div class="push-to-bottom">
-                <div class = "btn-group dropup" data-toggle="buttons">
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Terrain
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-                   
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Grass
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-
-                    
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Rock
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-
-                    
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Water
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-                    
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Plant
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-                   
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Mushroom
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Wall 
-                        <span class="caret"></span>  
-                   </button>
-                   <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Block
-                        <span class="caret"></span>
-                   </button>
-                   <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-
-                    <button type = "radio" class="btn btn-default sim-ui-element dropdown-toggle" data-toggle="dropdown">
-                        Agent
-                        <span class="caret"></span>
-                   </button>
-                   <ul class="dropdown-menu"
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Add</button><li>
-                        <li><button type="radio" class="btn btn-default sim-ui-element">Delete</button><li>
-                    </ul>
-                </div>  
+    <div class="row"
+        <div class="col-xs-10">
+            <div class="toolbar-bottom">
+                <div class="btn-group">
+                    <label class="radio-inline btn btn-primary"><input type="radio" name="alter" id="adding">Add</label>
+                    <label class="radio-inline btn btn-primary"><input type="radio" name="alter" id="deleting">Delete</label>
+                </div>
+                <div class="btn-group">
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="terrainUI">Terrain</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="grassUI">Grass</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="rockUI">Rock</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="waterUI">Water</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="plantUI">Plant</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="mushroomUI">Mushroom</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="wallUI">Wall</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="blockUI">Block</label>
+                    <label class="radio-inline btn btn-default"><input type="radio" name="elementUI" id="agentUI">Agent</label>
+                </div>
             </div>
         </div>
     </div>
