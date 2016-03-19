@@ -93,6 +93,14 @@ body
     margin: 10px;
 }
 
+.toolbar-bottom {
+    position: absolute;
+    bottom: 50px;
+    left: 20px;
+    margin: 10px;
+    max-width: 60%;
+}
+
 .open-close-button {
     position: absolute;
     bottom: 50px;
