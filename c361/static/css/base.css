@@ -29,6 +29,12 @@ body
     max-height: 200px;
     overflow-y: auto;
 }
+.actor-script-input {
+    height: 300px;
+    max-height: 300px;
+    width: 100%;
+}
+
 .scrollable-menu::-webkit-scrollbar {
     -webkit-appearance: none;
     width: 4px;
