@@ -15,15 +15,32 @@ class WorldState(CoordParseMixin):
 
     def __init__(self, size=(1000,1000), json_dump=None, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         if json_dump is not None:
-            json_in = json.loads(json_dump)
-            self._size = (json_in["width"], json_in["length"])
-            self._chunk_size = json_in["chunkSize"]
-            self._water_threshold = json_in["waterThreshold"]
-            self._rock_threshold = json_in["rockThreshold"]
-            self._cells = [Cell(json_dump=cell_json) for cell_json in json_in["cells"]]
-            self._inhabitants = defaultdict(list)
-            if json_in.get("seed") is not None:
-                self._seed = json_in["seed"]
+            self._size = (json_dump["width"], json_dump["length"])
+            self._chunk_size = json_dump["chunkSize"]
+            self._water_threshold = json_dump["waterThreshold"]
+            self._rock_threshold = json_dump["rockThreshold"]
+            
+            cell_data = [
+                {
+                    "coords": (cell_json['x'], cell_json['y']),
+                    "cell": Cell(json_dump=cell_json), 
+                    "contents": cell_json["contents"]
+                } 
+
+                for cell_json in json_dump["cells"]
+            ]
+
+            self._inhabitants = {}
+            self._cells = {}
+            for pair in cell_data:
+                if pair["coords"]['x'] not in self._cells:
+                    self._cells[pair["coords"]['x']] = {}
+                
+                self._cells[pair["coords"]['x']][pair.coor["coords"]['y']] = pair["cell"]
+                self._inhabitants[pair["coords"]['x'], pair.coor["coords"]['y']] = pair["contents"]
+
+            if json_dump.get("seed") is not None:
+                self._seed = json_dump["seed"]
             else:
                 raise Exception("No seed present in JSON dump of world state.")
         else:
@@ -33,7 +50,7 @@ class WorldState(CoordParseMixin):
             self._rock_threshold = rock_threshold
             self._cells = {}
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
-            self._inhabitants = defaultdict(list)
+            self._inhabitants = {}
 
     def __getitem__(self, key):
         return self.PartialTerrainGen(self, key)
@@ -58,16 +75,49 @@ class WorldState(CoordParseMixin):
 
         if withseed:
             serialized["seed"] = self._seed
+        
+        #Force create cells with defined contents
+        for inh in self._inhabitants:
+            if inh[0] not in self._cells:
+                self._cells[inh[0]] = {}
+
+            if inh[1] not in self._cells[inh[0]]:
+                self._cells[inh[0]][inh[1]] = self.__getitem__(inh[0])[inh[1]][0]
+
+        
+        #Remove useless cells if they are equal to default terrain cell
+        delQueue = []
+        for row in self._cells:
+             for c in self._cells[row]:
+                fmt = (self._cells[row][c].x,
+                        self._cells[row][c].y)
+                
+                tgen = self._terrainGen(row,c)
+
+                if not self._inhabitants[row, c] and str(self._cells[row][c]) == str(tgen):
+                    delQueue.append((row, c))
+
+                    if not self._cells[row]:
+                        delQueue.append((row,None))
+
+        for d in delQueue:
+            del self._cells[d[0]][d[1]]
+            if d[1] is None:
+                del self._cells[d[0]]
+
 
         cell_dict = {}
         for row in self._cells:
-             for c in cells[row]:
-                 fmt = (self._cells[row][c].x,
+             for c in self._cells[row]:
+                fmt = (self._cells[row][c].x,
                         self._cells[row][c].y)
-                 cell_dict["%d %d" % fmt] = self._cells[row][c].toJson()
 
+                cell_dict["%d %d" % fmt] = self._cells[row][c].toJson()
+                cell_dict["%d %d" % fmt]["contents"] = self._inhabitants[fmt]
+        
         serialized["cells"] = cell_dict
-        return json.dumps(serialized)
+        
+        return serialized
 
     def _terrainGen(self, x, y):
         height, slope = self._computeCell(x,y)

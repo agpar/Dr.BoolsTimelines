@@ -1,10 +1,13 @@
 import json
 from functools import partial
-import json
+"""
 try:
     from .scripting_engine.script_parser import AiScriptParser
 except ImportError:
     from c361.gamelogic.scripting_engine.script_parser import AiScriptParser
+"""
+
+from scripting_engine.script_parser import AiScriptParser
 
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
                1: 'ACTOR', 2: 'PLANT', 3: 'WATER'}
@@ -161,7 +164,6 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            json_in = json.loads(json_dump)
             self.ctype = CELL_TYPES[json_in["ctype"]]
             self._coords = (json_in["coords"]["x"], json_in["coords"]["y"])
             self.elevation = json_in["elevation"]
@@ -205,7 +207,7 @@ class Cell(WorldInhabitant):
             "elevation": self.elevation
         }
 
-        return json.dumps(serialized)
+        return serialized
 
 
 class Plant(WorldInhabitant):
@@ -222,4 +224,4 @@ class Plant(WorldInhabitant):
     def toJson(self):
         to_dict = {'type': self.type, 'health': self.health,
                    'x': self.x, 'y': self.y}
-        return json.dumps(to_dict)
+        return to_dict
