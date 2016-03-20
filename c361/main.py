@@ -1,5 +1,5 @@
-from actor import Actor
-from game_instance import GameInstance
+from gamelogic.actor import Actor
+from gamelogic.game_instance import GameInstance
 import IPython
 
 """Use this file to set up tests and toy situations.
