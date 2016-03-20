@@ -80,7 +80,7 @@ $(document).ready(function () {
             document.getElementById("deleting").click();
         }
 
-    })
+    });
 
     //Open main menu with options for choosing a game to load.
     $("#load-game-side-btn").click(function (event){
@@ -107,7 +107,10 @@ $(document).ready(function () {
 
     });
 
+    $("#")
+
     $("#create-actor-side-btn").click(function(event){
+
         if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
         {
             console.log("Fetched info from cache.");
@@ -212,33 +215,173 @@ $(document).ready(function () {
                 "<button class='btn btn-default' id='new-actor-create-btn'>Create Actor</button>");
         $mainmenu.show();
 
-        $("#new-actor-validate-btn").click(function(even){
+        $("#new-actor-script").keydown(function (e)
+        {
+            if (e.keyCode !== 9)
+            {
+                return;
+            }
+            else {
+                e.preventDefault();
+            }
+
+
+            var $this, end, start, line_end, line_start;
+            start = this.selectionStart;
+            end = this.selectionEnd;
+            $this = $(this);
+            var val = $this.val();
+
+            debugger;
+
+            var i = start;
+            while (val[i] !== '\n' && i > 0)
+            {
+                i--;
+            }
+            line_start = i;
+
+            i = end;
+            while(val[i] !== '\n' && i < val.length)
+            {
+                i++
+            }
+            line_end = i;
+
+            var lines = $this.val().substring(line_start, line_end).split('\n');
+            var altered = 0;
+
+            if (e.keyCode === 9  && e.shiftKey)
+            {
+                for(var i=0; i<lines.length; i++)
+                {
+                    if(lines[i])
+                    {
+                        for(var j=0; j<lines[i].length && j < 4 && lines[i][j] ===' '; j++);
+                        altered += j;
+                        lines[i] = lines[i].substring(j);
+                    }
+                }
+                $this.val($this.val().substring(0, line_start) + lines.join("\n") + $this.val().substring(line_end));
+                if (start === end)
+                {
+                    this.selectionStart = this.selectionEnd = start-4;
+                }
+                else {
+                    this.selectionStart = start;
+                    this.selectionEnd = end - altered;
+                }
+            }
+            else if(e.keyCode === 9)
+            {
+                if(start===end)
+                {
+                    $this.val($this.val().substring(0, start) + "    " + $this.val().substring(end));
+                    this.selectionStart = this.selectionEnd = start+4;
+                    return false
+                }
+                
+                for(var i=0; i<lines.length; i++)
+                {
+                    if(lines[i])
+                    {
+                        altered += 4;
+                        lines[i] = "    " + lines[i];
+                    }
+                }
+                $this.val($this.val().substring(0, line_start) +lines.join("\n")+ $this.val().substring(line_end));
+
+                if (start === end)
+                {
+                    this.selectionStart = this.selectionEnd = start + 4;
+                }
+                else {
+                    this.selectionStart = start;
+                    this.selectionEnd = end + altered;
+                }
+
+            }
+            return false
+        });
+
+        //Validates the actor's name and script. `create` arg can be used to also create the actor.
+        function validate_newactor(create)
+        {
+            if (create == null)
+            {
+                create = false;
+            }
+
             var nameval = $("#new-actor-name").val();
             var scriptval = $("#new-actor-script").val();
             if (namehash[nameval])
             {
-                console.log("You already have an actor named " + nameval);
+                $("#mainmenu-content2").html("Error: You already have an actor named '" + nameval+"'.");
             }
+            else if (! nameval)
+            {
+                $("#mainmenu-content2").html("Error: Actor needs a name.");
+            }
+            else
+            {
+                $.ajax({
+                    type: "post",
+                    url: "/syntax-checker/",
+                    data: {'script': scriptval},
+                    statusCode: {
+                        200: function(data)
+                        {
+                            if (data['error'])
+                            {
+                                $("#mainmenu-content2").html(data['error']);
+                            }
+                            else {
+                                if(!create)
+                                {
+                                    $("#mainmenu-content2").html("Syntax OK");
+                                }
+                                else
+                                {
+                                    create_newactor()
+                                }
+                            }
+
+                        }
+                    }
+                });
+            }
+        }
+
+        function create_newactor()
+        {
+            var nameval = $("#new-actor-name").val();
+            var scriptval = $("#new-actor-script").val();
             $.ajax({
                 type: "post",
-                url: "/syntax-checker/",
-                data: {'script': scriptval},
+                url: "/actors/",
+                data: {'behaviour_script': scriptval, 'title': nameval},
                 statusCode: {
-                    200: function(data)
+                    201: function(data)
                     {
-                        if (data['error'])
-                        {
-                            $("#mainmenu-content2").html(data['error']);
-                        }
-                        else {
-                            $("#mainmenu-content2").html("Syntax OK");
-                        }
-
+                        console.log("Made it!");
+                        mainMenuCache['my-actor-names'][nameval] = True;
                     }
                 }
             });
+        }
 
+        // Listener for button to validate the actor.
+        $("#new-actor-validate-btn").click(function(event){
+            validate_newactor()
+        });
+
+        //Listener to create the new actor.
+        $("#new-actor-create-btn").click(function (event)
+        {
+            validate_newactor(true)
         })
+
+
     }
 
     $("#closed-sidemenu").hide();
@@ -269,7 +412,7 @@ $(document).ready(function () {
             <div class = "cell-statinfo sim-ui-element" id = "cell-stats" style = "display: none">
                 <button type="button" class="close" id="close-stats" onclick = "$('#cell-stats').toggle();">×</button>
                 <h2 id = "cell-header"> Cell Stats </h2>  
-                    <div class "col-xs-2 ">
+                    <div class="col-xs-2">
                         <span> Elevation: </span><span id = "elevation"> </span><hr>
                         <span> CellType: </span><span id = "cell-type">  </span><hr>
                         <span> Health: </span><span id = "health">  </span><hr>
