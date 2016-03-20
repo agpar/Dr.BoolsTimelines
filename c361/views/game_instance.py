@@ -55,5 +55,10 @@ class GameDetail(BaseDetailView):
             future = actor_proxy.do_turn(int(turn_num))
             current_turn = future.get()
             return Response("Advanced to turn {}.".format(current_turn))
+        if request.GET.get('full_dump'):
+            actor_proxy = game_instance.get_pactor_proxy()
+            future = actor_proxy.full_dump()
+            dump = future.get()
+
 
         return super().get(self, request, *args, **kwargs)

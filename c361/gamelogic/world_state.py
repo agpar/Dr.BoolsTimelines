@@ -30,7 +30,7 @@ class WorldState(CoordParseMixin):
                 for cell_json in json_dump["cells"]
             ]
 
-            self._inhabitants = {}
+            self._inhabitants = defaultdict(list)
             self._cells = {}
             for pair in cell_data:
                 if pair["coords"]['x'] not in self._cells:
@@ -50,7 +50,7 @@ class WorldState(CoordParseMixin):
             self._rock_threshold = rock_threshold
             self._cells = {}
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
-            self._inhabitants = {}
+            self._inhabitants = defaultdict(list)
 
     def __getitem__(self, key):
         return self.PartialTerrainGen(self, key)
@@ -116,7 +116,6 @@ class WorldState(CoordParseMixin):
                 cell_dict["%d %d" % fmt]["contents"] = self._inhabitants[fmt]
         
         serialized["cells"] = cell_dict
-        
         return serialized
 
     def _terrainGen(self, x, y):

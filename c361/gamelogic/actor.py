@@ -34,8 +34,6 @@ class Actor(WorldInhabitant):
             self.sleep = model.sleep
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
-            self.is_food = model.food
-            self.is_rock = model.rock
             self.script = model.behaviour_script
         else:
             self.uuid = str(uuid.uuid4())

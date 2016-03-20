@@ -32,6 +32,9 @@ class GameRunner(pykka.ThreadingActor):
         self.game_model.save()
         return self.game_model.current_turn_number
 
+    def full_dump(self):
+        return self.game_object.full_dump()
+
     def stop(self):
         cache.delete(str(self.game_uuid))
         super().stop()

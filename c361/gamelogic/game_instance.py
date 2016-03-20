@@ -1,6 +1,5 @@
 import random
 import uuid
-
 # Handle both relative and local importing schemes.
 try:
     from .actor import Actor
@@ -41,10 +40,10 @@ class GameInstance(CoordParseMixin):
             self.current_turn = 0
 
             for a in model.actors.all():
-                self.add_actor(Actor(a))
+                self.add_actor(Actor(model=a))
 
-    def __getitem__(self, item):
-        return self.world[item]
+    def __getitem__(self, key):
+        return self.world[key]
 
     def __setitem__(self, key, item):
         self.world[key] = item
@@ -274,7 +273,13 @@ class GameInstance(CoordParseMixin):
 
         return all_turns
 
-  
+    def full_dump(self):
+        d = {
+            'world': self.world.toJson(),
+            'current_turn_number': self.current_turn,
+        }
+        return d
+
 
 
 
