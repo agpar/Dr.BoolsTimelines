@@ -8961,16 +8961,24 @@ module.exports = Class("GraphicsEngineController", {
         this.startSimulationEngine()
 
         $("#simulation-render-target").click(function(evt){
-            if(this._use == "TOOL") {
-                if(this._tool == "INSPECT"){
+            if (this._tool == "CAMERA") {
+                this._camera.angularSensibilityX = 1500
+                this._camera.angularSensibilityY = 1500
+            }
+            else if(this._tool == "INSPECT") {
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
                     
                     stats = this._renderer.getCell(coords[0], coords[1])
                     console.log(stats)
                     this._popupStats(stats)
-                }
+            } 
+            else {
+                if(this._use == "ADD") {
+                
+                }  
             }
+            
         }.bind(this))
     },
     /*

@@ -65,7 +65,7 @@ def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
     global LINENO
-    LINENO += len(t.value)
+    LINENO += 1
 
 
 t_ignore_COMMENT = r'\#.*'
@@ -112,13 +112,13 @@ def p_rule_actions(p):
          | IF boolexp THEN DO actions DONE ENDIF
     """
     if len(p) == 9:
-        p[0] = IfStatement(p[2],p[4],p[6])
+        p[0] = IfStatement(LINENO, p[2],p[4],p[6])
     else:
-        p[0] = IfStatement(p[2],[],p[5])
+        p[0] = IfStatement(LINENO, p[2],[],p[5])
 
 def p_rule_inference(p):
     "rule : IF boolexp THEN inferences ENDIF"
-    p[0] = IfStatement(p[2],p[4],[])
+    p[0] = IfStatement(LINENO, p[2],p[4],[])
 
 
 def p_actions(p):
@@ -142,7 +142,7 @@ def p_function(p):
     """
     function : SYMBOL LPAREN arguments RPAREN
     """
-    p[0] = Function(SymbolAtom(p[1]), p[3])
+    p[0] = Function(LINENO, SymbolAtom(LINENO, p[1]), p[3])
 
 
 def p_inferences(p):
@@ -161,7 +161,7 @@ def p_inference(p):
     inference : SYMBOL IS boolexp
               | SYMBOL IS numexp
     """
-    p[0] = Assignment(SymbolAtom(p[1]), p[3])
+    p[0] = Assignment(LINENO, SymbolAtom(LINENO, p[1]), p[3])
 
 
 def p_arguments(p):
@@ -194,11 +194,11 @@ def p_numexp_binop(p):
             | numexp MULT numexp
             | numexp DIVIDE numexp
     """
-    p[0] = BinaryNumOperation(p[1], p[2], p[3])
+    p[0] = BinaryNumOperation(LINENO, p[1], p[2], p[3])
 
 def p_numexp_unop(p):
     "numexp : MINUS numexp %prec UMINUS"
-    p[0] = UnaryNumOperation(p[1], p[2])
+    p[0] = UnaryNumOperation(LINENO, p[1], p[2])
 
 def p_numexp_atom(p):
     """
@@ -218,7 +218,7 @@ def p_numrel(p):
            | numexp GEQT numexp
            | numexp EQ numexp
     """
-    p[0] = NumRelationship(p[1], p[2], p[3])
+    p[0] = NumRelationship(LINENO, p[1], p[2], p[3])
 
 
 def p_boolexp_binop(p):
@@ -226,11 +226,11 @@ def p_boolexp_binop(p):
     boolexp : boolexp AND boolexp
             | boolexp OR boolexp
     """
-    p[0] = BinaryBoolOperation(p[1], p[2], p[3])
+    p[0] = BinaryBoolOperation(LINENO, p[1], p[2], p[3])
 
 def p_boolexp_unop(p):
     "boolexp : NOT boolexp"
-    p[0] = UnaryBoolOperation(p[1], p[2])
+    p[0] = UnaryBoolOperation(LINENO, p[1], p[2])
 
 def p_boolexp_atom(p):
     """
@@ -241,9 +241,9 @@ def p_boolexp_atom(p):
             | numrel
     """
     if p[1] == 'true':
-        p[0] = SymbolAtom(True)
+        p[0] = SymbolAtom(LINENO, True)
     elif p[1] == 'false':
-        p[0] = SymbolAtom(False)
+        p[0] = SymbolAtom(LINENO, False)
     elif len(p) == 4:
         p[0] = p[2]
     else:
@@ -255,7 +255,7 @@ def p_lvalue(p):
            | NUMBER
            | function
     """
-    p[0] = SymbolAtom(p[1])
+    p[0] = SymbolAtom(LINENO, p[1])
 
 
 def p_error(p):
@@ -266,7 +266,13 @@ def p_error(p):
 class AiScriptParser(object):
     def __init__(self):
         yacc.yacc()
-        self.parse = yacc.parse
+    
+    def parse (self, script):
+        global LINENO
+        LINENO = 1
+        res = yacc.parse(script)
+        LINENO = 1
+        return yacc.parse(script)
 
 
 #DEMO

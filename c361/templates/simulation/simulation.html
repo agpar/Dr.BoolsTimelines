@@ -70,6 +70,8 @@ $(document).ready(function () {
         content: $('#cont').html()
     });
 
+
+    /*
     //if 'w' or 's' anywhere on document, adding/deleting is enabled
     $(document).keypress(function (e) {
         console.log("Handler for .keypress() called.");
@@ -85,6 +87,7 @@ $(document).ready(function () {
         }
 
     });
+    */
 
     //Open main menu with options for choosing a game to load.
     $("#load-game-side-btn").click(function (event){
@@ -457,14 +460,14 @@ $(document).ready(function () {
 
     </div>
     <div class="row">
-        <div class="col-xs-offset-2 col-xs-10">
+        <div class="col-xs-offset-1 col-xs-12">
             <div class="sim-ui-element toolbar-bottom">
                 <div class="btn-group">
                     <label class="modifier dark radio-inline btn btn-primary">Add/Raise</label>
                     <label class="modifier radio-inline btn btn-primary">Delete/Lower</label>
                 </div>
                 <div class="btn-group">
-                    <label class="modifier dark radio-inline btn btn-primary">Camera</label>
+                    <label class="modifier dark radio-inline btn btn-default">Camera</label>
                     <label class="tool dark radio-inline btn btn-default">Inspect</label>
                     <label class="tool radio-inline btn btn-default">Terrain</label>
                     <label class="tool radio-inline btn btn-default">Grass</label>

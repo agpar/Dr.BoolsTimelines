@@ -104,7 +104,7 @@ module.exports = Class("GraphicsEngineController", {
                 this._camera.angularSensibilityX = 1500
                 this._camera.angularSensibilityY = 1500
             }
-            else if(this._tool == "INSPECT"){
+            else if(this._tool == "INSPECT") {
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
                     
