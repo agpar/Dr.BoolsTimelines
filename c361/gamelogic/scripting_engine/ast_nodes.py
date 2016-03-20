@@ -8,9 +8,20 @@ except ImportError:
 
 ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK'}
 
+
 class Node:
     def eval(self, actor):
         raise NotImplemented
+
+    def _eval_down(self, actor, val):
+        res = val
+        while isinstance(res, Node):
+            res = res.eval(actor)
+        # If the argument is not evaluated down to a value.
+        if hasattr(res, '__call__'):
+            raise(SyntaxError("Function Error: '{}' was improperly called.".format(val.value)))
+
+        return res
 
 
 class SymbolAtom(Node):
@@ -31,7 +42,7 @@ class SymbolAtom(Node):
 
         if isinstance(self.value, str) and \
                 not (self.symb or self.func or self.value in ATTRIBUTES):
-            raise SyntaxError("Unknown symbol: '{}'".format(self.value))
+            raise SyntaxError("Unknown Symbol: '{}'".format(self.value))
 
         if self.func:
             return self.func
@@ -48,21 +59,20 @@ class Function(Node):
     def __repr__(self):
         return "{}({})".format(self.symbol.value, self.arguments)
 
+    def __str__(self):
+        return self.symbol.value
+
     def eval(self, actor):
         evaluated_args = [x.eval(actor) for x in self.arguments]
         for i, arg in enumerate(evaluated_args):
-            while isinstance(arg, Node):
-                arg = arg.eval(actor)
-                evaluated_args[i] = arg
-            if hasattr(arg, '__call__'): # If the argument is not evaluated down to a value.
-                raise(SyntaxError("Function error: '{}' was improperly called.".format(self.arguments[i].value)))
+            evaluated_args[i] = self._eval_down(actor, arg)
 
         fn = self.symbol.eval(actor)
         try:
             return SymbolAtom(fn(actor, *evaluated_args))
         except Exception as e:
             strargs = [str(arg) for arg in evaluated_args]
-            raise SyntaxError("Function error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(strargs)))
+            raise SyntaxError("Function Error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(strargs)))
 
 
 class Assignment(Node):
@@ -89,7 +99,14 @@ class BinaryNumOperation(Node):
         self.right = right
 
     def eval(self, actor):
-        return self.operation(self.left.eval(actor), self.right.eval(actor))
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+
+        try:
+            return self.operation(eleft, eright)
+        except Exception as e:
+            raise SyntaxError("Numary Operation Error: Can't combine '{}':{} with '{}':{}"
+                              .format(self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
 
 
 class NumRelationship(Node):
@@ -100,8 +117,13 @@ class NumRelationship(Node):
         self.relation = FUNC_MAP[relation]
 
     def eval(self, actor):
-        return self.relation(self.left.eval(actor), self.right.eval(actor))
-
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+        try:
+            return self.relation(eleft, eright)
+        except TypeError as e:
+            raise SyntaxError("Numary Operation Error: Can't compare '{}':{} with '{}':{}"
+                              .format(self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
 
 class UnaryNumOperation(Node):
     """Unary operation on a number (such as negating) """
@@ -110,10 +132,11 @@ class UnaryNumOperation(Node):
         self.operand = operand
 
     def eval(self, actor):
+        eop = self._eval_down(actor, self.operand)
         if self.operation == '+':
-            return abs(self.operand.eval(actor))
+            return abs(eop)
         elif self.operation == '-':
-            return -(self.operand.eval(actor))
+            return -(eop)
 
 
 class BinaryBoolOperation(Node):
@@ -124,7 +147,9 @@ class BinaryBoolOperation(Node):
         self.right = right
 
     def eval(self, actor):
-        return self.operation(self.left.eval(actor), self.right.eval(actor))
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+        return self.operation(eleft, eright)
 
 
 class UnaryBoolOperation(Node):
@@ -134,5 +159,7 @@ class UnaryBoolOperation(Node):
         self.operand = operand
 
     def eval(self, actor):
+        eop = self._eval_down(actor, self.operand)
+
         if self.operation == 'not':
-            return not self.operand.eval(actor)
+            return not eop

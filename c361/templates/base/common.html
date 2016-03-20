@@ -14,6 +14,8 @@
     <meta name="mesh-dir" content="{% static 'mesh/' %}">
     <!-- Bootstrap core CSS -->
     <link href="{% static 'lib/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
+    <link href="{% static 'lib/linedtextarea/jquery-linedtextarea.css' %}" rel="stylesheet">
+
 
     <!-- Custom styles for this template -->
     <link href="{% static 'css/base.css' %}" rel="stylesheet">
@@ -22,6 +24,7 @@
     <script src="{% static 'lib/bootstrap/js/bootstrap.js' %}"></script>
     <script src="{% static 'lib/Babylon/babylon.2.3.js' %}"></script>
     <script src="{% static 'js/sim-engine.js' %}"></script>
+    <script src="{% static 'lib/linedtextarea/jquery-linedtextarea.js' %}"></script>
     <script>
         $.ajaxSetup({
             beforeSend: function(xhr, settings) {
