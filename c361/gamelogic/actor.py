@@ -66,7 +66,6 @@ class Actor(WorldInhabitant):
 
     def do_turn(self):
         self._turn_stat_change()
-        # TODO Replace this placeholder with actions based on a parsed behaviour script.
         return self.behaviours.get_action(self)
 
     def _turn_stat_change(self):
@@ -126,43 +125,16 @@ class Actor(WorldInhabitant):
                 "to": self.hunger + self.is_food
             }]
 
-    def walk(self):
-        if self.direction == "NORTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "_coords",
-                "from": self._coords,
-                "to": self.north()
-            }
-        elif self.direction == "EAST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "_coords",
-                "from": self._coords,
-                "to": self.east()
-            }
-        elif self.direction == "WEST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "_coords",
-                "from": self._coords,
-                "to": self.west()
-            }
-        elif self.direction == "SOUTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  #Used instead of coords
-                "varTarget": "_coords",
-                "from": self._coords,
-                "to": self.south()
-            }
+    def walk(self, direction):
+        """Return a delta for walking in direction."""
+        return {
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "_coords",
+            "from": self._coords,
+            "to": self.get_coord(direction)
+        }
 
     def turn_right(self):
         if self.direction == "NORTH":
@@ -243,7 +215,9 @@ class Actor(WorldInhabitant):
     def face_direction(self, direction):
         """Return a delta to face the direction."""
         if direction not in DIRECTIONS:
-            raise SyntaxError("Can not face direciton '{}'".format(direction))
+            raise SyntaxError("Can not face direction '{}'".format(direction))
+        if self.direction == direction:
+            return None
         return {
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},

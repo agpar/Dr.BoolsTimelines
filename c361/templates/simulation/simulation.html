@@ -13,6 +13,7 @@ $(document).ready(function () {
                          'my-actors-names': null};
     var $mainmenu = $("#mainmenu");
     var $mainmenu_content = $("#mainmenu-content");
+    var $mainmenu_content2 = $("#mainmenu-content2");
     var $mainmenu_scroller = $("#mainmenu-scroller");
     var $mainmenu_buttons = $("#mainmenu-buttons");
     var $mainmenu_header = $("#mainmenu-header");
@@ -150,15 +151,60 @@ $(document).ready(function () {
 
     });
 
+    $("#modify-actor-side-btn").click(function (event){
+        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
+        {
+            console.log("Fetched info from cache.");
+            setup_modifyactor_select_menu(mainMenuCache['my-actors'], mainMenuCache['my-actors-names']);
+        }
+        else
+        {
+            $.ajax({
+                type: "get",
+                url: "/actors/mine",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        //Save data in cache.
+                        console.log("Fetched info from Ajax.");
+                        console.log(data);
+                        set_cache('my-actors', data);
+
+                        //Hash and set names of actors.
+                        var namehash = {};
+                        for(var i = 0; i < data.length; i++)
+                        {
+                            namehash[data[i]['title']] = true;
+                        }
+                        set_cache('my-actors-names', namehash);
+                        set_cache('my-actors', data);
+
+                        setup_modifyactor_select_menu(data);
+                    }
+                }
+            });
+        }
+
+    });
+
 
     //Use a dict to hold on to results for 30 seconds.
-    function set_cache(key, value)
+    function set_cache(key, value, expire)
     {
-        mainMenuCache[key] = value;
-        window.setTimeout(function()
+        if(expire === null)
         {
-            mainMenuCache[key] = null;
-        }, 30000);
+            expire = true;
+        }
+
+        mainMenuCache[key] = value;
+        if (expire)
+        {
+            window.setTimeout(function()
+            {
+                mainMenuCache[key] = null;
+            }, 30000);
+        }
     }
     //In-case the cache needs to be cleared immediately.
     function clear_cache(key)
@@ -169,6 +215,8 @@ $(document).ready(function () {
     //Flush all html from the main menu.
     function flush_mainmenu()
     {
+        $mainmenu_header.html("");
+        $mainmenu_content2.html("");
         $mainmenu_content.html("");
         $mainmenu_buttons.html("");
         $mainmenu_scroller.html("");
@@ -212,14 +260,102 @@ $(document).ready(function () {
         lines.push("<input type='text' class='form-control' id='new-actor-name' placeholder='Geoffry'>");
         lines.push("</div><br>");
         lines.push("<b>Behaviour Script</b><br>");
-        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'>if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nendif</textarea>");
+        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'></textarea>");
+        $mainmenu_content.html(lines.join(""));
 
         $mainmenu_header.html("Create Actor");
-        $mainmenu_content.html(lines.join(""));
         $mainmenu_buttons.html("<button class='btn btn-default' id='new-actor-validate-btn'>Validate Script</button>" +
                 "<button class='btn btn-default' id='new-actor-create-btn'>Create Actor</button>");
         $mainmenu.show();
+        $("#new-actor-script").val("if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nendif");
+        make_actor_editor();
 
+
+        //Validates the actor's name and script. `create` arg can be used to also create the actor.
+
+
+        // Listener for button to validate the actor.
+        $("#new-actor-validate-btn").click(function(event){
+            validate_newactor({'create': false})
+        });
+
+        //Listener to create the new actor.
+        $("#new-actor-create-btn").click(function (event)
+        {
+            validate_newactor({'create': true})
+        })
+    }
+
+    //Sets up a menu for selecting from one of your existing actors.
+    function setup_modifyactor_select_menu(data)
+    {
+        var actor_list = [];
+        for (var i = 0; i < data.length; i++)
+        {
+            actor_list.push("<button type='button' class='list-group-item modifyable-actor-select' " +
+                    "id='modifyable-actor-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
+        }
+        if (actor_list.length == 0)
+        {
+            $mainmenu_content = "You have no actors to modify!";
+        }
+
+        flush_mainmenu();
+        $mainmenu_header.html("Modify an Actor");
+        $mainmenu_scroller.html(actor_list.join(""));
+        $mainmenu.show();
+
+
+        $(".modifyable-actor-select").click(function(event){
+            setup_modifyactor_edit_menu(event.target.id)
+        })
+    }
+    function setup_modifyactor_edit_menu(target_id)
+    {
+        var actor_id = target_id.slice(17);
+        var original_name = null;
+
+        $mainmenu_scroller.html("");
+        var lines = [];
+        lines.push("<div class='input-group'>");
+        lines.push("<span class='input-group-addon'>Actor Name</span>");
+        lines.push("<input type='text' class='form-control' id='new-actor-name' placeholder='Geoffry'>");
+        lines.push("</div><br>");
+        lines.push("<b>Behaviour Script</b><br>");
+        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'></textarea>");
+        $mainmenu_buttons.html("<button class='btn btn-default' id='new-actor-validate-btn'>Validate Script</button>" +
+                "<button class='btn btn-default' id='new-actor-create-btn'>Modify Actor</button>");
+        $mainmenu_content.html(lines.join(""));
+        make_actor_editor();
+
+        $.ajax({
+            type: "get",
+            url: "/actor/"+actor_id,
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    console.log(data);
+                    $("#new-actor-name").val(data['title']);
+                    original_name = data['title'];
+                    $("#new-actor-script").val(data['behaviour_script']);
+                }
+            }
+        });
+        $("#new-actor-validate-btn").click(function(event)
+        {
+            validate_newactor({'original_name': original_name})
+
+        });
+        $("#new-actor-create-btn").click(function(event)
+        {
+            validate_newactor({'original_name': original_name, 'url': "/actor/"+actor_id})
+        })
+    }
+
+    function make_actor_editor()
+    {
+        $("#new-actor-script").linedtextarea();
         $("#new-actor-script").keydown(function (e)
         {
             if (e.keyCode !== 9)
@@ -230,14 +366,11 @@ $(document).ready(function () {
                 e.preventDefault();
             }
 
-
             var $this, end, start, line_end, line_start;
             start = this.selectionStart;
             end = this.selectionEnd;
             $this = $(this);
             var val = $this.val();
-
-            debugger;
 
             var i = start;
             while (val[i] !== '\n' && i > 0)
@@ -308,87 +441,96 @@ $(document).ready(function () {
             }
             return false
         });
+    }
 
-        //Validates the actor's name and script. `create` arg can be used to also create the actor.
-        function validate_newactor(create)
+    function create_newactor()
+    {
+        var nameval = $("#new-actor-name").val();
+        var scriptval = $("#new-actor-script").val();
+        $.ajax({
+            type: "post",
+            url: "/actors/",
+            data: {'behaviour_script': scriptval, 'title': nameval},
+            statusCode: {
+                201: function(data)
+                {
+                    $mainmenu_content2.html("Created actor!");
+                    mainMenuCache['my-actors'] = null;
+                    mainMenuCache['my-actors-names'] = null;
+                }
+            }
+        });
+    }
+    function modify_actor(name, script, url) {
+        $.ajax({
+            type: "patch",
+            url: url,
+            data: {'title': name, 'behaviour_script': script},
+            statusCode: {
+                202: function (data) {
+                    console.log(data);
+                    $mainmenu_content2.html("Updated Successfully!!");
+                    mainMenuCache['my-actors'] = null;
+                    mainMenuCache['my-actors-names'] = null;
+                }
+            }
+        });
+    }
+
+    function validate_newactor(modify_dict)
+    {
+
+        if(modify_dict === null)
         {
-            if (create == null)
-            {
-                create = false;
-            }
-
-            var nameval = $("#new-actor-name").val();
-            var scriptval = $("#new-actor-script").val();
-
-            if (namehash[nameval])
-            {
-                $("#mainmenu-content2").html("Error: You already have an actor named '" + nameval+"'.");
-            }
-            else if (! nameval)
-            {
-                $("#mainmenu-content2").html("Error: Actor needs a name.");
-            }
-            else
-            {
-                $.ajax({
-                    type: "post",
-                    url: "/syntax-checker/",
-                    data: {'script': scriptval},
-                    statusCode: {
-                        200: function(data)
-                        {
-                            if (data['error'])
-                            {
-                                $("#mainmenu-content2").html(data['error']);
-                            }
-                            else {
-                                if(!create)
-                                {
-                                    $("#mainmenu-content2").html("Syntax OK");
-                                }
-                                else
-                                {
-                                    create_newactor()
-                                }
-                            }
-
-                        }
-                    }
-                });
-            }
+            modify_dict = {};
         }
 
-        function create_newactor()
+        var namehash = mainMenuCache['my-actors-names'];
+        var nameval = $("#new-actor-name").val();
+        var scriptval = $("#new-actor-script").val();
+
+        if (namehash[nameval] && nameval != modify_dict['original_name'])
         {
-            var nameval = $("#new-actor-name").val();
-            var scriptval = $("#new-actor-script").val();
+            $mainmenu_content2.html("Error: You already have an actor named '" + nameval+"'.");
+        }
+        else if (! nameval)
+        {
+            $mainmenu_content2.html("Error: Actor needs a name.");
+        }
+        else
+        {
+
             $.ajax({
                 type: "post",
-                url: "/actors/",
-                data: {'behaviour_script': scriptval, 'title': nameval},
+                url: "/syntax-checker/",
+                data: {'script': scriptval},
                 statusCode: {
-                    201: function(data)
+                    200: function(data)
                     {
-                        console.log("Made it!");
-                        mainMenuCache['my-actor-names'][nameval] = True;
+                        if (data['error'])
+                        {
+                            $mainmenu_content2.html(data['error']);
+                        }
+                        else
+                        {
+                            if(modify_dict['create']) {
+                                create_newactor()
+                            }
+                            else if (modify_dict['url'])
+                            {
+                                modify_actor(nameval, scriptval, modify_dict['url'])
+                            }
+                            else
+                            {
+                                $mainmenu_content2.html("Syntax OK");
+                            }
+                        }
                     }
                 }
             });
         }
-
-        // Listener for button to validate the actor.
-        $("#new-actor-validate-btn").click(function(event){
-            validate_newactor()
-        });
-
-        //Listener to create the new actor.
-        $("#new-actor-create-btn").click(function (event)
-        {
-            validate_newactor(true)
-        })
-
-
     }
+
     $("#mainmenu").hide();
     $("#closed-sidemenu").hide();
     $("#opened-actorinfo").hide();
@@ -413,12 +555,6 @@ $(document).ready(function () {
             <button type="button" class="close" id="close-mainmenu">×</button>
             <h3 id="mainmenu-header">Main Menu </h3>
             <hr>
-            <div id="mainmenu-content">
-                <ul>
-                    <li>First thing.</li>
-                    <li>Next thing.</li>
-                </ul>
-            </div>
             <ul class="list-group scrollable-menu" id="mainmenu-scroller">
                 <button type="button" class="list-group-item">1</button>
                 <button type="button" class="list-group-item">1</button>
@@ -429,6 +565,13 @@ $(document).ready(function () {
                 <button type="button" class="list-group-item">1</button>
                 <button type="button" class="list-group-item">1</button>
             </ul>
+            <div id="mainmenu-content">
+                <ul>
+                    <li>First thing.</li>
+                    <li>Next thing.</li>
+                </ul>
+            </div>
+
             <div id="mainmenu-content2"></div>
             <hr>
             <div id="mainmenu-buttons" class="container">
@@ -444,7 +587,7 @@ $(document).ready(function () {
             <button class="btn btn-default btn-sidemenu">Spectate Game</button>
             <hr>
             <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
-            <button class="btn btn-default btn-sidemenu">Modify Actor</button>
+            <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
             <button class="btn btn-default btn-sidemenu">Add Actor</button>
             <button class="btn btn-default btn-sidemenu">Add Plants/Obstacles</button>
             <hr>

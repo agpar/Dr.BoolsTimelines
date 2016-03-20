@@ -19,7 +19,7 @@ class Node:
             res = res.eval(actor)
         # If the argument is not evaluated down to a value.
         if hasattr(res, '__call__'):
-            raise(SyntaxError("Line {} Function Error: '{}' was improperly called.".format(self.line, val.value)))
+            raise(SyntaxError("Line: {} Function Error: '{}' was improperly called.".format(self.line, val.value)))
 
         return res
 
@@ -43,7 +43,7 @@ class SymbolAtom(Node):
 
         if isinstance(self.value, str) and \
                 not (self.symb or self.func or self.value in ATTRIBUTES):
-            raise SyntaxError("Line {} Unknown Symbol: '{}'".format(self.line, self.value))
+            raise SyntaxError("Line: {} Unknown Symbol: '{}'".format(self.line, self.value))
 
         if self.func:
             return self.func
@@ -74,7 +74,7 @@ class Function(Node):
             return SymbolAtom(self.line, fn(actor, *evaluated_args))
         except Exception as e:
             strargs = [str(arg) for arg in evaluated_args]
-            raise SyntaxError("Line {} Function Error: '{}' is not compatible with arguments ({}) ".format(self.line, self.symbol.value, ",".join(strargs)))
+            raise SyntaxError("Line: {} Function Error: '{}' is not compatible with arguments ({}) ".format(self.line, self.symbol.value, ",".join(strargs)))
 
 
 class Assignment(Node):
@@ -110,7 +110,7 @@ class BinaryNumOperation(Node):
         try:
             return self.operation(eleft, eright)
         except Exception as e:
-            raise SyntaxError("Line {} Numary Operation Error: Can't combine '{}':{} with '{}':{}"
+            raise SyntaxError("Line: {} Numary Operation Error: Can't combine '{}':{} with '{}':{}"
                               .format(self.line, self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
 
 
@@ -128,8 +128,9 @@ class NumRelationship(Node):
         try:
             return self.relation(eleft, eright)
         except TypeError as e:
-            raise SyntaxError("Line {} Numary Operation Error: Can't compare '{}':{} with '{}':{}"
+            raise SyntaxError("Line: {} Numary Operation Error: Can't compare '{}':{} with '{}':{}"
                               .format(self.line, self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
+
 
 class UnaryNumOperation(Node):
     """Unary operation on a number (such as negating) """

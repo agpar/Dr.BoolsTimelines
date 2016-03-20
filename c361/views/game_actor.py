@@ -1,5 +1,6 @@
 import re
 from django.http import HttpResponseRedirect
+from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -28,11 +29,30 @@ class ActorList(BaseListCreateView):
     model = GameActorModel
     serializer_class = GameActorFullSerializer
 
+    def post(self, request, *args, **kwargs):
+        inpt = request.POST
+        d = {
+            'title': inpt['title'],
+            'behaviour_script': inpt['behaviour_script'],
+            'creator': request.user
+        }
+        g = GameActorModel(**d)
+        g.save()
+        return Response(status=HTTP_201_CREATED)
+
 
 class ActorDetail(BaseDetailView):
     """View for detail of specific actor."""
     model = GameActorModel
     serializer_class = GameActorFullSerializer
+
+    def patch(self, request, *args, **kwargs):
+        changes = request.POST
+        act = super().get_object()
+        act.title = changes['title']
+        act.behaviour_script = changes['behaviour_script']
+        act.save()
+        return Response(status=HTTP_202_ACCEPTED)
 
 
 class ScriptSyntaxChecker(APIView):
@@ -56,17 +76,11 @@ class ScriptSyntaxChecker(APIView):
 
         # Our custom written functions throw a SyntaxError when things go bad.
         except SyntaxError as e:
-            badsyntax = re.findall("'([^']*)'", str(e))
-            if not badsyntax:
-                return Response({'error': "Unknown error! '{}'".format(e)})
+            if "Line: " in str(e):
+                return Response({"error":  str(e)})
             else:
-                badsyntax = badsyntax[0]
+                return Response({'error': "Unknown error! '{}'".format(e)})
 
-            for i, l in enumerate(lines):
-                if badsyntax in l:
-                    break
-
-            return Response({"error":  "Line {}: {}".format(i+1, e)})
         # Our parser library throws unspecified Exceptions :/
         except Exception as e:
             badsyntax = re.findall("'([^']*)'", str(e))

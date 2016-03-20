@@ -114,31 +114,34 @@ def direction_fn(actor, xy, y=None):
     return actor.direction_to((xy, y))
 
 
-
 def nearest_fn(actor, attr):
     """Call from script like:
 
     nearest(ATTRIBUTE)
 
-    :return
+    :return A two-tuple coordinate.
     """
     return actor.gameInstance.find_nearest(actor, attr)
 
 
 def walk_fn(actor, direction):
+    """Return delta for walking in some direction.
+
+    :param actor: An actor to walk.
+    :param direction: A constant (or list of) from globals.DIRECTIONS.
+    """
 
     if isinstance(direction, str):
-        if actor.can_walk(direction):
-            import pdb
-            pdb.set_trace()
-            deltas = []
-            deltas.append(actor.face_direction(direction))
-            deltas.append(actor.walk())
-            return deltas
+        direction = [direction]
+
     if isinstance(direction, list):
         for dir in direction:
-            if actor.gameInstance.can_walk(actor, dir):
-                return actor.walk()
+            if actor.can_walk(dir):
+                deltas = []
+                deltas.append(actor.face_direction(dir))
+                deltas.append(actor.walk(dir))
+                return deltas
+
 
 
 FUNC_MAP = {
