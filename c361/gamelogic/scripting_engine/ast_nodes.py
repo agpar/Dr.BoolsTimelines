@@ -26,7 +26,8 @@ class Node:
 
 class SymbolAtom(Node):
     """A node which holds a single symbol."""
-    def __init__(self, val):
+    def __init__(self, line, val):
+        self.line = line
         self.value = val
         if isinstance(val, collections.Hashable):
             self.symb = SYM_MAP.get(val)
@@ -42,7 +43,7 @@ class SymbolAtom(Node):
 
         if isinstance(self.value, str) and \
                 not (self.symb or self.func or self.value in ATTRIBUTES):
-            raise SyntaxError("Unknown Symbol: '{}'".format(self.value))
+            raise SyntaxError("Line {}: Unknown Symbol: '{}'".format(self.line, self.value))
 
         if self.func:
             return self.func
@@ -52,7 +53,8 @@ class SymbolAtom(Node):
 
 
 class Function(Node):
-    def __init__(self, symbol, arguments):
+    def __init__(self, line, symbol, arguments):
+        self.line = line
         self.symbol = symbol
         self.arguments = arguments
 
@@ -76,13 +78,15 @@ class Function(Node):
 
 
 class Assignment(Node):
-    def __init__(self, symbol, value):
+    def __init__(self, line, symbol, value):
+        self.line = line
         self.symbol = symbol
         self.value = value
 
 
 class IfStatement(Node):
-    def __init__(self, condition, inferences, actions):
+    def __init__(self, line, condition, inferences, actions):
+        self.line = line
         self.condition = condition
         self.inferences = inferences
         self.actions = actions
@@ -93,7 +97,8 @@ class IfStatement(Node):
 
 
 class BinaryNumOperation(Node):
-    def __init__(self, left, operation, right):
+    def __init__(self, line, left, operation, right):
+        self.line = line
         self.left = left
         self.operation = FUNC_MAP[operation]
         self.right = right
@@ -111,7 +116,8 @@ class BinaryNumOperation(Node):
 
 class NumRelationship(Node):
     """Evaluate a relationship between two numbers to True or False."""
-    def __init__(self, left, relation, right):
+    def __init__(self, line, left, relation, right):
+        self.line = line
         self.left = left
         self.right = right
         self.relation = FUNC_MAP[relation]
@@ -127,7 +133,8 @@ class NumRelationship(Node):
 
 class UnaryNumOperation(Node):
     """Unary operation on a number (such as negating) """
-    def __init__(self, operation, operand):
+    def __init__(self, line, operation, operand):
+        self.line = line
         self.operation = operation
         self.operand = operand
 
@@ -141,10 +148,12 @@ class UnaryNumOperation(Node):
 
 class BinaryBoolOperation(Node):
     """Evaluate a boolean statement to True or False"""
-    def __init__(self, left, operation, right):
+    def __init__(self, line, left, operation, right):
+        self.line = line
         self.left = left
         self.operation = FUNC_MAP[operation]
         self.right = right
+
 
     def eval(self, actor):
         eleft = self._eval_down(actor, self.left)
@@ -154,7 +163,8 @@ class BinaryBoolOperation(Node):
 
 class UnaryBoolOperation(Node):
     """Not or other unary boolean operators (are there others)?"""
-    def __init__(self, operation, operand):
+    def __init__(self, line, operation, operand):
+        self.line = line
         self.operation = operation
         self.operand = operand
 

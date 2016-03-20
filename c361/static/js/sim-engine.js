@@ -8881,23 +8881,28 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+    'private _tool': "INSPECT",
+    'private _use': "CAMERA",
 
     'private _popupStats': function (stats) {
+        $('#cell-stats').show()
 
+        $("div#cell-stats span#elevation").html(Math.round(100*stats.elevation)/100 + " meters");
+        $("div#cell-stats span#cell-type").html(stats.type);
+        $("div#cell-stats span#coords").html(stats.coords);
+        $("div#cell-stats div#stat-listing").empty();
+        $("div#cell-stats div#stat-listing").append("<h4>Contents:</h4>");
 
-        $("div#cell-statinfo span#elevation").html(stats.elevation);
-        $("div#cell-statinfo span#cell-type").html(stats.type);
-        $("div#cell-statinfo span#coords").html(stats.coords);
+        for (var i in stats.contents) {
+            var cont = stats.contents[i];
+            var element = $("<div class='cell-content-list'> </div>");
+            var health = cont.health;
+            var type = cont.type;
 
-        for (var i in stats.content){
-            var element = $("<div class='content-list' style='border: 2px solid black'> </div>");
-            var health = i.health;
-            var type = i.type;
-
-            $("<span> Type: </span><span id='type'>" + type + "</span>").appendTo(element);
+            $("<span> Type: </span><span id='type'>" + type + "</span><br>").appendTo(element);
             $("<span> Health: </span><span id='health'>" + health + "</span>").appendTo(element);
 
-            $("#stat-listing").append(element);
+            $("div#stat-listing").append(element);
         }
     },
     /*
@@ -8954,6 +8959,19 @@ module.exports = Class("GraphicsEngineController", {
 
         this._setupKeys(scene)
         this.startSimulationEngine()
+
+        $("#simulation-render-target").click(function(evt){
+            if(this._use == "TOOL") {
+                if(this._tool == "INSPECT"){
+                    var picked = scene.pick(evt.clientX, evt.clientY)
+                    var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
+                    
+                    stats = this._renderer.getCell(coords[0], coords[1])
+                    console.log(stats)
+                    this._popupStats(stats)
+                }
+            }
+        }.bind(this))
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -9199,12 +9217,12 @@ module.exports =  Class("WorldRenderer", {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
-                        if(cell.mesh != undefined)
-                            cell.mesh.dispose()
                         for(c in cell.contents) {
                             if(c.mesh != undefined)
                                 c.mesh.dispose()
                         }
+                        if(cell.mesh != undefined)
+                            cell.mesh.dispose()
                         cell = chunk[row].pop()
                     }
                 }
@@ -9241,6 +9259,7 @@ module.exports =  Class("WorldRenderer", {
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
                         "type": "MUSH",
+                        "health": 50,
                         "mesh": undefined
                     })
                 }
@@ -9410,6 +9429,9 @@ module.exports =  Class("WorldRenderer", {
             grad: gradient
         }
     },
+    'public setInspectionMode': function (mode) {
+        this._inspect = mode;
+    },
     /*
     Render the geometry in the scene.
     */
@@ -9530,6 +9552,8 @@ module.exports =  Class("WorldRenderer", {
                     cont.mesh = this._proto[cont["type"]]
                                     .createInstance(cellx + " " + celly + " " + cont["type"])
                     cont.mesh.position = new BABYLON.Vector3(meshx, cell["elevation"]/2, meshz)
+
+                    cont.mesh.isPickable = false;
                 }
 
                 cell["mesh"] = mesh

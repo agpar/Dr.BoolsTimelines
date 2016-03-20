@@ -61,12 +61,12 @@ module.exports =  Class("WorldRenderer", {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
-                        if(cell.mesh != undefined)
-                            cell.mesh.dispose()
                         for(c in cell.contents) {
                             if(c.mesh != undefined)
                                 c.mesh.dispose()
                         }
+                        if(cell.mesh != undefined)
+                            cell.mesh.dispose()
                         cell = chunk[row].pop()
                     }
                 }
@@ -103,6 +103,7 @@ module.exports =  Class("WorldRenderer", {
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
                         "type": "MUSH",
+                        "health": 50,
                         "mesh": undefined
                     })
                 }
@@ -272,6 +273,9 @@ module.exports =  Class("WorldRenderer", {
             grad: gradient
         }
     },
+    'public setInspectionMode': function (mode) {
+        this._inspect = mode;
+    },
     /*
     Render the geometry in the scene.
     */
@@ -392,6 +396,8 @@ module.exports =  Class("WorldRenderer", {
                     cont.mesh = this._proto[cont["type"]]
                                     .createInstance(cellx + " " + celly + " " + cont["type"])
                     cont.mesh.position = new BABYLON.Vector3(meshx, cell["elevation"]/2, meshz)
+
+                    cont.mesh.isPickable = false;
                 }
 
                 cell["mesh"] = mesh

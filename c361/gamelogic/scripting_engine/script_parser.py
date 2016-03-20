@@ -49,6 +49,8 @@ t_GEQT   = r'>='
 t_EQ     = r'=='
 
 
+LINENO = 1
+
 def t_SYMBOL(t):
     r'[a-zA-Z][a-zA-Z0-9]*'
     t.type = reserved.get(t.value, 'SYMBOL')
@@ -62,6 +64,8 @@ def t_NUMBER(t):
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+    global LINENO
+    LINENO += len(t.value)
 
 
 t_ignore_COMMENT = r'\#.*'
