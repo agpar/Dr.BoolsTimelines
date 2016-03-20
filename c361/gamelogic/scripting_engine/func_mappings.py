@@ -108,7 +108,7 @@ def direction_fn(actor, xy, y=None):
 
     :return List of directions to the coord.
     """
-    if not y:
+    if y == None:
         xy, y = xy
     return actor.direction_to((xy, y))
 
