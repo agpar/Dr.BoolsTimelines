@@ -262,19 +262,22 @@ $(document).ready(function () {
                 <button class="btn btn-default" id="close-actorinfo">Close</button>
             </div>
 
-<!--             <div class = "cell-click sim-ui-element" id = "cell-click">
+            <div class = "cell-click sim-ui-element" id = "cell-click">
                 <button class = "btn btn-default" id = "Button" data-toggle = "popover"> Cell </button>
-            </div> -->
+            </div>
 
             <div class = "cell-statinfo sim-ui-element" id = "cell-stats" style = "display: none">
                 <button type="button" class="close" id="close-stats" onclick = "$('#cell-stats').toggle();">×</button>
-                <h2 id = "cell-header"> Cell Stats </h2>  
-                    <div class "col-xs-2 ">
+                <h4 id = "cell-header"> Cell Stats </h4>  
+                    <div class "col-xs-2 " id = "stat-listing">
                         <span> Elevation: </span><span id = "elevation"> </span><hr>
                         <span> CellType: </span><span id = "cell-type">  </span><hr>
-                        <span> Health: </span><span id = "health">  </span><hr>
                         <span> Coords: </span><span id = "coords">  </span><hr>
-                        <span> Type: </span><span id = "type">  </span>
+                        <h5 id = "content-header"> Contents </h5>
+                        <div class "content-list" id = "content-list" style="border: 2px solid black">
+                            <span> Type: </span><span id = "type">  </span><p>
+                            <span> Health: </span><span id = "health">  </span>
+                        </div>
                     </div>
             </div>
         </div>
