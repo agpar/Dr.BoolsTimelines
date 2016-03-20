@@ -265,7 +265,7 @@ $(document).ready(function () {
                 $this.val($this.val().substring(0, line_start) + lines.join("\n") + $this.val().substring(line_end));
                 if (start === end)
                 {
-                    this.selectionStart = this.selectionEnd = start-4;
+                    this.selectionStart = this.selectionEnd = start-altered;
                 }
                 else {
                     this.selectionStart = start;
@@ -280,7 +280,7 @@ $(document).ready(function () {
                     this.selectionStart = this.selectionEnd = start+4;
                     return false
                 }
-                
+
                 for(var i=0; i<lines.length; i++)
                 {
                     if(lines[i])
