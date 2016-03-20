@@ -41,6 +41,7 @@ class ScriptSyntaxChecker(APIView):
         aiscript = request.POST['script']
         lines = aiscript.split("\n")
 
+        aiscript = "\n".join(lines)
         # Check for flagrant syntax errors.
         try:
             res = PARSER.parse(aiscript)

@@ -28,13 +28,13 @@ module.exports = Class("GraphicsEngineController", {
         $("div#cell-statinfo span#cell-type").html(stats.type);
         $("div#cell-statinfo span#coords").html(stats.coords);
 
-        for (var i in stats.content){
-            var element = $("<div class "content-list" style="border: 2px solid black"> </div>");
+        for (var i in stats.content) {
+            var element = $("<div class='content-list' style='border: 2px solid black'> </div>");
             var health = i.health;
             var type = i.type;
 
-            $("<span> Type: </span><span id = "type">" + type + "</span><p>").appendTo(element);
-            $("<span> Health: </span><span id = "health">" + health + "</span>").appendTo(element);
+            $("<span> Type: </span><span id='type'>" + type + "</span>").appendTo(element);
+            $("<span> Health: </span><span id='health'>" + health + "</span>").appendTo(element);
 
             $("#stat-listing").append(element);
         }

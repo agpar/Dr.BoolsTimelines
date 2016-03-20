@@ -8855,69 +8855,8 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
-
-    //Open the actorInfo on the page.
-    $("#open-actorinfo").click(function (event){
-        $("#opened-actorinfo").show();
-        $("#closed-actorinfo").hide();
-        // $.ajax({
-        //     type: "get",
-        //     url: "/actors",
-        //     contentType:"application/json",
-        //     statusCode: {
-        //         200: function(data)
-        //         {
-        //             $("#actorinfo-content").html(JSON.stringify(data, null, 4));
-        //             $("#actorinfo").show();
-        //             console.log(data);
-        //         }
-        //     }
-        // })
-    });
-
-    //Close the actorInfo on the page
-    $("#close-actorinfo").click(function (event){
-        $("#opened-actorinfo").hide();
-        $("#closed-actorinfo").show();
-    });
-
-    //Close the sidemenu on the page.
-    $("#close-sidemenu").click(function (event){
-        $("#opened-sidemenu").hide();
-        $("#closed-sidemenu").show();
-
-    });
-
-    //Open the sideemnu on the page.
-    $("#open-sidemenu").click(function (event){
-        $("#opened-sidemenu").show();
-        $("#closed-sidemenu").hide();
-    });
-
-    //Tiny button for closing the mainmenu.
-    $("#close-mainmenu").click(function (event){
-        $("#mainmenu").hide();
-    });
-
-    $("#load-game-side-btn").click(function (event){
-        $("#mainmenu-header").html("Load a Game");
-        $.ajax({
-            type: "get",
-            url: "/games/mine",
-            contentType:"application/json",
-            statusCode: {
-                200: function(data)
-                {
-                    $("#mainmenu-content").html(JSON.stringify(data, null, 4));
-                    $("#mainmenu").show();
-                    console.log(data);
-                }
-            }
-        })
-    });
-    $("#closed-sidemenu").hide();
-    $("#opened-actorinfo").hide();
-})
+    
+});
 
 },{"./worldgraphics/graphics-engine-controller":35}],35:[function(require,module,exports){
 var Class = require("easejs").Class
@@ -8942,8 +8881,24 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
+
     'private _popupStats': function (stats) {
 
+
+        $("div#cell-statinfo span#elevation").html(stats.elevation);
+        $("div#cell-statinfo span#cell-type").html(stats.type);
+        $("div#cell-statinfo span#coords").html(stats.coords);
+
+        for (var i in stats.content){
+            var element = $("<div class='content-list' style='border: 2px solid black'> </div>");
+            var health = i.health;
+            var type = i.type;
+
+            $("<span> Type: </span><span id='type'>" + type + "</span>").appendTo(element);
+            $("<span> Health: </span><span id='health'>" + health + "</span>").appendTo(element);
+
+            $("#stat-listing").append(element);
+        }
     },
     /*
     Bind key events to camera or interaction actions
