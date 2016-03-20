@@ -8,9 +8,20 @@ except ImportError:
 
 ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK'}
 
+
 class Node:
     def eval(self, actor):
         raise NotImplemented
+
+    def _eval_down(self, actor, val):
+        res = val
+        while isinstance(res, Node):
+            res = res.eval(actor)
+        # If the argument is not evaluated down to a value.
+        if hasattr(res, '__call__'):
+            raise(SyntaxError("Function error: '{}' was improperly called.".format(val.value)))
+
+        return res
 
 
 class SymbolAtom(Node):
@@ -51,11 +62,8 @@ class Function(Node):
     def eval(self, actor):
         evaluated_args = [x.eval(actor) for x in self.arguments]
         for i, arg in enumerate(evaluated_args):
-            while isinstance(arg, Node):
-                arg = arg.eval(actor)
-                evaluated_args[i] = arg
-            if hasattr(arg, '__call__'): # If the argument is not evaluated down to a value.
-                raise(SyntaxError("Function error: '{}' was improperly called.".format(self.arguments[i].value)))
+            evaluated_args[i] = self._eval_down(actor, arg)
+
 
         fn = self.symbol.eval(actor)
         try:
@@ -89,7 +97,13 @@ class BinaryNumOperation(Node):
         self.right = right
 
     def eval(self, actor):
-        return self.operation(self.left.eval(actor), self.right.eval(actor))
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+
+        try:
+            return self.operation(eleft, eright)
+        except Exception as e:
+            raise SyntaxError("Can't operate '{} with {}': ".format(self.left, self.format ))
 
 
 class NumRelationship(Node):
@@ -100,7 +114,9 @@ class NumRelationship(Node):
         self.relation = FUNC_MAP[relation]
 
     def eval(self, actor):
-        return self.relation(self.left.eval(actor), self.right.eval(actor))
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+        return self.relation(eleft, eright)
 
 
 class UnaryNumOperation(Node):
@@ -110,10 +126,11 @@ class UnaryNumOperation(Node):
         self.operand = operand
 
     def eval(self, actor):
+        eop = self._eval_down(actor, self.operand)
         if self.operation == '+':
-            return abs(self.operand.eval(actor))
+            return abs(eop)
         elif self.operation == '-':
-            return -(self.operand.eval(actor))
+            return -(eop)
 
 
 class BinaryBoolOperation(Node):
@@ -124,8 +141,9 @@ class BinaryBoolOperation(Node):
         self.right = right
 
     def eval(self, actor):
-        return self.operation(self.left.eval(actor), self.right.eval(actor))
-
+        eleft = self._eval_down(actor, self.left)
+        eright = self._eval_down(actor, self.right)
+        return self.operation(eleft, eright)
 
 class UnaryBoolOperation(Node):
     """Not or other unary boolean operators (are there others)?"""
@@ -134,5 +152,7 @@ class UnaryBoolOperation(Node):
         self.operand = operand
 
     def eval(self, actor):
+        eop = self._eval_down(actor, self.operand)
+
         if self.operation == 'not':
-            return not self.operand.eval(actor)
+            return not eop
