@@ -1,3 +1,4 @@
+
 # Comparisons #
 # =========== #
 
@@ -124,6 +125,22 @@ def nearest_fn(actor, attr):
     return actor.gameInstance.find_nearest(actor, attr)
 
 
+def walk_fn(actor, direction):
+
+    if isinstance(direction, str):
+        if actor.can_walk(direction):
+            import pdb
+            pdb.set_trace()
+            deltas = []
+            deltas.append(actor.face_direction(direction))
+            deltas.append(actor.walk())
+            return deltas
+    if isinstance(direction, list):
+        for dir in direction:
+            if actor.gameInstance.can_walk(actor, dir):
+                return actor.walk()
+
+
 FUNC_MAP = {
     '<': lt,
     '<=': lte,
@@ -140,6 +157,7 @@ FUNC_MAP = {
     'sleep': sleep_fn,
     'direction': direction_fn,
     'nearest': nearest_fn,
+    'walk': walk_fn
 }
 
 SYM_MAP = {

@@ -36,7 +36,7 @@ class GameInstance(CoordParseMixin):
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
             self.actors = {}
-            self.world = []
+            self.world = WorldState()
             self.world_size = 250
             self.current_turn = 0
 
@@ -48,6 +48,7 @@ class GameInstance(CoordParseMixin):
 
     def __setitem__(self, key, item):
         self.world[key] = item
+
 
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.

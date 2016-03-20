@@ -71,7 +71,7 @@ class Function(Node):
 
         fn = self.symbol.eval(actor)
         try:
-            return SymbolAtom(fn(actor, *evaluated_args))
+            return SymbolAtom(self.line, fn(actor, *evaluated_args))
         except Exception as e:
             strargs = [str(arg) for arg in evaluated_args]
             raise SyntaxError("Line {} Function Error: '{}' is not compatible with arguments ({}) ".format(self.line, self.symbol.value, ",".join(strargs)))

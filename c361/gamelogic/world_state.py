@@ -136,6 +136,13 @@ class WorldState(CoordParseMixin):
         x, y = self.coord_parse(worldinhabitant)
         self._inhabitants[x, y].remove(worldinhabitant)
 
+    def get_cell(self, xy):
+        x,y = xy
+        lst = self[x][y]
+        for x in lst:
+            if isinstance(x, Cell):
+                return x
+
     class PartialTerrainGen:
         """A class solely for storing half of a request to get or set a cell
 

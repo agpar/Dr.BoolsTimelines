@@ -7,12 +7,12 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-    if not 4 > myhunger
-    then
-        do
-            direction(nearest(GRASS));
-        done
-    endif
+if myhunger < 40
+then
+    do
+    walk(NORTH);
+    done
+endif
     """
 
 a = Actor(1, 1, "Alex", testscript)
