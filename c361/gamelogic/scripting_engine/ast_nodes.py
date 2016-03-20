@@ -19,7 +19,7 @@ class Node:
             res = res.eval(actor)
         # If the argument is not evaluated down to a value.
         if hasattr(res, '__call__'):
-            raise(SyntaxError("Function error: '{}' was improperly called.".format(val.value)))
+            raise(SyntaxError("Function Error: '{}' was improperly called.".format(val.value)))
 
         return res
 
@@ -42,7 +42,7 @@ class SymbolAtom(Node):
 
         if isinstance(self.value, str) and \
                 not (self.symb or self.func or self.value in ATTRIBUTES):
-            raise SyntaxError("Unknown symbol: '{}'".format(self.value))
+            raise SyntaxError("Unknown Symbol: '{}'".format(self.value))
 
         if self.func:
             return self.func
@@ -59,18 +59,20 @@ class Function(Node):
     def __repr__(self):
         return "{}({})".format(self.symbol.value, self.arguments)
 
+    def __str__(self):
+        return self.symbol.value
+
     def eval(self, actor):
         evaluated_args = [x.eval(actor) for x in self.arguments]
         for i, arg in enumerate(evaluated_args):
             evaluated_args[i] = self._eval_down(actor, arg)
-
 
         fn = self.symbol.eval(actor)
         try:
             return SymbolAtom(fn(actor, *evaluated_args))
         except Exception as e:
             strargs = [str(arg) for arg in evaluated_args]
-            raise SyntaxError("Function error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(strargs)))
+            raise SyntaxError("Function Error: '{}' is not compatible with arguments ({}) ".format(self.symbol.value, ",".join(strargs)))
 
 
 class Assignment(Node):
@@ -103,7 +105,8 @@ class BinaryNumOperation(Node):
         try:
             return self.operation(eleft, eright)
         except Exception as e:
-            raise SyntaxError("Can't operate '{} with {}': ".format(self.left, self.format ))
+            raise SyntaxError("Numary Operation Error: Can't combine '{}':{} with '{}':{}"
+                              .format(self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
 
 
 class NumRelationship(Node):
@@ -116,8 +119,11 @@ class NumRelationship(Node):
     def eval(self, actor):
         eleft = self._eval_down(actor, self.left)
         eright = self._eval_down(actor, self.right)
-        return self.relation(eleft, eright)
-
+        try:
+            return self.relation(eleft, eright)
+        except TypeError as e:
+            raise SyntaxError("Numary Operation Error: Can't compare '{}':{} with '{}':{}"
+                              .format(self.left.value, eleft.__class__.__name__,  self.right.value, eright.__class__.__name__,))
 
 class UnaryNumOperation(Node):
     """Unary operation on a number (such as negating) """
@@ -144,6 +150,7 @@ class BinaryBoolOperation(Node):
         eleft = self._eval_down(actor, self.left)
         eright = self._eval_down(actor, self.right)
         return self.operation(eleft, eright)
+
 
 class UnaryBoolOperation(Node):
     """Not or other unary boolean operators (are there others)?"""

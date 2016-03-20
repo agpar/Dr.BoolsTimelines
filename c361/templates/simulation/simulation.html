@@ -107,7 +107,6 @@ $(document).ready(function () {
 
     });
 
-    $("#")
 
     $("#create-actor-side-btn").click(function(event){
 
@@ -215,6 +214,8 @@ $(document).ready(function () {
                 "<button class='btn btn-default' id='new-actor-create-btn'>Create Actor</button>");
         $mainmenu.show();
 
+        $("#new-actor-script").linedtextarea();
+
         $("#new-actor-script").keydown(function (e)
         {
             if (e.keyCode !== 9)
@@ -226,15 +227,13 @@ $(document).ready(function () {
             }
 
 
-            var $this, end, start, line_end, line_start;
+            var $this, end, start, line_end, line_start, i;
             start = this.selectionStart;
             end = this.selectionEnd;
             $this = $(this);
             var val = $this.val();
 
-            debugger;
-
-            var i = start;
+            i = start;
             while (val[i] !== '\n' && i > 0)
             {
                 i--;
