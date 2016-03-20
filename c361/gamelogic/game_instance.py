@@ -274,11 +274,7 @@ class GameInstance(CoordParseMixin):
         return all_turns
 
     def full_dump(self):
-        d = {
-            'world': self.world.toJson(),
-            'current_turn_number': self.current_turn,
-        }
-        return d
+        return self.world.to_dict()
 
 
 

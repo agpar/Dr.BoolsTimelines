@@ -10,7 +10,7 @@ except SystemError:
 
 
 class WorldState(CoordParseMixin):
-    SEED_SIZE = 600
+    SEED_SIZE = 300
     STANDARD_HEIGHT = 15
 
     def __init__(self, size=(1000,1000), json_dump=None, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
@@ -59,10 +59,10 @@ class WorldState(CoordParseMixin):
         return self.PartialTerrainGen(self, key)
 
     def __repr__(self):
-        return self.toJson(False)
+        return self.to_dict(False)
 
 
-    def toJson(self, withseed=True):
+    def to_dict(self, withseed=True):
         serialized = {
             "standardHeight": self.STANDARD_HEIGHT,
             "width": self._size[0],
@@ -112,8 +112,8 @@ class WorldState(CoordParseMixin):
                 fmt = (self._cells[row][c].x,
                         self._cells[row][c].y)
 
-                cell_dict["%d %d" % fmt] = self._cells[row][c].toJson()
-                cell_dict["%d %d" % fmt]["contents"] = self._inhabitants[fmt]
+                cell_dict["%d %d" % fmt] = self._cells[row][c].to_dict()
+                cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt]]
         
         serialized["cells"] = cell_dict
         return serialized

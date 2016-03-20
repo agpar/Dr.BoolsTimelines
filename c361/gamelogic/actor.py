@@ -26,6 +26,7 @@ class Actor(WorldInhabitant):
 
     def __init__(self, x=-1, y=-1, name="Anonymous", script="", model=None):
         if model:
+            self.dbid = model.id
             self.uuid = str(model.uuid)
             self.name = model.title
             self._coords = model.coords
@@ -36,6 +37,7 @@ class Actor(WorldInhabitant):
             self.direction = model.direction
             self.script = model.behaviour_script
         else:
+            self.dbid = -1
             self.uuid = str(uuid.uuid4())
             self.name = name
             self._coords = (x, y)
@@ -61,6 +63,24 @@ class Actor(WorldInhabitant):
     def __repr__(self):
         temp = "Actor({}, {}, '{}')"
         return temp.format(self.x, self.y, self.name)
+
+    def to_dict(self):
+        d = {
+            'dbid': self.dbid,
+            'type': 'ACTOR',
+            'uuid': self.uuid,
+            'title': self.name,
+            'x': self.x,
+            'y': self.y,
+            'health': self.health,
+            'hunger': self.hunger,
+            'sleep': self.sleep,
+            'is_sleeping': self.is_sleeping,
+            'direction': self.direction,
+            'self.behaviour_script': self.script,
+            'smell_code': self.smell_code,
+        }
+        return d
 
     def do_turn(self):
         self._turn_stat_change()
@@ -539,3 +559,4 @@ class Actor(WorldInhabitant):
                         "from": True,
                         "to": False
                     }
+

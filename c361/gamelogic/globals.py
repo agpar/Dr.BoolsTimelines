@@ -161,9 +161,9 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            self.ctype = CELL_TYPES[json_in["ctype"]]
-            self._coords = (json_in["coords"]["x"], json_in["coords"]["y"])
-            self.elevation = json_in["elevation"]
+            self.ctype = CELL_TYPES[json_dump["ctype"]]
+            self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
+            self.elevation = json_dump["elevation"]
         else:
             self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
             self._coords = (x, y)
@@ -197,7 +197,7 @@ class Cell(WorldInhabitant):
             return True
         return False
 
-    def toJson(self):
+    def to_dict(self):
         serialized = {
             "type": CELL_TYPES[self.ctype],
             "coords": {"x": self.x, "y": self.y},
@@ -218,7 +218,7 @@ class Plant(WorldInhabitant):
             self.health = from_dict['health']
             self._coords = (from_dict['x'], from_dict['y'])
 
-    def toJson(self):
+    def to_dict(self):
         to_dict = {'type': self.type, 'health': self.health,
                    'x': self.x, 'y': self.y}
         return to_dict

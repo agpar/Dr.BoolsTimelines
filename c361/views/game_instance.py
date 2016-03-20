@@ -1,9 +1,11 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from rest_framework.response import Response
 from c361.models import GameInstanceModel
 from c361.serializers.game_instance import GameInstanceFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
+from django.http import JsonResponse
+import ujson as json
 
 
 class MyGameList(BaseDetailView):
@@ -40,25 +42,26 @@ class GameDetail(BaseDetailView):
         if request.GET.get('start'):
             if not game_instance.is_active():
                 game_instance.start()
-                return Response("Pykka actor created.")
+                return JsonResponse({"result": "Pykka actor created."})
             else:
-                return Response("Pykka actor already exists.", status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({"result": "Pykka actor already exists."}, status=status.HTTP_400_BAD_REQUEST)
         if request.GET.get('stop'):
             if game_instance.is_active():
                 game_instance.stop()
-                return Response("Pykaa actor stopped.")
+                return JsonResponse({"result": "Pykaa actor stopped."})
             else:
-                return Response("Pykaa actor does not exist.", status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({"result":"Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
         if request.GET.get('do_turn'):
             turn_num = request.GET.get('do_turn')
             actor_proxy = game_instance.get_pactor_proxy()
             future = actor_proxy.do_turn(int(turn_num))
             current_turn = future.get()
-            return Response("Advanced to turn {}.".format(current_turn))
+            return JsonResponse({"result": "Advanced to turn {}.".format(current_turn)})
         if request.GET.get('full_dump'):
             actor_proxy = game_instance.get_pactor_proxy()
             future = actor_proxy.full_dump()
-            dump = future.get()
+            full_dump = future.get()
+            return HttpResponse(json.dumps(full_dump), content_type='application/json')
 
 
         return super().get(self, request, *args, **kwargs)
