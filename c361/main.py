@@ -7,7 +7,7 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-if not nearest(WATER) == mylocation
+if nearest(WATER) == mylocation
 then
     do
         walk(NORTH);

@@ -87,14 +87,14 @@ class Actor(WorldInhabitant):
         return self.behaviours.get_action(self)
 
     def _turn_stat_change(self):
-        self.hunger -= 5
+        self.hunger -= 1
         if self.is_sleeping:
             self.sleep = self.sleep + 7
             if self.sleep >= 100:
                 self.is_sleeping = False
                 self.sleep = 100
         else:
-            self.sleep -= 5
+            self.sleep -= 1
 
     @property
     def is_alive(self):
@@ -124,7 +124,6 @@ class Actor(WorldInhabitant):
             "smell": self.smell,
             "sleep": self.sleep_action
         }
-
 
     def eat(self):
         if self.is_food :
@@ -363,7 +362,6 @@ class Actor(WorldInhabitant):
                 "varTarget": "food",
                 "to": True
             }]
-
 
     def drop(self):
         if self.is_food:

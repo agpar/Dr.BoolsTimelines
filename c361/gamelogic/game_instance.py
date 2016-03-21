@@ -223,6 +223,7 @@ class GameInstance(CoordParseMixin):
         if not isinstance(actor_turn, list):
             actor_turn = [actor_turn]
 
+        # Calculate side effects of the actor's turn.
         for delta in actor_turn:
             if not delta:
                 continue
@@ -235,7 +236,7 @@ class GameInstance(CoordParseMixin):
                 if self.has_attr(coord_contents, "WATER"):
                     effects.append({
                         "type": "actorDelta",
-                        "coords": {'x': new_x, 'y': new_y},  # The new position of the actor
+                        "coords": {'x': new_x, 'y': new_y},
                         "actorID": actor.uuid,
                         "varTarget": "health",
                         "from": actor.health,
@@ -250,27 +251,28 @@ class GameInstance(CoordParseMixin):
                         "from": actor.health,
                         "to": actor.health-50
                     })
-                if self.has_attr(coord_contents, "ACTOR"):
-                    effects.append({
-                         "type": "actorDelta",
-                        "coords": {'x': new_x, 'y': new_y},
-                        "actorID": actor.uuid,
-                        "varTarget": None,
-                        "from": None,
-                        "to": None
-                    })
-                if self.has_attr(coord_contents, "FOOD"):
+            if delta['varTarget'] == 'health':
+                if delta['to'] <= 0:
                     effects.append({
                         "type": "actorDelta",
-                        "coords": {'x': new_x, 'y': new_y},
+                        "coords": {'x': delta["coords"]['x'], 'y': delta["coords"]['y']},
                         "actorID": actor.uuid,
-                        "varTarget": None,
-                        "from": None,
-                        "to": None
+                        "varTarget": "is_alive",
+                        "from": True,
+                        "to": False,
                     })
+
+        # Calculate any side effects of the side effects.
+        old_effects = effects
+        while old_effects:
+            new_effects = self.turn_effects(old_effects)
+            old_effects = new_effects
+            effects.extend(old_effects)
+
         return effects
 
     def do_turn(self, up_to=0):
+        """High level function for returning a list of turns in this game."""
         all_turns = []
         while self.current_turn <= up_to:
             self.current_turn += 1
@@ -278,19 +280,17 @@ class GameInstance(CoordParseMixin):
             for uuid, actor in self.actors.items():
                 turn_res = []
                 turn_res.append(actor.do_turn())
-                turn_res.extend(self.turn_effects(turn_res))
+                side_effects = self.turn_effects(turn_res)
+                turn_res.extend(side_effects)
                 self.apply_deltas(turn_res)
                 this_turn['deltas'].append(turn_res)
-                print(turn_res)
 
             all_turns.append(this_turn)
-
-            # TODO Validate the delta before accepting and returning it.
-            # TODO Calculate other effects that result from the delta (health changes, deaths, etc)
 
         return all_turns
 
     def apply_deltas(self, delta_list):
+        """Apply the deltas produced by inbetween turns."""
         for delta in delta_list:
             if not delta:
                 continue

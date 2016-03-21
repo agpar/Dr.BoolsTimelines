@@ -111,6 +111,7 @@ class WorldInhabitant(CoordParseMixin):
     is_plant = False
     is_rock = False
     smell_code = None
+    is_alive = False
 
     @property
     def x(self):
@@ -158,9 +159,9 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            self.ctype = CELL_TYPES[json_in["ctype"]]
-            self._coords = (json_in["coords"]["x"], json_in["coords"]["y"])
-            self.elevation = json_in["elevation"]
+            self.ctype = CELL_TYPES[json_dump["type"]]
+            self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
+            self.elevation = json_dump["elevation"]
         else:
             self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
             self._coords = (x, y)
