@@ -1,5 +1,6 @@
 import random
 import uuid
+import ujson as json
 # Handle both relative and local importing schemes.
 try:
     from .actor import Actor
@@ -35,9 +36,9 @@ class GameInstance(CoordParseMixin):
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
             self.actors = {}
-            self.world = WorldState()
+            self.world = WorldState(json_dump=json.loads(model.world))
             self.world_size = 250
-            self.current_turn = 0
+            self.current_turn = model.current_turn_number
 
             for a in model.actors.all():
                 self.add_actor(Actor(model=a))
@@ -273,7 +274,7 @@ class GameInstance(CoordParseMixin):
 
         return all_turns
 
-    def full_dump(self):
+    def to_dict(self):
         return self.world.to_dict()
 
 

@@ -77,7 +77,7 @@ class Actor(WorldInhabitant):
             'sleep': self.sleep,
             'is_sleeping': self.is_sleeping,
             'direction': self.direction,
-            'self.behaviour_script': self.script,
+            'behaviour_script': self.script,
             'smell_code': self.smell_code,
         }
         return d

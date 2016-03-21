@@ -161,7 +161,7 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            self.ctype = CELL_TYPES[json_dump["ctype"]]
+            self.ctype = CELL_TYPES[json_dump["type"]]
             self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
             self.elevation = json_dump["elevation"]
         else:

@@ -59,9 +59,10 @@ class GameInstanceModel(models.Model):
         return actor_ref
 
     def stop(self):
-        actor_ref = self.get_pactor_ref()
+        actor_proxy = self.get_pactor_proxy()
         cache.delete(str(self.uuid))
-        actor_ref.stop()
+        future = actor_proxy.stop()
+        future.get()
 
 
 

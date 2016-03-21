@@ -1,5 +1,8 @@
 import pykka
+import ujson as json
 from c361.models.game_instance import GameInstanceModel
+from c361.models.game_actor import GameActorModel
+
 from c361.models.turn import TurnModel
 
 from c361.gamelogic.game_instance import GameInstance
@@ -33,8 +36,28 @@ class GameRunner(pykka.ThreadingActor):
         return self.game_model.current_turn_number
 
     def full_dump(self):
-        return self.game_object.full_dump()
+        return self.game_object.to_dict()
 
     def stop(self):
         cache.delete(str(self.game_uuid))
+        full_dump = self.game_object.to_dict()
+        seed = json.dumps(full_dump)
+
+        self.game_model.world = seed
+        self.game_model.current_turn_number = self.game_object.current_turn
+        self.game_model.save()
+
+        # Figure out which attributes and actor model has.
+        actr = GameActorModel.objects.first()
+        backend_actor_keys = {k for k,v in actr.__dict__ .items()}
+
+        # Put in keys which have the same name on backend.
+        for k, a in self.game_object.actors.items():
+            adict = a.to_dict()
+            actor = GameActorModel.objects.get(uuid=k)
+            for key, value in adict.items():
+                if key in backend_actor_keys:
+                    setattr(actor, key, value)
+            actor.save()
+
         super().stop()

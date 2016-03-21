@@ -19,30 +19,29 @@ class WorldState(CoordParseMixin):
             self._chunk_size = json_dump["chunkSize"]
             self._water_threshold = json_dump["waterThreshold"]
             self._rock_threshold = json_dump["rockThreshold"]
-            
+
             cell_data = [
                 {
-                    "coords": (cell_json['x'], cell_json['y']),
+                    "coords": (cell_json['coords']['x'], cell_json['coords']['y']),
                     "cell": Cell(json_dump=cell_json), 
                     "contents": cell_json["contents"]
                 } 
 
-                for cell_json in json_dump["cells"]
+                for k, cell_json in json_dump["cells"].items()
             ]
 
             self._inhabitants = defaultdict(list)
-            self._cells = {}
+            self._cells = defaultdict(dict)
             for pair in cell_data:
-                if pair["coords"]['x'] not in self._cells:
-                    self._cells[pair["coords"]['x']] = {}
-                
-                self._cells[pair["coords"]['x']][pair.coor["coords"]['y']] = pair["cell"]
-                self._inhabitants[pair["coords"]['x'], pair.coor["coords"]['y']] = pair["contents"]
+                self._cells[pair['coords'][0]][pair['coords'][1]] = pair["cell"]
 
             if json_dump.get("seed") is not None:
                 self._seed = json_dump["seed"]
             else:
                 raise Exception("No seed present in JSON dump of world state.")
+
+            import pdb
+            pdb.set_trace()
         else:
             self._size = size
             self._chunk_size = chunk_size
@@ -113,7 +112,7 @@ class WorldState(CoordParseMixin):
                         self._cells[row][c].y)
 
                 cell_dict["%d %d" % fmt] = self._cells[row][c].to_dict()
-                cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt]]
+                cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt] if not x.is_actor]
         
         serialized["cells"] = cell_dict
         return serialized
