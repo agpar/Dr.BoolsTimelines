@@ -129,10 +129,46 @@ module.exports = Class("GraphicsEngineController", {
             }
 
         }.bind(this))
+        var gameid = 4;
+        $.ajax({
+          type: "get",
+          url: "/game/"+gameid+"/?start=true",
+          contentType:"application/json",
+          statusCode: {
+              200: function(data)
+              {
+                  console.log(data)
+              }
+          }
+        })
 
+        $.ajax({
+            type: "get",
+            url: "/game/"+gameid+"/?full_dump=true",
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    this._renderer.setWorldState(data)
+                }
+            }
+        })
+        this._renderer.updateView(this._camPos.x, this._camPos.y)
+        var i = 0
         setInterval(function () {
-            //ajax call to update state
-            //this._renderer.setWorldState(newstate)
+            $.ajax({
+                type: "get",
+                url: "/game/"+gameid+"/?light_dump=true",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        this._renderer.setWorldState(data)
+                    }
+                }
+            })
+
+            this._renderer.updateView(this._camPos.x, this._camPos.y)
         }, 1000)
     },
     /*

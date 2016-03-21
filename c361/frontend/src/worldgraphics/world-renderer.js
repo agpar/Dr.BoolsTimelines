@@ -296,7 +296,11 @@ module.exports =  Class("WorldRenderer", {
     param state: The new state to replace the state of the world.
     */
     'public setWorldState': function (state) {
-        this._worldState = WorldState(state)
+        var tstate = state
+        if(tstate["seed"] == undefined)
+            tstate["seed"] = this._worldstate.get("seed")
+
+        this._worldState = WorldState(tstate)
     },
     /*
     Update the world with the changes specified by a list of state change
