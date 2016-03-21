@@ -301,5 +301,6 @@ class GameInstance(CoordParseMixin):
                 actr.health = delta['to']
 
 
-    def to_dict(self):
-        return self.world.to_dict()
+    def to_dict(self, withseed=True):
+        d = self.world.to_dict(withseed=withseed)
+        return d

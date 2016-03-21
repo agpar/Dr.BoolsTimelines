@@ -63,5 +63,9 @@ class GameDetail(BaseDetailView):
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
 
-
+        if request.GET.get('light_dump'):
+            actor_proxy = game_instance.get_pactor_proxy()
+            future = actor_proxy.light_dump()
+            full_dump = future.get()
+            return HttpResponse(json.dumps(full_dump), content_type='application/json')
         return super().get(self, request, *args, **kwargs)

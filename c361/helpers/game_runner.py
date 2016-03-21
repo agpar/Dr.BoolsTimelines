@@ -35,8 +35,14 @@ class GameRunner(pykka.ThreadingActor):
         self.game_model.save()
         return self.game_model.current_turn_number
 
+    def restart_game(self):
+        """Development function for restarting a running game."""
+
     def full_dump(self):
         return self.game_object.to_dict()
+
+    def light_dump(self):
+        return self.game_object.to_dict(withseed=False)
 
     def stop(self):
         cache.delete(str(self.game_uuid))
@@ -58,6 +64,7 @@ class GameRunner(pykka.ThreadingActor):
             for key, value in adict.items():
                 if key in backend_actor_keys:
                     setattr(actor, key, value)
+
             actor.save()
 
         super().stop()

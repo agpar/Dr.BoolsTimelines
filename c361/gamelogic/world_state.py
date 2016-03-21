@@ -38,11 +38,12 @@ class WorldState(CoordParseMixin):
 
                 cts = pair["contents"]
                 for cont in pair["contents"]:
-                    data = pair["contents"][cont]
+                    data = cont
 
                     inhab = None
                     if data["type"] == "MUSH":
                         inhab = Plant(from_dict=data)
+
                     #Add more types here
 
                     if inhab:
@@ -122,7 +123,7 @@ class WorldState(CoordParseMixin):
                         self._cells[row][c].y)
 
                 cell_dict["%d %d" % fmt] = self._cells[row][c].to_dict()
-                cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt] if not x.is_actor]
+                cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt]]
         
         serialized["cells"] = cell_dict
         return serialized
