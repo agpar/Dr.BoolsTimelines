@@ -137,10 +137,7 @@ def walk_fn(actor, direction):
     if isinstance(direction, list):
         for dir in direction:
             if actor.can_walk(dir):
-                deltas = []
-                deltas.append(actor.face_direction(dir))
-                deltas.append(actor.walk(dir))
-                return deltas
+                return actor.walk(dir)
 
 
 

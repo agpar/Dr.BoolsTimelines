@@ -7,10 +7,17 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-if myhunger < 40
+if not nearest(WATER) == mylocation
 then
     do
-    walk(NORTH);
+        walk(NORTH);
+    done
+endif
+
+if true
+then
+    do
+        walk(direction(nearest(WATER)));
     done
 endif
     """

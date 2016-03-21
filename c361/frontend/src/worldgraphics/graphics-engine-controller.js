@@ -100,25 +100,31 @@ module.exports = Class("GraphicsEngineController", {
         this.startSimulationEngine()
 
         $("#simulation-render-target").click(function(evt){
-            if (this._tool == "CAMERA") {
+            if(evt.ctrlKey)
+                return
+            if (this._use == "CAMERA") {
                 this._camera.angularSensibilityX = 1500
                 this._camera.angularSensibilityY = 1500
             }
             else if(this._tool == "INSPECT") {
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
-                    
+
                     stats = this._renderer.getCell(coords[0], coords[1])
-                    console.log(stats)
                     this._popupStats(stats)
-            } 
+            }
             else {
                 if(this._use == "ADD") {
-                
-                }  
+
+                }
+                else if(this._use == "DELETE") {
+
+                }
             }
-            
+
         }.bind(this))
+
+        $("")
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -129,7 +135,7 @@ module.exports = Class("GraphicsEngineController", {
         var control = this
 
         loader.onFinish = function() {
-            this._renderer.updateView(0,0,true)
+            this._renderer.updateView(0,0)
             this._camPos = {x: 0, y: 0}
 
             this._renderEngine.runRenderLoop(function () {
@@ -141,7 +147,7 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._renderer.updateView(newx, newy, false)
+                    this._renderer.updateView(newx, newy)
                     this._camPos = {x: newx, y: newy}
                 }
             }.bind(this))

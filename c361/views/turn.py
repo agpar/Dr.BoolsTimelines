@@ -31,7 +31,7 @@ class TurnList(BaseListCreateView):
             result = future.get()
 
         # Return queryset of the requested turns.
-        qs = game_instance.turns.filter(number__gte=first)
-        qs = game_instance.turns.filter(number__lte=last)
+
+        qs = game_instance.turns.filter(number__gte=first, number__lte=last)
         return qs
 

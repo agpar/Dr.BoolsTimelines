@@ -241,13 +241,6 @@ $(document).ready(function () {
         $mainmenu_scroller.html(gamelist.join(""));
         $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
         $mainmenu.show();
-
-        $(".loadable-game-select").click(function (event)
-        {
-            var gameid = event['currentTarget']['id'];
-            console.log(gameid);
-        });
-
     }
 
     //Generate and display the createactor menu screen.
@@ -540,7 +533,7 @@ $(document).ready(function () {
 
 <canvas id="simulation-render-target"></canvas>
 <div class="sim-ui-container container">
-    
+
     <div class="col-xs-1 fill">
         <div class = "cell-statinfo sim-ui-element" id = "cell-stats">
             <button type="button" class="close" id="close-stats">×</button>

@@ -8961,25 +8961,31 @@ module.exports = Class("GraphicsEngineController", {
         this.startSimulationEngine()
 
         $("#simulation-render-target").click(function(evt){
-            if (this._tool == "CAMERA") {
+            if(evt.ctrlKey)
+                return
+            if (this._use == "CAMERA") {
                 this._camera.angularSensibilityX = 1500
                 this._camera.angularSensibilityY = 1500
             }
             else if(this._tool == "INSPECT") {
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
-                    
+
                     stats = this._renderer.getCell(coords[0], coords[1])
-                    console.log(stats)
                     this._popupStats(stats)
-            } 
+            }
             else {
                 if(this._use == "ADD") {
-                
-                }  
+
+                }
+                else if(this._use == "DELETE") {
+
+                }
             }
-            
+
         }.bind(this))
+
+        $("")
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -8990,7 +8996,7 @@ module.exports = Class("GraphicsEngineController", {
         var control = this
 
         loader.onFinish = function() {
-            this._renderer.updateView(0,0,true)
+            this._renderer.updateView(0,0)
             this._camPos = {x: 0, y: 0}
 
             this._renderEngine.runRenderLoop(function () {
@@ -9002,7 +9008,7 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._renderer.updateView(newx, newy, false)
+                    this._renderer.updateView(newx, newy)
                     this._camPos = {x: newx, y: newy}
                 }
             }.bind(this))
@@ -9226,8 +9232,9 @@ module.exports =  Class("WorldRenderer", {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
                         for(c in cell.contents) {
-                            if(c.mesh != undefined)
-                                c.mesh.dispose()
+                            var cont = cell.contents[c]
+                            if(cont.mesh != undefined)
+                                cont.mesh.dispose()
                         }
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
@@ -9237,7 +9244,7 @@ module.exports =  Class("WorldRenderer", {
             }
         }
         this._sceneChunks = lru(options)
-
+        /*
         //  placeholder state
         var seed = []
         var seedsize = 600
@@ -9248,7 +9255,6 @@ module.exports =  Class("WorldRenderer", {
             }
             seed.push(row)
         }
-
 
         var key
         var cells = {}
@@ -9261,7 +9267,7 @@ module.exports =  Class("WorldRenderer", {
                     contents: [],
                     coords: {'x': j, 'y': i},
                     type: "GRASS",
-                    mesh: undefined,
+                    mesh: undefined
                 }
 
                 if(Math.random() < 0.1) {
@@ -9273,7 +9279,6 @@ module.exports =  Class("WorldRenderer", {
                 }
             }
         }
-
 
         var tempstate = WorldState({
             "standardHeight": 15,
@@ -9289,7 +9294,7 @@ module.exports =  Class("WorldRenderer", {
 
         this._worldState = tempstate
         //  end placeholder state
-
+        */
         //Basic condiguration for the render engine.
         var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 
@@ -9452,7 +9457,7 @@ module.exports =  Class("WorldRenderer", {
     param state: The new state to replace the state of the world.
     */
     'public setWorldState': function (state) {
-        this._worldState = state
+        this._worldState = WorldState(state)
     },
     /*
     Update the world with the changes specified by a list of state change
@@ -9494,11 +9499,15 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of view.
     param force: Force update over already defined chunks in the view.
     */
-    'public updateView': function(x,y, force) {
+    'public updateView': function(x,y) {
+        if(this._worldState == null)
+            return
+
         var chunksize = this._worldState.get("chunkSize")
 
         var chunk_x
         var chunk_y
+
 
         for(var i = -4; i <= 4; i++) {
             for(var  j = -4; j <= 4; j++) {
@@ -9508,7 +9517,7 @@ module.exports =  Class("WorldRenderer", {
                 chunk_x *= chunksize
                 chunk_y *= chunksize
 
-                this.updateChunk(chunk_x, chunk_y, force)
+                this.updateChunk(chunk_x, chunk_y)
             }
         }
     },
@@ -9520,7 +9529,7 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of chunk
     param force: Force update the chunk even if it's already loaded.
     */
-    'public updateChunk': function (x,y, force) {
+    'public updateChunk': function (x,y) {
         //Make sure to round key into chunk grid coordinates
         var chunksize = this._worldState.get("chunkSize")
         var chunk_x = Math.floor(x/chunksize)
@@ -9529,51 +9538,65 @@ module.exports =  Class("WorldRenderer", {
         var cellx = chunk_x*chunksize
         var celly = chunk_y*chunksize
 
-        if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y) != undefined)
-            return
+        var chunk
+        var pcell, cell, mesh
 
-        var chunk = []
-        var cell, mesh, meshx, meshy, meshz
+        chunk = this._sceneChunks.get(chunk_x + " " + chunk_y)
+        cachemiss = chunk == undefined
+        if(cachemiss)
+            chunk = []
 
-        for(var i = 0; i < chunksize; i++) {
-            var row = []
-            for(var j = 0; j < chunksize; j++) {
-                cell = this._terrainGen(cellx, celly)
-
-                if(cell == null)
-                    continue
-
-                meshx = chunk_x*chunksize + j
-                meshz = chunk_y*chunksize + i
-                meshy = cell["elevation"]/4
-
-                mesh = this._proto[cell["type"]]
-                           .createInstance(cellx + " " + celly)
-
-                mesh.scaling.y = cell["elevation"]/2
-
-                mesh.position = new BABYLON.Vector3(meshx, meshy, meshz)
-
-                var cont
-                for(k in cell.contents) {
-                    cont = cell.contents[k]
-                    cont.mesh = this._proto[cont["type"]]
-                                    .createInstance(cellx + " " + celly + " " + cont["type"])
-                    cont.mesh.position = new BABYLON.Vector3(meshx, cell["elevation"]/2, meshz)
-
-                    cont.mesh.isPickable = false;
+        for (var i = 0; i < chunksize; i++) {
+            var row
+            if(cachemiss)
+                row = []
+            for (var j = 0; j < chunksize; j++) {
+                if(!cachemiss) {
+                    pcell = chunk[i][j]
+                    for(k in pcell.contents)
+                        pcell.contents[k]["mesh"].dispose()
                 }
 
-                cell["mesh"] = mesh
-                row.push(cell)
+                cell = this._terrainGen(cellx, celly)
+
+                //If new cell is different, rerender.
+                if (cachemiss
+                    || pcell["type"] != cell["type"]
+                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100)
+                {
+                    mesh = this._proto[cell["type"]]
+                               .createInstance(cellx + " " + celly)
+
+                    mesh.scaling.y = cell["elevation"]/2
+
+                    mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
+
+                    cell["mesh"] = mesh
+
+                    if(cachemiss)
+                        row.push(cell)
+                    pcell = cell
+                }
+                else {
+                    pcell.contents = cell.contents
+                }
+
+                for(k in pcell.contents) {
+                    var cont = pcell.contents[k]
+                    cont.mesh = this._proto[cont["type"]]
+                                    .createInstance(cellx + " " + celly + " " + cont["type"])
+                    cont.mesh.position = new BABYLON.Vector3(cellx, pcell["elevation"]/2, celly)
+                    cont.mesh.isPickable = false;
+                }
                 cellx++
             }
-            celly++
+            if(cachemiss)
+                chunk.push(row)
             cellx = chunk_x*chunksize
-            chunk.push(row)
+            celly++
         }
-
-        this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        if(cachemiss)
+            this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
     }
 })
 
