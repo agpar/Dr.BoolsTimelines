@@ -42,6 +42,7 @@ class GameRunner(pykka.ThreadingActor):
         return self.game_object.to_dict()
 
     def light_dump(self):
+        self.do_turn(self.game_object.current_turn)
         return self.game_object.to_dict(withseed=False)
 
     def stop(self):
