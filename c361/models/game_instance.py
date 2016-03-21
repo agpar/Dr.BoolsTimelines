@@ -64,6 +64,12 @@ class GameInstanceModel(models.Model):
         future = actor_proxy.stop()
         future.get()
 
+    def reset_game(self):
+        self.current_turn_number = 0
+        for t in self.turns.all():
+            t.delete()
+        self.save()
+
 
 
 
