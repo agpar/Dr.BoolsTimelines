@@ -32,14 +32,26 @@ class WorldState(CoordParseMixin):
 
             self._inhabitants = defaultdict(list)
             self._cells = defaultdict(dict)
+
             for pair in cell_data:
                 self._cells[pair['coords'][0]][pair['coords'][1]] = pair["cell"]
+
+                cts = cell_data["contents"]
+                for cont in cell_data["contents"]:
+                    data = cell_data["contents"][cont]
+
+                    inhab = None
+                    if data["type"] == "MUSH":
+                        inhab = Plant(from_dict=data)
+                    #Add more types here
+
+                    if inhab:
+                        self._inhabitants[(pair['coords'][0], pair['coords'][0])].append(inhab)
 
             if json_dump.get("seed") is not None:
                 self._seed = json_dump["seed"]
             else:
                 raise Exception("No seed present in JSON dump of world state.")
-
         else:
             self._size = size
             self._chunk_size = chunk_size
@@ -56,7 +68,7 @@ class WorldState(CoordParseMixin):
         return self.PartialTerrainGen(self, key)
 
     def __repr__(self):
-        return self.to_dict(False)
+        return json.dumps(self.to_dict(False))
 
 
     def to_dict(self, withseed=True):
@@ -180,6 +192,7 @@ class WorldState(CoordParseMixin):
     def remove_inhabitant(self, worldinhabitant):
         """Add a WI to the inhabitants using their current coord."""
         x, y = self.coord_parse(worldinhabitant)
+        print(str(x) + " " + str(y))
         self._inhabitants[x, y].remove(worldinhabitant)
 
     def get_cell(self, xy):

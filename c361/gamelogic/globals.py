@@ -1,10 +1,10 @@
 import json
 from functools import partial
-try:
-    from gamelogic.scripting_engine.script_parser import AiScriptParser
-except (SystemError, ImportError):
-    from c361.gamelogic.scripting_engine.script_parser import AiScriptParser
 
+try:
+    from .scripting_engine.script_parser import AiScriptParser
+except ImportError:
+    from c361.gamelogic.scripting_engine.script_parser import AiScriptParser
 
 SMELL_CODES = {'ACTOR': 1, 'PLANT': 2, 'WATER': 3,
                1: 'ACTOR', 2: 'PLANT', 3: 'WATER'}
@@ -161,9 +161,9 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            self.ctype = CELL_TYPES[json_dump["type"]]
-            self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
-            self.elevation = json_dump["elevation"]
+            self.ctype = CELL_TYPES[json_in["ctype"]]
+            self._coords = (json_in["coords"]["x"], json_in["coords"]["y"])
+            self.elevation = json_in["elevation"]
         else:
             self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
             self._coords = (x, y)
@@ -216,9 +216,12 @@ class Plant(WorldInhabitant):
         else:
             self.type = from_dict['type']
             self.health = from_dict['health']
-            self._coords = (from_dict['x'], from_dict['y'])
+            self._coords = (from_dict['coords']['x'], from_dict['coords']['y'])
 
     def to_dict(self):
-        to_dict = {'type': self.type, 'health': self.health,
-                   'x': self.x, 'y': self.y}
+        to_dict = {
+            'type': self.type, 
+            'health': self.health,
+            'coords': {'x': self.x, 'y': self.y}
+        }
         return to_dict
