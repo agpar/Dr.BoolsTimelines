@@ -120,25 +120,22 @@ class WorldInhabitant(CoordParseMixin):
     def y(self):
         return self._coords[1]
 
-    def wrapper(self, coord):
-        x, y = coord
-        return x % self.wrap, y % self.wrap
 
     def north(self, n=1):
         y = self._coords[1] + n
-        return self.wrapper((self.x, y))
+        return self.x, y
 
     def south(self, n=1):
         y = self._coords[1] - n
-        return self.wrapper((self.x, y))
+        return self.x, y
 
     def east(self, n=1):
         x = self._coords[0] + n
-        return self.wrapper((x, self.y))
+        return x, self.y
 
     def west(self, n=1):
         x = self._coords[0] - n
-        return self.wrapper((x, self.y))
+        return x, self.y
 
     def distance_to(self, other):
         """Calculate distance between self and other."""

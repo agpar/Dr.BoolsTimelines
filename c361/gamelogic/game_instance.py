@@ -109,7 +109,13 @@ class GameInstance(CoordParseMixin):
         :param xy_or_UUID: x,y coord OR UUID of actor, or WorldInhabitant
         :return: Actor that fits description, or None
         """
-        if isinstance(xy_or_UUID, uuid.UUID):
+        try:
+            uuid.UUID(xy_or_UUID)
+            is_uuid = True
+        except Exception as e:
+            is_uuid = False
+
+        if is_uuid:
             return self.actors.get(xy_or_UUID)
         else:
             x, y = self.coord_parse(xy_or_UUID)
@@ -203,7 +209,6 @@ class GameInstance(CoordParseMixin):
             else:
                 return True
 
-
     def turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
 
@@ -211,61 +216,69 @@ class GameInstance(CoordParseMixin):
         :return: delta of any direct changes that have occured.
         """
 
-        actor = self.get_actor(actor_turn['actorID'])
-        if actor_turn['varTarget'] == "_coords":
-            new_x = actor_turn["to"][0]
-            new_y = actor_turn["to"][1]
-            coord_contents = self.world[new_x][new_y]
+        effects = []
+        if not isinstance(actor_turn, list):
+            actor_turn = [actor_turn]
 
-            if self.has_attr(coord_contents, "WATER"):
-                return {
-                    "type": "actorDelta",
-                    "coords": {'x': new_x, 'y': new_y},  # The new position of the actor
-                    "actorID": actor.uuid,
-                    "varTarget": "health",
-                    "from": actor.health,
-                    "to": 0
-                }
-            if self.has_attr(coord_contents, "DEADLY"):
-                return {
-                    "type": "actorDelta",
-                    "coords": {'x': new_x, 'y': new_y},
-                    "actorID": actor.uuid,
-                    "varTarget": "health",
-                    "from": actor.health,
-                    "to": actor.health-50
-                }
-            if self.has_attr(coord_contents, "ACTOR"):
-                return {
-                     "type": "actorDelta",
-                    "coords": {'x': new_x, 'y': new_y},
-                    "actorID": actor.uuid,
-                    "varTarget": None,
-                    "from": None,
-                    "to": None
-                }
-            if self.has_attr(coord_contents, "FOOD"):
-                return {
-                    "type": "actorDelta",
-                    "coords": {'x': new_x, 'y': new_y},
-                    "actorID": actor.uuid,
-                    "varTarget": None,
-                    "from": None,
-                    "to": None
-                }
-        else:
-            return None  # This method should only return new effects.
+        for delta in actor_turn:
+            if not delta:
+                continue
+            actor = self.get_actor(delta['actorID'])
+
+            if delta['varTarget'] == "_coords":
+                new_x = delta["to"][0]
+                new_y = delta["to"][1]
+                coord_contents = self.world.get_cell((new_x, new_y))
+                if self.has_attr(coord_contents, "WATER"):
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': new_x, 'y': new_y},  # The new position of the actor
+                        "actorID": actor.uuid,
+                        "varTarget": "health",
+                        "from": actor.health,
+                        "to": 0
+                    })
+                if self.has_attr(coord_contents, "DEADLY"):
+                     effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': new_x, 'y': new_y},
+                        "actorID": actor.uuid,
+                        "varTarget": "health",
+                        "from": actor.health,
+                        "to": actor.health-50
+                    })
+                if self.has_attr(coord_contents, "ACTOR"):
+                    effects.append({
+                         "type": "actorDelta",
+                        "coords": {'x': new_x, 'y': new_y},
+                        "actorID": actor.uuid,
+                        "varTarget": None,
+                        "from": None,
+                        "to": None
+                    })
+                if self.has_attr(coord_contents, "FOOD"):
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': new_x, 'y': new_y},
+                        "actorID": actor.uuid,
+                        "varTarget": None,
+                        "from": None,
+                        "to": None
+                    })
+        return effects
 
     def do_turn(self, up_to=0):
         all_turns = []
         while self.current_turn <= up_to:
             self.current_turn += 1
             this_turn = {'number': self.current_turn, 'deltas': []}
-            for uuid, actor in random.shuffle(list(self.actors.items())):
-
-                this_turn['deltas'].append(actor.do_turn())
-                print(actor.do_turn())
-
+            for uuid, actor in self.actors.items():
+                turn_res = []
+                turn_res.append(actor.do_turn())
+                turn_res.extend(self.turn_effects(turn_res))
+                self.apply_deltas(turn_res)
+                this_turn['deltas'].append(turn_res)
+                print(turn_res)
 
             all_turns.append(this_turn)
 
@@ -273,6 +286,17 @@ class GameInstance(CoordParseMixin):
             # TODO Calculate other effects that result from the delta (health changes, deaths, etc)
 
         return all_turns
+
+    def apply_deltas(self, delta_list):
+        for delta in delta_list:
+            if not delta:
+                continue
+            actr = self.get_actor(delta['actorID'])
+            if delta['varTarget'] == '_coords':
+                self.move_actor(actr, delta['to'])
+            if delta['varTarget'] == 'health':
+                actr.health = delta['to']
+
 
     def to_dict(self):
         return self.world.to_dict()
