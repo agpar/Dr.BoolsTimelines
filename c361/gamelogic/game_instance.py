@@ -36,7 +36,10 @@ class GameInstance(CoordParseMixin):
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
             self.actors = {}
-            self.world = WorldState(json_dump=json.loads(model.world))
+            if model.world:
+                self.world = WorldState(json_dump=json.loads(model.world))
+            else:
+                self.world = WorldState()
             self.world_size = 250
             self.current_turn = model.current_turn_number
 
