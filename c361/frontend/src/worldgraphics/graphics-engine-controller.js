@@ -20,8 +20,8 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
-    'private _tool': "INSPECT",
-    'private _use': "CAMERA",
+    'private _tool': "CAMERA",
+    'private _use': "ADD",
 
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
@@ -102,29 +102,38 @@ module.exports = Class("GraphicsEngineController", {
         $("#simulation-render-target").click(function(evt){
             if(evt.ctrlKey)
                 return
-            if (this._use == "CAMERA") {
+            if (this._tool == "CAMERA") {
                 this._camera.angularSensibilityX = 1500
                 this._camera.angularSensibilityY = 1500
             }
-            else if(this._tool == "INSPECT") {
+            else {
+                this._camera.angularSensibilityX = 1000000000
+                this._camera.angularSensibilityY = 1000000000
+
+                if(this._tool == "INSPECT") {
+                    console.log("INS")
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
 
                     stats = this._renderer.getCell(coords[0], coords[1])
                     this._popupStats(stats)
-            }
-            else {
-                if(this._use == "ADD") {
-
                 }
-                else if(this._use == "DELETE") {
+                else {
+                    if(this._use == "ADD") {
 
+                    }
+                    else if(this._use == "DELETE") {
+
+                    }
                 }
             }
 
         }.bind(this))
 
-        $("")
+        setInterval(function () {
+            //ajax call to update state
+            //this._renderer.setWorldState(newstate)
+        }, 1000)
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -186,4 +195,12 @@ module.exports = Class("GraphicsEngineController", {
     'public moveCamera': function(x,y) {
         renderer.updateCam(x,y)
     },
+    'public setUse': function (use) {
+        console.log(use + " MODE")
+        this._use = use
+    },
+    'public setTool': function (tool) {
+        console.log(tool + " TOOL")
+        this._tool = tool
+    }
 })

@@ -27,7 +27,8 @@ module.exports =  Class("WorldRenderer", {
         'GRASS': null,
         'BLOCK': null,
         'MUSH':  null,
-        'PLANT': null
+        'PLANT': null,
+        'ACTOR': null
     },
     /*
     Load the prototype mesh assets and return an event handle to be bound to
@@ -51,6 +52,16 @@ module.exports =  Class("WorldRenderer", {
         */
         this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
         this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
+        this._proto["ACTOR"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        var actormat = new BABYLON.StandardMaterial("actormat", this._scene)
+
+        this._proto["ACTOR"].material = actormat
+
+        actormat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        actormat.diffuseColor = new BABYLON.Color3(0.7, 0.3, 0.3)
         return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
@@ -74,7 +85,6 @@ module.exports =  Class("WorldRenderer", {
             }
         }
         this._sceneChunks = lru(options)
-        /*
         //  placeholder state
         var seed = []
         var seedsize = 600
@@ -102,7 +112,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "MUSH",
+                        "type": "ACTOR",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -124,7 +134,6 @@ module.exports =  Class("WorldRenderer", {
 
         this._worldState = tempstate
         //  end placeholder state
-        */
         //Basic condiguration for the render engine.
         var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 

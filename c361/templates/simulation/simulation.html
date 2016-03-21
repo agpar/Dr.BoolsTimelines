@@ -241,6 +241,13 @@ $(document).ready(function () {
         $mainmenu_scroller.html(gamelist.join(""));
         $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
         $mainmenu.show();
+
+        $(".loadable-game-select").click(function (event)
+        {
+            var gameid = event['currentTarget']['id'];
+            console.log(gameid);
+        });
+
     }
 
     //Generate and display the createactor menu screen.
@@ -597,23 +604,23 @@ $(document).ready(function () {
     </div>
     <div class="row">
         <div class="col-xs-offset-1 col-xs-12">
-            <div class="sim-ui-element toolbar-bottom">
+            <div id="toolbar-bottom" class="sim-ui-element">
                 <div class="btn-group">
-                    <label class="modifier dark radio-inline btn btn-primary">Add/Raise</label>
-                    <label class="modifier radio-inline btn btn-primary">Delete/Lower</label>
+                    <label id="add-raise" class="modifier selected radio-inline btn btn-primary">Add/Raise</label>
+                    <label id="delete-lower" class="modifier radio-inline btn btn-primary">Delete/Lower</label>
                 </div>
                 <div class="btn-group">
-                    <label class="modifier dark radio-inline btn btn-default">Camera</label>
-                    <label class="tool dark radio-inline btn btn-default">Inspect</label>
-                    <label class="tool radio-inline btn btn-default">Terrain</label>
-                    <label class="tool radio-inline btn btn-default">Grass</label>
-                    <label class="tool radio-inline btn btn-default">Rock</label>
-                    <label class="tool radio-inline btn btn-default">Water</label>
-                    <label class="tool radio-inline btn btn-default">Plant</label>
-                    <label class="tool radio-inline btn btn-default">Mushroom</label>
-                    <label class="tool radio-inline btn btn-default">Wall</label>
-                    <label class="tool radio-inline btn btn-default">Block</label>
-                    <label class="tool radio-inline btn btn-default">Actor</label>
+                    <label id="camera" class="tool selected radio-inline btn btn-default">Camera</label>
+                    <label id="inspect" class="tool radio-inline btn btn-default">Inspect</label>
+                    <label id="terrain" class="tool radio-inline btn btn-default">Terrain</label>
+                    <label id="grass" class="tool radio-inline btn btn-default">Grass</label>
+                    <label id="rock" class="tool radio-inline btn btn-default">Rock</label>
+                    <label id="water" class="tool radio-inline btn btn-default">Water</label>
+                    <label id="plant" class="tool radio-inline btn btn-default">Plant</label>
+                    <label id="mushroom" class="tool radio-inline btn btn-default">Mushroom</label>
+                    <label id="wall" class="tool radio-inline btn btn-default">Wall</label>
+                    <label id="block" class="tool radio-inline btn btn-default">Block</label>
+                    <label id="actor" class="tool radio-inline btn btn-default">Actor</label>
                 </div>
             </div>
         </div>

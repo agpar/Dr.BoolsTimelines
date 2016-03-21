@@ -8855,7 +8855,21 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
-    
+
+    $("#toolbar-bottom .tool").click(function (evt) {
+        $("#toolbar-bottom .tool").removeClass("selected")
+        $(this).addClass("selected")
+    })
+    $("#toolbar-bottom .modifier").click(function (evt) {
+        $("#toolbar-bottom .modifier").removeClass("selected")
+        $(this).addClass("selected")
+    })
+
+    $("#add-raise").click(function (evt){controller.setUse("ADD")})
+    $("#delete-lower").click(function (evt){controller.setUse("DELETE")})
+    $("#camera").click(function (evt){controller.setTool("CAMERA")})
+    $("#inspect").click(function (evt){controller.setTool("INSPECT")})
+
 });
 
 },{"./worldgraphics/graphics-engine-controller":35}],35:[function(require,module,exports){
@@ -8881,8 +8895,8 @@ module.exports = Class("GraphicsEngineController", {
     'private _timeLine': null,
     'private _turn': 0,
     'private _rtarget': null,
-    'private _tool': "INSPECT",
-    'private _use': "CAMERA",
+    'private _tool': "CAMERA",
+    'private _use': "ADD",
 
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
@@ -8963,29 +8977,38 @@ module.exports = Class("GraphicsEngineController", {
         $("#simulation-render-target").click(function(evt){
             if(evt.ctrlKey)
                 return
-            if (this._use == "CAMERA") {
+            if (this._tool == "CAMERA") {
                 this._camera.angularSensibilityX = 1500
                 this._camera.angularSensibilityY = 1500
             }
-            else if(this._tool == "INSPECT") {
+            else {
+                this._camera.angularSensibilityX = 1000000000
+                this._camera.angularSensibilityY = 1000000000
+
+                if(this._tool == "INSPECT") {
+                    console.log("INS")
                     var picked = scene.pick(evt.clientX, evt.clientY)
                     var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
 
                     stats = this._renderer.getCell(coords[0], coords[1])
                     this._popupStats(stats)
-            }
-            else {
-                if(this._use == "ADD") {
-
                 }
-                else if(this._use == "DELETE") {
+                else {
+                    if(this._use == "ADD") {
 
+                    }
+                    else if(this._use == "DELETE") {
+
+                    }
                 }
             }
 
         }.bind(this))
 
-        $("")
+        setInterval(function () {
+            //ajax call to update state
+            //this._renderer.setWorldState(newstate)
+        }, 1000)
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -9047,6 +9070,14 @@ module.exports = Class("GraphicsEngineController", {
     'public moveCamera': function(x,y) {
         renderer.updateCam(x,y)
     },
+    'public setUse': function (use) {
+        console.log(use + " MODE")
+        this._use = use
+    },
+    'public setTool': function (tool) {
+        console.log(tool + " TOOL")
+        this._tool = tool
+    }
 })
 
 },{"./world-renderer":39,"easejs":1}],36:[function(require,module,exports){
@@ -9197,7 +9228,8 @@ module.exports =  Class("WorldRenderer", {
         'GRASS': null,
         'BLOCK': null,
         'MUSH':  null,
-        'PLANT': null
+        'PLANT': null,
+        'ACTOR': null
     },
     /*
     Load the prototype mesh assets and return an event handle to be bound to
@@ -9221,6 +9253,16 @@ module.exports =  Class("WorldRenderer", {
         */
         this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
         this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
+        this._proto["ACTOR"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        var actormat = new BABYLON.StandardMaterial("actormat", this._scene)
+
+        this._proto["ACTOR"].material = actormat
+
+        actormat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        actormat.diffuseColor = new BABYLON.Color3(0.7, 0.3, 0.3)
         return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
@@ -9244,7 +9286,6 @@ module.exports =  Class("WorldRenderer", {
             }
         }
         this._sceneChunks = lru(options)
-        /*
         //  placeholder state
         var seed = []
         var seedsize = 600
@@ -9272,7 +9313,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "MUSH",
+                        "type": "ACTOR",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -9294,7 +9335,6 @@ module.exports =  Class("WorldRenderer", {
 
         this._worldState = tempstate
         //  end placeholder state
-        */
         //Basic condiguration for the render engine.
         var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0.1,-1,0.1), scene)
 

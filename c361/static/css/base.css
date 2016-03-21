@@ -23,7 +23,15 @@ body
     max-width: 800px;
     margin: 60px auto 60px;
 }
+.tool.selected
+{
+    background-color: #CCC;
+}
 
+.modifier.selected
+{
+    background-color: #99F;
+}
 .cell-statinfo
 {
     width: 200px;
@@ -96,7 +104,7 @@ body
     margin: 10px;
 }
 
-.toolbar-bottom {
+#toolbar-bottom {
     position: absolute;
     bottom: 50px;
     left: 20px;
