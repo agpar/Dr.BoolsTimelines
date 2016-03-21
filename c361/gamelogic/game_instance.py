@@ -283,7 +283,7 @@ class GameInstance(CoordParseMixin):
                 side_effects = self.turn_effects(turn_res)
                 turn_res.extend(side_effects)
                 self.apply_deltas(turn_res)
-                this_turn['deltas'].append(turn_res)
+                this_turn['deltas'].extend(turn_res)
 
             all_turns.append(this_turn)
 

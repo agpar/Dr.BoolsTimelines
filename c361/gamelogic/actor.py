@@ -46,17 +46,14 @@ class Actor(WorldInhabitant):
             self.sleep = 100
             self.is_sleeping = False
             self.direction = "NORTH"
-            self.is_food = False
-            self.is_rock = False
             self.script = script
 
         self.info = {}
         self.gameInstance = None
-        self.smell_code = SMELL_CODES['ACTOR']
+        self.is_food = False
+        self.is_rock = False
         self.is_actor = True
-
-        self.sight_line = []
-        self.smells_near = []
+        self.smell_code = SMELL_CODES['ACTOR']
 
         self.behaviours = PARSER.parse(self.script)
 

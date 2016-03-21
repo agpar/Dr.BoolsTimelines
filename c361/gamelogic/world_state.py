@@ -36,9 +36,9 @@ class WorldState(CoordParseMixin):
             for pair in cell_data:
                 self._cells[pair['coords'][0]][pair['coords'][1]] = pair["cell"]
 
-                cts = cell_data["contents"]
-                for cont in cell_data["contents"]:
-                    data = cell_data["contents"][cont]
+                cts = pair["contents"]
+                for cont in pair["contents"]:
+                    data = pair["contents"][cont]
 
                     inhab = None
                     if data["type"] == "MUSH":
