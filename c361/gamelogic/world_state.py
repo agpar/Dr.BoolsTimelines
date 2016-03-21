@@ -40,8 +40,6 @@ class WorldState(CoordParseMixin):
             else:
                 raise Exception("No seed present in JSON dump of world state.")
 
-            import pdb
-            pdb.set_trace()
         else:
             self._size = size
             self._chunk_size = chunk_size
