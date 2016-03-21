@@ -37,7 +37,6 @@ class GameInstance(CoordParseMixin):
             self.current_turn = model.current_turn_number
             self.actors = {}
             self.world = WorldState(json_dump=json.loads(model.world))
-            self.world_size = 250
             self.current_turn = model.current_turn_number
 
             for a in model.actors.all():
@@ -196,10 +195,10 @@ class GameInstance(CoordParseMixin):
 
             if self.has_attr(check_coord, "ROCK"):
                 return False
-                
+
             elif self.has_attr(check_coord, "ACTOR"):
                 return False
-                
+
             else:
                 return True
 
@@ -276,12 +275,3 @@ class GameInstance(CoordParseMixin):
 
     def to_dict(self):
         return self.world.to_dict()
-
-
-
-
-
-
-
-
-
