@@ -45,15 +45,20 @@ $(document).ready(function () {
 
     //Close the sidemenu on the page.
     $("#close-sidemenu").click(function (event){
-        $("#opened-sidemenu").hide();
-        $("#closed-sidemenu").show();
-
+        $("#sidemenu-col").hide();
+        $("#open-sidemenu").show();
+        $("#close-sidemenu").hide();
+        $("#mainmenu-col").addClass("col-xs-offset-1");
     });
 
     //Open the sideemnu on the page.
     $("#open-sidemenu").click(function (event){
-        $("#opened-sidemenu").show();
-        $("#closed-sidemenu").hide();
+        $("#sidemenu-col").show();
+        $("#open-sidemenu").hide();
+        $("#close-sidemenu").show();
+        $("#mainmenu-col").removeClass("col-xs-offset-1");
+
+
     });
 
     //Tiny button for closing the mainmenu.
@@ -115,6 +120,7 @@ $(document).ready(function () {
 
     });
 
+    //Click listener for the create-actor button in the sidemenu.
     $("#create-actor-side-btn").click(function(event){
 
         if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
@@ -151,6 +157,7 @@ $(document).ready(function () {
 
     });
 
+    //Click listener for the modify-actor button in the sidemenu.
     $("#modify-actor-side-btn").click(function (event){
         if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
         {
@@ -188,7 +195,6 @@ $(document).ready(function () {
 
     });
 
-
     //Use a dict to hold on to results for 30 seconds.
     function set_cache(key, value, expire)
     {
@@ -206,6 +212,7 @@ $(document).ready(function () {
             }, 30000);
         }
     }
+
     //In-case the cache needs to be cleared immediately.
     function clear_cache(key)
     {
@@ -259,16 +266,14 @@ $(document).ready(function () {
         lines.push("<span class='input-group-addon'>Actor Name</span>");
         lines.push("<input type='text' class='form-control' id='new-actor-name' placeholder='Geoffry'>");
         lines.push("</div><br>");
-        lines.push("<b>Behaviour Script</b><br>");
-        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'></textarea>");
         $mainmenu_content.html(lines.join(""));
 
         $mainmenu_header.html("Create Actor");
         $mainmenu_buttons.html("<button class='btn btn-default' id='new-actor-validate-btn'>Validate Script</button>" +
                 "<button class='btn btn-default' id='new-actor-create-btn'>Create Actor</button>");
         $mainmenu.show();
-        $("#new-actor-script").val("if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nendif");
         make_actor_editor();
+        $("#new-actor-script").val("if myhunger < 40\nthen\n    do\n    walk(NORTH);\n    done\nendif");
 
 
         //Validates the actor's name and script. `create` arg can be used to also create the actor.
@@ -321,11 +326,10 @@ $(document).ready(function () {
         lines.push("<span class='input-group-addon'>Actor Name</span>");
         lines.push("<input type='text' class='form-control' id='new-actor-name' placeholder='Geoffry'>");
         lines.push("</div><br>");
-        lines.push("<b>Behaviour Script</b><br>");
-        lines.push("<textarea class='actor-script-input' rows='40' cols='50' id='new-actor-script'></textarea>");
         $mainmenu_buttons.html("<button class='btn btn-default' id='new-actor-validate-btn'>Validate Script</button>" +
                 "<button class='btn btn-default' id='new-actor-create-btn'>Modify Actor</button>");
         $mainmenu_content.html(lines.join(""));
+        $mainmenu.show();
         make_actor_editor();
 
         $.ajax({
@@ -353,8 +357,13 @@ $(document).ready(function () {
         })
     }
 
+    /*Create a textarea with line numbers and smart-tabbing in the mainMenu.*/
     function make_actor_editor()
     {
+        var lines = [];
+        lines.push("<b>Behaviour Script</b><br>");
+        lines.push("<textarea class='actor-script-input' cols='50' id='new-actor-script'></textarea>");
+        $mainmenu_content.append(lines.join(""));
         $("#new-actor-script").linedtextarea();
         $("#new-actor-script").keydown(function (e)
         {
@@ -443,6 +452,7 @@ $(document).ready(function () {
         });
     }
 
+    //Send an asynchronous request to create an actor, and record the result in the mainMenu.
     function create_newactor()
     {
         var nameval = $("#new-actor-name").val();
@@ -461,6 +471,7 @@ $(document).ready(function () {
             }
         });
     }
+    //Send an asynchronous request to modify an actor, and record the result in the mainMenu.
     function modify_actor(name, script, url) {
         $.ajax({
             type: "patch",
@@ -477,6 +488,8 @@ $(document).ready(function () {
         });
     }
 
+    /*Use backend to validate the script that is currently in the new-actor-script textarea.
+    * Report results to mainmenu-content2. */
     function validate_newactor(modify_dict)
     {
 
@@ -550,7 +563,7 @@ $(document).ready(function () {
             <div id="stat-listing"></div>
         </div>
     </div>
-    <div class="col-xs-8 fill">
+    <div class="col-xs-8 fill" id="mainmenu-col">
         <div class="main-menu sim-ui-element" id="mainmenu">
             <button type="button" class="close" id="close-mainmenu">×</button>
             <h3 id="mainmenu-header">Main Menu </h3>
@@ -580,7 +593,7 @@ $(document).ready(function () {
 
         </div>
     </div>
-    <div class="col-xs-3 fill" style="padding: 0">
+    <div class="col-xs-3 fill" id="sidemenu-col" style="padding: 0">
         <div class="opened-sidemenu sim-ui-element" id="opened-sidemenu">
             <button class="btn btn-default btn-sidemenu">Start New Game</button>
             <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
@@ -591,19 +604,18 @@ $(document).ready(function () {
             <button class="btn btn-default btn-sidemenu">Add Actor</button>
             <button class="btn btn-default btn-sidemenu">Add Plants/Obstacles</button>
             <hr>
-            <div class="push-to-bottom">
-                <button class="btn btn-default" id="close-sidemenu">Close Menu</button>
-            </div>
         </div>
-        <div class="closed-sidemenu" id="closed-sidemenu">
-            <div class="push-to-bottom ">
-                <button class="btn btn-default sim-ui-element" id="open-sidemenu">Open Menu</button>
-            </div>
-        </div>
-
     </div>
+
+    <div class="push-to-bottom sim-ui-element">
+        <button class="btn btn-default sim-ui-element" id="open-sidemenu">Open Menu</button>
+    </div>
+    <div class="push-to-bottom sim-ui-element">
+        <button class="btn btn-default" id="close-sidemenu">Close Menu</button>
+    </div>
+
     <div class="row">
-        <div class="col-xs-offset-1 col-xs-12">
+        <div class="col-xs-12">
             <div id="toolbar-bottom" class="sim-ui-element">
                 <div class="btn-group">
                     <label id="add-raise" class="modifier selected radio-inline btn btn-primary">Add/Raise</label>
