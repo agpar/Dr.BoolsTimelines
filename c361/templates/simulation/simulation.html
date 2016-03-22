@@ -326,7 +326,10 @@ $(document).ready(function () {
 
         if (actor_list.length == 0)
         {
-            $mainmenu_content.html("You have no actors!");
+            if(options['add-to-game'])
+                $mainmenu_content.html("You have no actors not already in games!");
+            else
+                $mainmenu_content.html("You have no actors");
         }
 
         $mainmenu_header.html("Select an Actor");
