@@ -69,7 +69,7 @@ $(document).ready(function () {
 
     $("#close-stats").click(function (event) {
         $("#cell-stats").hide()
-    })
+    });
 
     $('#cell-click').popover({
         html:true,
@@ -96,11 +96,11 @@ $(document).ready(function () {
     */
 
     //Open main menu with options for choosing a game to load.
-    $("#load-game-side-btn").click(function (event){
+    $("#create-game-side-btn").click(function (event){
         if (mainMenuCache['my-games'])
         {
             console.log("Fetched info from cache.");
-            setup_loadgame_menu(mainMenuCache['my-games']);
+            setup_creategame_menu(mainMenuCache['my-games']);
         }
         else {
             $.ajax({
@@ -112,12 +112,18 @@ $(document).ready(function () {
                     {
                         console.log("Fetched info from Ajax.");
                         set_cache('my-games', data);
-                        setup_loadgame_menu(data);
+                        setup_creategame_menu(data);
                     }
                 }
             });
         }
 
+    });
+
+
+    //Open main menu with options for choosing a game to load.
+    $("#load-game-side-btn").click(function (event){
+        setup_game_select_menu({'load': true});
     });
 
     //Click listener for the create-actor button in the sidemenu.
@@ -158,41 +164,12 @@ $(document).ready(function () {
     });
 
     //Click listener for the modify-actor button in the sidemenu.
-    $("#modify-actor-side-btn").click(function (event){
-        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
-        {
-            console.log("Fetched info from cache.");
-            setup_modifyactor_select_menu(mainMenuCache['my-actors'], mainMenuCache['my-actors-names']);
-        }
-        else
-        {
-            $.ajax({
-                type: "get",
-                url: "/actors/mine",
-                contentType:"application/json",
-                statusCode: {
-                    200: function(data)
-                    {
-                        //Save data in cache.
-                        console.log("Fetched info from Ajax.");
-                        console.log(data);
-                        set_cache('my-actors', data);
+    $("#modify-actor-side-btn").click(function (event) {
+        setup_actor_select_menu({'modify': true});
+    });
 
-                        //Hash and set names of actors.
-                        var namehash = {};
-                        for(var i = 0; i < data.length; i++)
-                        {
-                            namehash[data[i]['title']] = true;
-                        }
-                        set_cache('my-actors-names', namehash);
-                        set_cache('my-actors', data);
-
-                        setup_modifyactor_select_menu(data);
-                    }
-                }
-            });
-        }
-
+    $("#add-actor-side-btn").click(function(event){
+        setup_actor_select_menu({'add-to-game':true});
     });
 
     //Use a dict to hold on to results for 30 seconds.
@@ -200,7 +177,7 @@ $(document).ready(function () {
     {
         if(expire === null)
         {
-            expire = true;
+            expire = false;
         }
 
         mainMenuCache[key] = value;
@@ -227,12 +204,39 @@ $(document).ready(function () {
         $mainmenu_content.html("");
         $mainmenu_buttons.html("");
         $mainmenu_scroller.html("");
+        $mainmenu_scroller.hide();
     }
 
-    //Generate and display the loadgame menu screen.
-    function setup_loadgame_menu(data)
+    //Sets up a menu for selecting from one of your existing games. Action
+    //on choosing an actor can be controlled via options.
+    function setup_game_select_menu(options)
     {
+        var data;
+        if (mainMenuCache['my-games'])
+        {
+            console.log("Fetched info from cache.");
+            data = mainMenuCache['my-games']
+        }
+        else {
+            $.ajax({
+                type: "get",
+                url: "/games/mine",
+                async: false,
+                contentType:"application/json",
+                statusCode: {
+                    200: function(resp)
+                    {
+                        console.log("Fetched info from Ajax.");
+                        set_cache('my-games', resp);
+                        data = resp;
+                   }
+                }
+            });
+        }
+
         var gamelist = [];
+        flush_mainmenu();
+
         for (var i = 0; i < data.length; i++)
         {
             gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
@@ -240,22 +244,111 @@ $(document).ready(function () {
         }
         if (gamelist.length == 0)
         {
-            $mainmenu_content = "You have no games to load!";
+            $mainmenu_content.html("You have no games!");
+        }
+        if(options['load'] && gamelist.length != 0)
+            $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
+
+        $("#mainmenu-header").html("Choose a Game");
+        $mainmenu_scroller.html(gamelist.join(""));
+
+        $mainmenu.show();
+        $mainmenu_scroller.show();
+
+
+        if(options['load']) {
+            $(".loadable-game-select").click(function (event) {
+                var gameid = event['currentTarget']['id'];
+                console.log(gameid);
+            });
+        }
+        if(options['add-to-game'])
+        {
+            $(".loadable-game-select").click(function (event) {
+                var gameid = event['currentTarget']['id'].slice(14);
+                console.log(gameid);
+                add_actor_to_game(gameid, options['actor-id'])
+            });
+        }
+    }
+
+    //Sets up a menu for selecting from one of your existing actors. Action
+    //on choosing an actor can be controled via options.
+    function setup_actor_select_menu(options)
+    {
+        flush_mainmenu();
+
+        var data;
+        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
+        {
+            console.log("Fetched info from cache.");
+            data = mainMenuCache['my-actors']
+        }
+        else
+        {
+            $.ajax({
+                type: "get",
+                url: "/actors/mine",
+                contentType:"application/json",
+                async: false,
+                statusCode: {
+                    200: function(resp)
+                    {
+                        //Save data in cache.
+                        console.log("Fetched info from Ajax.");
+                        console.log(resp);
+                        set_cache('my-actors', resp);
+
+                        //Hash and set names of actors.
+                        var namehash = {};
+                        for(var i = 0; i < resp.length; i++)
+                        {
+                            namehash[resp[i]['title']] = true;
+                        }
+                        set_cache('my-actors-names', namehash);
+                        set_cache('my-actors', resp);
+                        data = resp;
+                    }
+                }
+            });
         }
 
-        flush_mainmenu();
-        $("#mainmenu-header").html("Load a Game");
-        $mainmenu_scroller.html(gamelist.join(""));
-        $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
-        $mainmenu.show();
-
-        $(".loadable-game-select").click(function (event)
+        var actor_list = [];
+        for (var i = 0; i < data.length; i++)
         {
-            var gameid = event['currentTarget']['id'];
-            console.log(gameid);
-        });
+            if(!(options['add-to-game'] && !data[i]['in_game']))
+            {
+                actor_list.push("<button type='button' class='list-group-item modifyable-actor-select' " +
+                        "id='modifyable-actor-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
+            }
 
+        }
+
+        if (actor_list.length == 0)
+        {
+            $mainmenu_content.html("You have no actors!");
+        }
+
+        $mainmenu_header.html("Select an Actor");
+        $mainmenu_scroller.html(actor_list.join(""));
+        $mainmenu.show();
+        $mainmenu_scroller.show();
+
+        if (options['modify'])
+        {
+            $(".modifyable-actor-select").click(function(event){
+                setup_modifyactor_edit_menu(event.target.id)
+            })
+        }
+        if (options['add-to-game'])
+        {
+            $(".modifyable-actor-select").click(function(event) {
+                var actor_id = event['currentTarget']['id'].slice(17);
+                setup_game_select_menu({ "add-to-game": true, 'actor-id': actor_id});
+            });
+        }
     }
+
 
     //Generate and display the createactor menu screen.
     function setup_createactor_menu(data, namehash)
@@ -291,30 +384,7 @@ $(document).ready(function () {
         })
     }
 
-    //Sets up a menu for selecting from one of your existing actors.
-    function setup_modifyactor_select_menu(data)
-    {
-        var actor_list = [];
-        for (var i = 0; i < data.length; i++)
-        {
-            actor_list.push("<button type='button' class='list-group-item modifyable-actor-select' " +
-                    "id='modifyable-actor-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
-        }
-        if (actor_list.length == 0)
-        {
-            $mainmenu_content = "You have no actors to modify!";
-        }
 
-        flush_mainmenu();
-        $mainmenu_header.html("Modify an Actor");
-        $mainmenu_scroller.html(actor_list.join(""));
-        $mainmenu.show();
-
-
-        $(".modifyable-actor-select").click(function(event){
-            setup_modifyactor_edit_menu(event.target.id)
-        })
-    }
     function setup_modifyactor_edit_menu(target_id)
     {
         var actor_id = target_id.slice(17);
@@ -527,7 +597,7 @@ $(document).ready(function () {
                         else
                         {
                             if(modify_dict['create']) {
-                                create_newactor()
+                                create_newactor();
                             }
                             else if (modify_dict['url'])
                             {
@@ -543,6 +613,75 @@ $(document).ready(function () {
             });
         }
     }
+
+    function setup_creategame_menu(data)
+    {
+        flush_mainmenu();
+        $mainmenu_scroller.hide();
+        $mainmenu_header.html("Create a Game.");
+        $mainmenu_content.html("Choose a memorable name for your new game.<br><br>");
+
+        var lines = [];
+        lines.push("<div class='input-group'>");
+        lines.push("<span class='input-group-addon'>Game Name</span>");
+        lines.push("<input type='text' class='form-control' id='new-game-name' placeholder='Great new fun-game.'>");
+        lines.push("</div>");
+        $mainmenu_content.append(lines.join(""));
+        $mainmenu_buttons.html("<button class='btn btn-default' id='new-game-create-btn'>Create</button>");
+        $mainmenu.show();
+
+        $("#new-game-create-btn").click(function(event){
+            var game_name = $("#new-game-name").val();
+            if (! game_name)
+            {
+                $mainmenu_content2.html("<br>You game needs some name!");
+                return;
+            }
+            for(var i = 0; i < data.length; i++){
+                if (data[i].title === game_name)
+                {
+                    $mainmenu_content2.html("<br>You already have a game with that name!");
+                    return
+                }
+
+            }
+            $.ajax({
+                type: "post",
+                url: "/games/",
+                data: {'title': game_name},
+                statusCode: {
+                    201: function(data)
+                    {
+                        $mainmenu_content2.html("<br> Created Game!");
+                        mainMenuCache['my-games'] = null;
+                    }
+                }
+            });
+
+        })
+    }
+
+    //Add the actor, then clear the menu.
+    function add_actor_to_game(gameid, actorid)
+    {
+        $.ajax({
+            type: "patch",
+            url: "/game/" + gameid +"/",
+            data: {'add-actor': actorid},
+            statusCode: {
+                202: function (data) {
+                    console.log(data);
+                    $mainmenu_header.html("Success!");
+                    $mainmenu_content2.html("Added actor to game!");
+                    $mainmenu_scroller.html("");
+                    mainMenuCache['my-actors'] = null;
+                    mainMenuCache['my-actors-names'] = null;
+                }
+            }
+        });
+    }
+
+
 
     $("#mainmenu").hide();
     $("#closed-sidemenu").hide();
@@ -595,14 +734,13 @@ $(document).ready(function () {
     </div>
     <div class="col-xs-3 fill" id="sidemenu-col" style="padding: 0">
         <div class="opened-sidemenu sim-ui-element" id="opened-sidemenu">
-            <button class="btn btn-default btn-sidemenu">Start New Game</button>
+            <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
             <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
             <button class="btn btn-default btn-sidemenu">Spectate Game</button>
             <hr>
             <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
             <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
-            <button class="btn btn-default btn-sidemenu">Add Actor</button>
-            <button class="btn btn-default btn-sidemenu">Add Plants/Obstacles</button>
+            <button class="btn btn-default btn-sidemenu" id="add-actor-side-btn">Add Actor to Game</button>
             <hr>
         </div>
     </div>

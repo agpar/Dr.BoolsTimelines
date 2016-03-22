@@ -1,6 +1,7 @@
 from django.http import HttpResponseRedirect, HttpResponse
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_202_ACCEPTED
 from rest_framework.response import Response
-from c361.models import GameInstanceModel
+from c361.models import GameInstanceModel, GameActorModel
 from c361.serializers.game_instance import GameInstanceFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
@@ -28,6 +29,16 @@ class GameList(BaseListCreateView):
     """View for list of Games"""
     model = GameInstanceModel
     serializer_class = GameInstanceFullSerializer
+
+    def post(self, request, *args, **kwargs):
+        inpt = request.POST
+        d = {
+            'title': inpt['title'],
+            'creator': request.user
+        }
+        g = GameInstanceModel(**d)
+        g.save()
+        return Response(status=HTTP_201_CREATED)
 
 
 class GameDetail(BaseDetailView):
@@ -69,3 +80,16 @@ class GameDetail(BaseDetailView):
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
         return super().get(self, request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        import pdb
+        pdb.set_trace()
+        changes = request.POST
+        new_actor_id = changes.get('add-actor')
+        if not new_actor_id:
+            return Response(status=HTTP_400_BAD_REQUEST)
+        game = self.get_object()
+        act = GameActorModel.objects.get(id=int(new_actor_id))
+        game.actors.add(act)
+        game.save()
+        return Response(status=HTTP_202_ACCEPTED)

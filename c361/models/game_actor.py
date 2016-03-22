@@ -25,3 +25,7 @@ class GameActorModel(models.Model):
     @property
     def coords(self):
         return (self.x_coord, self.y_coord)
+
+    @property
+    def in_game(self):
+        return self.games.exists()
