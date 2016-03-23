@@ -57,6 +57,8 @@ class GameActorModel(models.Model):
 
 @receiver(post_save, sender=GameActorModel)
 def update_copies(sender, instance, **kwargs):
+    if not instance.is_master:
+        return
     for copy in instance.copies.all():
         copy.title = instance.title
         copy.creator = instance.creator

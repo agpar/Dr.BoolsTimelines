@@ -22,7 +22,8 @@ class GameInstanceModel(models.Model):
 
     actors = models.ManyToManyField(GameActorModel, blank=True, related_name="games")
     current_turn_number = models.IntegerField(default=0)
-    world = models.TextField(blank=True, null=True)
+    seed = models.TextField(blank=True, null=True)
+    cells = models.TextField(blank=True, null=True)
 
     def is_active(self):
         actor_urn = cache.get(str(self.uuid))

@@ -1,14 +1,17 @@
+""" Pykka actor implementation for running a game continuously and allowing
+    users to make requests without having to swamp database for responses.
+
+"""
+
+
 import pykka
 import ujson as json
+
+from django.core.cache import cache
 from c361.models.game_instance import GameInstanceModel
 from c361.models.game_actor import GameActorModel
-
 from c361.models.turn import TurnModel
-
 from c361.gamelogic.game_instance import GameInstance
-from django.core.cache import cache
-
-# TODO Write serializer for dumping GameInstance and GameActor to the database.
 
 
 class GameRunner(pykka.ThreadingActor):
@@ -19,6 +22,13 @@ class GameRunner(pykka.ThreadingActor):
         self.game_uuid = game_uuid
         self.game_model = GameInstanceModel.objects.get(uuid=game_uuid)
         self.game_object = GameInstance(self.game_model)
+
+        if not self.game_model.seed:
+            not_cells = self.game_object.to_dict()
+            del not_cells['cells']
+            self.game_model.seed = json.dumps(not_cells)
+            self.game_model.save()
+
 
     def do_turn(self, up_to=0):
         """
@@ -45,12 +55,9 @@ class GameRunner(pykka.ThreadingActor):
         self.do_turn(self.game_object.current_turn)
         return self.game_object.to_dict(withseed=False)
 
-    def stop(self):
-        cache.delete(str(self.game_uuid))
-        full_dump = self.game_object.to_dict()
-        seed = json.dumps(full_dump)
-
-        self.game_model.world = seed
+    def dump_to_db(self):
+        cells = self.light_dump()['cells']
+        self.game_model.cells = json.dumps(cells)
         self.game_model.current_turn_number = self.game_object.current_turn
         self.game_model.save()
 
@@ -58,7 +65,7 @@ class GameRunner(pykka.ThreadingActor):
         actr = GameActorModel.objects.first()
         backend_actor_keys = {k for k,v in actr.__dict__ .items()}
 
-        # Put in keys which have the same name on backend.
+        # Save all the actors.
         for k, a in self.game_object.actors.items():
             adict = a.to_dict()
             actor = GameActorModel.objects.get(uuid=k)
@@ -68,4 +75,8 @@ class GameRunner(pykka.ThreadingActor):
 
             actor.save()
 
+    def stop(self):
+        """Stops and dumps all new information to the database."""
+        cache.delete(str(self.game_uuid))
+        self.dump_to_db()
         super().stop()
