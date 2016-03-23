@@ -3,7 +3,7 @@
 
 """
 
-
+import threading
 import pykka
 import ujson as json
 
@@ -22,7 +22,8 @@ class GameRunner(pykka.ThreadingActor):
         self.game_uuid = game_uuid
         self.game_model = GameInstanceModel.objects.get(uuid=game_uuid)
         self.game_object = GameInstance(self.game_model)
-
+        self.turns_done = 0
+        self.last_dump = 0
         if not self.game_model.seed:
             not_cells = self.game_object.to_dict()
             del not_cells['cells']
@@ -36,12 +37,17 @@ class GameRunner(pykka.ThreadingActor):
         This class will tell its game_object to compute the turns, then save deltas as TurnModels.
         """
         results = self.game_object.do_turn(up_to)
-
         for turn in results:
             temp = TurnModel(game=self.game_model, number=turn['number'], delta_dump=turn['deltas'])
             temp.save()
+            self.turns_done += 1
+
         self.game_model.current_turn_number = up_to
         self.game_model.save()
+
+        if self.turns_done - self.last_dump > 10:
+            self.dump_to_db()
+
         return self.game_model.current_turn_number
 
     def reset_game(self):
@@ -61,33 +67,39 @@ class GameRunner(pykka.ThreadingActor):
         self.game_model.save()
         self.game_object = GameInstance(self.game_model)
 
-
     def full_dump(self):
         return self.game_object.to_dict()
 
     def light_dump(self):
-        self.do_turn(self.game_object.current_turn)
+        self.do_turn(self.game_object.current_turn) # ONLY FOR THE DEMO
         return self.game_object.to_dict(withseed=False)
 
-    def dump_to_db(self):
-        cells = self.game_object.to_dict(withseed=False)
-        self.game_model.cells = json.dumps(cells)
-        self.game_model.current_turn_number = self.game_object.current_turn
-        self.game_model.save()
+    def dump_to_db(self, async=True):
+        """Dump all information about actors and games to the database."""
+        def dump_helper():
+            cells = self.game_object.to_dict(withseed=False)['cells']
+            self.game_model.cells = json.dumps(cells)
+            self.game_model.current_turn_number = self.game_object.current_turn
+            self.game_model.save()
 
-        # Figure out which attributes and actor model has.
-        actr = GameActorModel.objects.first()
-        backend_actor_keys = {k for k,v in actr.__dict__ .items()}
+            # Figure out which attributes and actor model has.
+            actr = GameActorModel.objects.first()
+            backend_actor_keys = {k for k,v in actr.__dict__ .items()}
 
-        # Save all the actors.
-        for k, a in self.game_object.actors.items():
-            adict = a.to_dict()
-            actor = GameActorModel.objects.get(uuid=k)
-            for key, value in adict.items():
-                if key in backend_actor_keys:
-                    setattr(actor, key, value)
+            # Save all the actors.
+            for k, a in self.game_object.actors.items():
+                adict = a.to_dict()
+                actor = GameActorModel.objects.get(uuid=k)
+                for key, value in adict.items():
+                    if key in backend_actor_keys:
+                        setattr(actor, key, value)
+                actor.save()
 
-            actor.save()
+        if async:
+            t = threading.Thread(target=dump_helper())
+            t.start()
+        else:
+            dump_helper()
 
     def stop(self):
         """Stops and dumps all new information to the database."""
