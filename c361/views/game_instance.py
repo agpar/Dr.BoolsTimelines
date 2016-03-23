@@ -82,14 +82,13 @@ class GameDetail(BaseDetailView):
         return super().get(self, request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
-        import pdb
-        pdb.set_trace()
         changes = request.POST
         new_actor_id = changes.get('add-actor')
         if not new_actor_id:
             return Response(status=HTTP_400_BAD_REQUEST)
         game = self.get_object()
         act = GameActorModel.objects.get(id=int(new_actor_id))
-        game.actors.add(act)
+        copy_act = act.deep_copy()
+        game.actors.add(copy_act)
         game.save()
         return Response(status=HTTP_202_ACCEPTED)

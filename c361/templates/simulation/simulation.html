@@ -316,20 +316,13 @@ $(document).ready(function () {
         var actor_list = [];
         for (var i = 0; i < data.length; i++)
         {
-            if(!(options['add-to-game'] && !data[i]['in_game']))
-            {
-                actor_list.push("<button type='button' class='list-group-item modifyable-actor-select' " +
-                        "id='modifyable-actor-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
-            }
-
+            actor_list.push("<button type='button' class='list-group-item modifyable-actor-select' " +
+                    "id='modifyable-actor-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
         }
 
         if (actor_list.length == 0)
         {
-            if(options['add-to-game'])
-                $mainmenu_content.html("You have no actors not already in games!");
-            else
-                $mainmenu_content.html("You have no actors");
+            $mainmenu_content.html("You have no actors");
         }
 
         $mainmenu_header.html("Select an Actor");
