@@ -92,6 +92,18 @@ def actor_location(actor):
 def actor_health(actor):
     return actor.health
 
+def actor_direction(actor):
+    return actor.direction
+
+def actor_rock(actor):
+    return actor.is_rock
+
+def actor_food(actor):
+    return actor.is_food
+
+def actor_issleeping(actor):
+    return actor.is_sleeping
+
 # Action Functions #
 # ================ #
 
@@ -167,5 +179,10 @@ SYM_MAP = {
     'WEST': lambda x: 'WEST',
     'myhunger': actor_hunger,
     'mylocation': actor_location,
-    'myhealth': actor_health
+    'myhealth': actor_health,
+    'mydirection' : actor_direction,
+    'myrock' : actor_rock,
+    'myfood' : actor_food,
+    'asleep' : actor_issleeping
+
 }
