@@ -29,7 +29,6 @@ class GameRunner(pykka.ThreadingActor):
             self.game_model.seed = json.dumps(not_cells)
             self.game_model.save()
 
-
     def do_turn(self, up_to=0):
         """
         This will be the main method for getting turn information.
@@ -45,8 +44,23 @@ class GameRunner(pykka.ThreadingActor):
         self.game_model.save()
         return self.game_model.current_turn_number
 
-    def restart_game(self):
+    def reset_game(self):
         """Development function for restarting a running game."""
+        self.game_model.current_turn_number = 0
+        self.game_model.cells = json.dumps({})
+
+        # Reset all actors
+        for a in self.game_model.actors.all():
+            a.reset_to_defaults()
+            a.save()
+
+        # Delete all recorded turns.
+        for t in self.game_model.turns.all():
+            t.delete()
+
+        self.game_model.save()
+        self.game_object = GameInstance(self.game_model)
+
 
     def full_dump(self):
         return self.game_object.to_dict()
@@ -56,7 +70,7 @@ class GameRunner(pykka.ThreadingActor):
         return self.game_object.to_dict(withseed=False)
 
     def dump_to_db(self):
-        cells = self.light_dump()['cells']
+        cells = self.game_object.to_dict(withseed=False)
         self.game_model.cells = json.dumps(cells)
         self.game_model.current_turn_number = self.game_object.current_turn
         self.game_model.save()

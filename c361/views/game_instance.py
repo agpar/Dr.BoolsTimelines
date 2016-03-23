@@ -62,23 +62,29 @@ class GameDetail(BaseDetailView):
                 return JsonResponse({"result": "Pykaa actor stopped."})
             else:
                 return JsonResponse({"result":"Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.GET.get('do_turn'):
+            game_proxy = game_instance.get_pactor_proxy()
             turn_num = request.GET.get('do_turn')
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.do_turn(int(turn_num))
+            future = game_proxy.do_turn(int(turn_num))
             current_turn = future.get()
             return JsonResponse({"result": "Advanced to turn {}.".format(current_turn)})
         if request.GET.get('full_dump'):
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.full_dump()
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.full_dump()
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
-
         if request.GET.get('light_dump'):
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.light_dump()
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.light_dump()
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
+        if request.GET.get('reset'):
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.reset_game()
+            future.get()
+            return JsonResponse({"result": "Game reset."}, content_type='application/json')
+
         return super().get(self, request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
