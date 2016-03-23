@@ -111,6 +111,15 @@ def actor_issleeping(actor):
 def sleep_fn(actor):
     return actor.sleep_action()
 
+def eat_fn(actor):
+    """If an actor has food, eat, otherwise do nothing
+
+    :return Delta 
+    """
+    if actor_food(actor):
+        return actor.eat()
+    else: 
+        return
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.
@@ -169,7 +178,8 @@ FUNC_MAP = {
     'sleep': sleep_fn,
     'direction': direction_fn,
     'nearest': nearest_fn,
-    'walk': walk_fn
+    'walk': walk_fn,
+    'eat': eat_fn
 }
 
 SYM_MAP = {
