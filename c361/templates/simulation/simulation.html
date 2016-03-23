@@ -95,83 +95,6 @@ $(document).ready(function () {
     });
     */
 
-    //Open main menu with options for choosing a game to load.
-    $("#create-game-side-btn").click(function (event){
-        if (mainMenuCache['my-games'])
-        {
-            console.log("Fetched info from cache.");
-            setup_creategame_menu(mainMenuCache['my-games']);
-        }
-        else {
-            $.ajax({
-                type: "get",
-                url: "/games/mine",
-                contentType:"application/json",
-                statusCode: {
-                    200: function(data)
-                    {
-                        console.log("Fetched info from Ajax.");
-                        set_cache('my-games', data);
-                        setup_creategame_menu(data);
-                    }
-                }
-            });
-        }
-
-    });
-
-
-    //Open main menu with options for choosing a game to load.
-    $("#load-game-side-btn").click(function (event){
-        setup_game_select_menu({'load': true});
-    });
-
-    //Click listener for the create-actor button in the sidemenu.
-    $("#create-actor-side-btn").click(function(event){
-
-        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
-        {
-            console.log("Fetched info from cache.");
-            setup_createactor_menu(mainMenuCache['my-actors'], mainMenuCache['my-actors-names']);
-        }
-        else
-        {
-            $.ajax({
-                type: "get",
-                url: "/actors/mine",
-                contentType:"application/json",
-                statusCode: {
-                    200: function(data)
-                    {
-                        //Save data in cache.
-                        console.log("Fetched info from Ajax.");
-                        set_cache('my-actors', data);
-
-                        //Hash and set names of actors.
-                        var namehash = {};
-                        for(var i = 0; i < data.length; i++)
-                        {
-                            namehash[data[i]['title']] = true;
-                        }
-                        set_cache('my-actors-names', namehash);
-
-                        setup_createactor_menu(data, namehash);
-                    }
-                }
-            });
-        }
-
-    });
-
-    //Click listener for the modify-actor button in the sidemenu.
-    $("#modify-actor-side-btn").click(function (event) {
-        setup_actor_select_menu({'modify': true});
-    });
-
-    $("#add-actor-side-btn").click(function(event){
-        setup_actor_select_menu({'add-to-game':true});
-    });
-
     //Use a dict to hold on to results for 30 seconds.
     function set_cache(key, value, expire)
     {
@@ -207,15 +130,47 @@ $(document).ready(function () {
         $mainmenu_scroller.hide();
     }
 
-    //Sets up a menu for selecting from one of your existing games. Action
-    //on choosing an actor can be controlled via options.
-    function setup_game_select_menu(options)
+    //Checks if actor info is cached, or else fetches it.
+    function refresh_actor_cache()
     {
-        var data;
+        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
+        {
+            console.log("Fetched info from cache.");
+        }
+        else
+        {
+            $.ajax({
+                type: "get",
+                url: "/actors/mine",
+                contentType:"application/json",
+                async: false,
+                statusCode: {
+                    200: function(resp)
+                    {
+                        //Save data in cache.
+                        console.log("Fetched info from Ajax.");
+                        set_cache('my-actors', resp);
+
+                        //Hash and set names of actors.
+                        var namehash = {};
+                        for(var i = 0; i < resp.length; i++)
+                        {
+                            namehash[resp[i]['title']] = true;
+                        }
+                        set_cache('my-actors-names', namehash);
+                        set_cache('my-actors', resp);
+                    }
+                }
+            });
+        }
+    }
+
+    //Checks if game info is cached, or else fetches it.
+    function refresh_game_cache()
+    {
         if (mainMenuCache['my-games'])
         {
             console.log("Fetched info from cache.");
-            data = mainMenuCache['my-games']
         }
         else {
             $.ajax({
@@ -228,14 +183,64 @@ $(document).ready(function () {
                     {
                         console.log("Fetched info from Ajax.");
                         set_cache('my-games', resp);
-                        data = resp;
-                   }
+                    }
                 }
             });
         }
+    }
 
-        var gamelist = [];
+    //Draw a status update in the main menu.
+    function draw_status_menu(header, message)
+    {
         flush_mainmenu();
+        $mainmenu_header.html(header);
+        $mainmenu_content.html(message);
+        $mainmenu_buttons.html("<button class='btn btn-default' id='close-mainmenu-btn'>Close</button>");
+        $("#close-mainmenu-btn").click(function(event)
+        {
+            flush_mainmenu();
+            $("#mainmenu").hide();
+        });
+
+    }
+
+    //Open main menu with options for choosing a game to load.
+    $("#create-game-side-btn").click(function (event){
+        refresh_game_cache();
+        setup_creategame_menu(mainMenuCache['my-games']);
+    });
+
+    //Open main menu with options for choosing a game to load.
+    $("#load-game-side-btn").click(function (event){
+        setup_game_select_menu({'load': true});
+    });
+
+    //Click listener for the create-actor button in the sidemenu.
+    $("#create-actor-side-btn").click(function(event){
+
+        refresh_actor_cache();
+        setup_createactor_menu(mainMenuCache['my-actors'], mainMenuCache['my-actors-names']);
+    });
+
+    //Click listener for the modify-actor button in the sidemenu.
+    $("#modify-actor-side-btn").click(function (event) {
+        setup_actor_select_menu({'modify': true});
+    });
+
+    $("#add-actor-side-btn").click(function(event){
+        setup_actor_select_menu({'add-to-game':true});
+    });
+
+
+
+    //Sets up a menu for selecting from one of your existing games. Action
+    //on choosing an actor can be controlled via options.
+    function setup_game_select_menu(options)
+    {
+        refresh_game_cache();
+        flush_mainmenu();
+        var data = mainMenuCache['my-games'];
+        var gamelist = [];
 
         for (var i = 0; i < data.length; i++)
         {
@@ -276,42 +281,9 @@ $(document).ready(function () {
     //on choosing an actor can be controled via options.
     function setup_actor_select_menu(options)
     {
+        refresh_actor_cache();
         flush_mainmenu();
-
-        var data;
-        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
-        {
-            console.log("Fetched info from cache.");
-            data = mainMenuCache['my-actors']
-        }
-        else
-        {
-            $.ajax({
-                type: "get",
-                url: "/actors/mine",
-                contentType:"application/json",
-                async: false,
-                statusCode: {
-                    200: function(resp)
-                    {
-                        //Save data in cache.
-                        console.log("Fetched info from Ajax.");
-                        console.log(resp);
-                        set_cache('my-actors', resp);
-
-                        //Hash and set names of actors.
-                        var namehash = {};
-                        for(var i = 0; i < resp.length; i++)
-                        {
-                            namehash[resp[i]['title']] = true;
-                        }
-                        set_cache('my-actors-names', namehash);
-                        set_cache('my-actors', resp);
-                        data = resp;
-                    }
-                }
-            });
-        }
+        var data = mainMenuCache['my-actors'];
 
         var actor_list = [];
         for (var i = 0; i < data.length; i++)
@@ -347,7 +319,7 @@ $(document).ready(function () {
 
 
     //Generate and display the createactor menu screen.
-    function setup_createactor_menu(data, namehash)
+    function setup_createactor_menu()
     {
         flush_mainmenu();
         var lines = [];
@@ -398,20 +370,20 @@ $(document).ready(function () {
         $mainmenu.show();
         make_actor_editor();
 
-        $.ajax({
-            type: "get",
-            url: "/actor/"+actor_id,
-            contentType:"application/json",
-            statusCode: {
-                200: function(data)
-                {
-                    console.log(data);
-                    $("#new-actor-name").val(data['title']);
-                    original_name = data['title'];
-                    $("#new-actor-script").val(data['behaviour_script']);
-                }
+        refresh_actor_cache();
+        var data = mainMenuCache['my-actors'];
+        var actor_int = parseInt(actor_id);
+        for (var i = 0; i < data.length; i++)
+        {
+            if (data[i].id === actor_int)
+            {
+                $("#new-actor-name").val(data[i]['title']);
+                original_name = data[i]['title'];
+                $("#new-actor-script").val(data[i]['behaviour_script']);
+                break;
             }
-        });
+        }
+
         $("#new-actor-validate-btn").click(function(event)
         {
             validate_newactor({'original_name': original_name})
@@ -428,7 +400,7 @@ $(document).ready(function () {
     {
         var lines = [];
         lines.push("<b>Behaviour Script</b><br>");
-        lines.push("<textarea class='actor-script-input' cols='50' id='new-actor-script'></textarea>");
+        lines.push("<textarea class='actor-script-input' cols='50' id='new-actor-script'></textarea><br>");
         $mainmenu_content.append(lines.join(""));
         $("#new-actor-script").linedtextarea();
         $("#new-actor-script").keydown(function (e)
@@ -527,13 +499,16 @@ $(document).ready(function () {
             type: "post",
             url: "/actors/",
             data: {'behaviour_script': scriptval, 'title': nameval},
-            statusCode: {
-                201: function(data)
-                {
-                    $mainmenu_content2.html("Created actor!");
-                    mainMenuCache['my-actors'] = null;
-                    mainMenuCache['my-actors-names'] = null;
-                }
+            success: function (data) {
+                draw_status_menu("Success!", "Actor was created!");
+            },
+            failure: function(data) {
+                draw_status_menu("Failed!!", "Something went wrong... Your actor was not created.");
+            },
+            complete: function(data)
+            {
+                mainMenuCache['my-actors'] = null;
+                mainMenuCache['my-actors-names'] = null;
             }
         });
     }
@@ -543,13 +518,16 @@ $(document).ready(function () {
             type: "patch",
             url: url,
             data: {'title': name, 'behaviour_script': script},
-            statusCode: {
-                202: function (data) {
-                    console.log(data);
-                    $mainmenu_content2.html("Updated Successfully!!");
-                    mainMenuCache['my-actors'] = null;
-                    mainMenuCache['my-actors-names'] = null;
-                }
+            success: function (data) {
+                draw_status_menu("Success!", "Actor modified successfully!");
+            },
+            failure: function(data) {
+                draw_status_menu("Failed!!", "Something went wrong... Your actor was not modified.");
+            },
+            complete: function(data)
+            {
+                mainMenuCache['my-actors'] = null;
+                mainMenuCache['my-actors-names'] = null;
             }
         });
     }
@@ -558,12 +536,10 @@ $(document).ready(function () {
     * Report results to mainmenu-content2. */
     function validate_newactor(modify_dict)
     {
-
         if(modify_dict === null)
         {
             modify_dict = {};
         }
-
         var namehash = mainMenuCache['my-actors-names'];
         var nameval = $("#new-actor-name").val();
         var scriptval = $("#new-actor-script").val();
@@ -645,12 +621,15 @@ $(document).ready(function () {
                 type: "post",
                 url: "/games/",
                 data: {'title': game_name},
-                statusCode: {
-                    201: function(data)
-                    {
-                        $mainmenu_content2.html("<br> Created Game!");
-                        mainMenuCache['my-games'] = null;
-                    }
+                success: function (data) {
+                    draw_status_menu("Success!", "New game created!");
+                },
+                failure: function(data) {
+                    draw_status_menu("Failed!!", "Something went wrong... Your game was not created.");
+                },
+                complete: function(data)
+                {
+                    mainMenuCache['my-games'] = null;
                 }
             });
 
@@ -664,22 +643,22 @@ $(document).ready(function () {
             type: "patch",
             url: "/game/" + gameid +"/",
             data: {'add-actor': actorid},
-            statusCode: {
-                202: function (data) {
-                    console.log(data);
-                    $mainmenu_header.html("Success!");
-                    $mainmenu_content2.html("Added actor to game!");
-                    $mainmenu_scroller.html("");
-                    mainMenuCache['my-actors'] = null;
-                    mainMenuCache['my-actors-names'] = null;
-                }
+            success: function (data) {
+                draw_status_menu("Success!", "Added actor to game!");
+            },
+            failure: function(data) {
+                draw_status_menu("Failed!!", "Something went wrong... Your actor was not added.");
+            },
+            complete: function(data)
+            {
+                mainMenuCache['my-actors'] = null;
+                mainMenuCache['my-actors-names'] = null;
             }
         });
     }
 
 
-
-    $("#mainmenu").hide();
+    $mainmenu.hide();
     $("#closed-sidemenu").hide();
     $("#opened-actorinfo").hide();
     $("#cell-stats").hide();
