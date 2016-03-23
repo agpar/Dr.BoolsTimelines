@@ -1,6 +1,7 @@
 import random
 import uuid
 import ujson as json
+import sys
 # Handle both relative and local importing schemes.
 try:
     from .actor import Actor
@@ -217,6 +218,8 @@ class GameInstance(CoordParseMixin):
         """
 
         effects = []
+        if not actor_turn:
+            return []
         if not isinstance(actor_turn, list):
             actor_turn = [actor_turn]
 
@@ -276,7 +279,7 @@ class GameInstance(CoordParseMixin):
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in self.actors.items():
                 turn_res = []
-                turn_res.append(actor.do_turn())
+                turn_res.extend(actor.do_turn())
                 side_effects = self.turn_effects(turn_res)
                 turn_res.extend(side_effects)
                 self.apply_deltas(turn_res)

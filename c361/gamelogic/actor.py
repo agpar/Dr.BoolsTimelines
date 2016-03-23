@@ -80,6 +80,7 @@ class Actor(WorldInhabitant):
         return d
 
     def do_turn(self):
+        """Returns a list of deltas the actor wishes to do."""
         self._turn_stat_change()
         return self.behaviours.get_action(self)
 

@@ -2,8 +2,6 @@
     users to make requests without having to swamp database for responses.
 
 """
-
-import threading
 import pykka
 import ujson as json
 
@@ -74,32 +72,27 @@ class GameRunner(pykka.ThreadingActor):
         self.do_turn(self.game_object.current_turn) # ONLY FOR THE DEMO
         return self.game_object.to_dict(withseed=False)
 
-    def dump_to_db(self, async=True):
+    def dump_to_db(self):
         """Dump all information about actors and games to the database."""
-        def dump_helper():
-            cells = self.game_object.to_dict(withseed=False)['cells']
-            self.game_model.cells = json.dumps(cells)
-            self.game_model.current_turn_number = self.game_object.current_turn
-            self.game_model.save()
+        cells = self.game_object.to_dict(withseed=False)['cells']
+        self.game_model.cells = json.dumps(cells)
+        self.game_model.current_turn_number = self.game_object.current_turn
+        self.game_model.save()
 
-            # Figure out which attributes and actor model has.
-            actr = GameActorModel.objects.first()
-            backend_actor_keys = {k for k,v in actr.__dict__ .items()}
+        # Figure out which attributes and actor model has.
+        actr = GameActorModel.objects.first()
+        backend_actor_keys = {k for k,v in actr.__dict__ .items()}
 
-            # Save all the actors.
-            for k, a in self.game_object.actors.items():
-                adict = a.to_dict()
-                actor = GameActorModel.objects.get(uuid=k)
-                for key, value in adict.items():
-                    if key in backend_actor_keys:
-                        setattr(actor, key, value)
-                actor.save()
+        # Save all the actors.
+        for k, a in self.game_object.actors.items():
+            adict = a.to_dict()
+            actor = GameActorModel.objects.get(uuid=k)
+            for key, value in adict.items():
+                if key in backend_actor_keys:
+                    setattr(actor, key, value)
+            actor.save()
+        print("Finished dumping.")
 
-        if async:
-            t = threading.Thread(target=dump_helper())
-            t.start()
-        else:
-            dump_helper()
 
     def stop(self):
         """Stops and dumps all new information to the database."""
