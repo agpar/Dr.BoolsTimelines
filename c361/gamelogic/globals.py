@@ -141,7 +141,7 @@ class WorldInhabitant(CoordParseMixin):
     def distance_to(self, other):
         """Calculate distance between self and other."""
 
-        return self.distance(self, other)
+        return self.distance_fn(self, other)
 
     def direction_to(self, other):
         """Calculate best direction to go from self to other.
@@ -159,45 +159,45 @@ class Cell(WorldInhabitant):
 
     def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
         if json_dump is not None:
-            self.ctype = CELL_TYPES[json_dump["type"]]
+            self.type = CELL_TYPES[json_dump["type"]]
             self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
             self.elevation = json_dump["elevation"]
         else:
-            self.ctype = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
+            self.type = ctype if ctype in [1, 2, 3] else CELL_TYPES[ctype]
             self._coords = (x, y)
             self.elevation = elevation
 
     def __repr__(self):
         temp = "Cell({}, {}, {}, {})"
-        return temp.format(self.x, self.y, CELL_TYPES[self.ctype], self.elevation)
+        return temp.format(self.x, self.y, CELL_TYPES[self.type], self.elevation)
 
     @property
     def is_water(self):
-        if self.ctype == CELL_TYPES['WATER']:
+        if self.type == CELL_TYPES['WATER']:
             return True
         return False
 
     @property
     def is_grass(self):
-        if self.ctype == CELL_TYPES['GRASS']:
+        if self.type == CELL_TYPES['GRASS']:
             return True
         return False
 
     @property
     def is_plant(self):
-        if self.ctype == CELL_TYPES['PLANT']:
+        if self.type == CELL_TYPES['PLANT']:
             return True
         return False
 
     @property
     def is_rock(self):
-        if self.ctype == CELL_TYPES['ROCK']:
+        if self.type == CELL_TYPES['ROCK']:
             return True
         return False
 
     def to_dict(self):
         serialized = {
-            "type": CELL_TYPES[self.ctype],
+            "type": CELL_TYPES[self.type],
             "coords": {"x": self.x, "y": self.y},
             "elevation": self.elevation
         }
