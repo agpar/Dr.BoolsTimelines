@@ -85,7 +85,7 @@ class GameDetail(BaseDetailView):
         changes = request.POST
         new_actor_id = changes.get('add-actor')
         if not new_actor_id:
-            return Response(status=HTTP_400_BAD_REQUEST)
+            return Response(data={'error': "Actor does not exist."}, status=HTTP_400_BAD_REQUEST)
         game = self.get_object()
         act = GameActorModel.objects.get(id=int(new_actor_id))
         copy_act = act.deep_copy()
