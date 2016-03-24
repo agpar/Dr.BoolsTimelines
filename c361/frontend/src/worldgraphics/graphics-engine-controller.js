@@ -46,6 +46,8 @@ module.exports = Class("GraphicsEngineController", {
 
             $("div#stat-listing").append(element);
         }
+
+
     },
     /*
     Bind key events to camera or interaction actions
@@ -120,6 +122,7 @@ module.exports = Class("GraphicsEngineController", {
                     console.log("INS")
 
                     stats = this._renderer.getCell(coords[0], coords[1])
+                    console.log(stats)
                     this._popupStats(stats)
                 }
                 else {
