@@ -156,18 +156,16 @@ class Actor(WorldInhabitant):
             }]
             
     def attack(self):
-        if direction not in DIRECTIONS:
-            direction = self.direction
 
-        x1,y1 = self.get_coord(direction)
-        coord_contents = self.gameInstance.world.get_cell((x1,y1))
+        x1,y1 = self.get_coord(self.direction)
 
-        if self.gameInstance.has_attr(coord_contents, "ACTOR"):
-            actor_ID = self.gameInstance.get_actor(x1,y1)
+        if self.gameInstance.check_actor((x1,y1)):
+            actor = self.gameInstance.get_actor((x1,y1))
+            print(actor.uuid)
             return {
                 "type": "actorDelta",
                 "coords": {'x': x1, 'y': y1},
-                "actorID": actor_ID,
+                "actorID": actor.uuid,
                 "varTarget": "health",
                 "from": actor.health,
                 "to": actor.health - 10

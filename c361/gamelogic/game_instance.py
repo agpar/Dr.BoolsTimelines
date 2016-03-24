@@ -89,13 +89,12 @@ class GameInstance(CoordParseMixin):
             a.gameInstance = self
             self.world.add_inhabitant(a)
 
-    def remove_actor(self, xy_or_WI):
+    def remove_actor(self, act_uuid):
         """Remove an actor from the GameInstance. Fail silently.
 
         :param xy_or_WI: x,y coord OR a WorldInhabitant object.
         """
-        x,y = self.coord_parse(xy_or_WI)
-        actr = self.get_actor(xy_or_WI)
+        actr = self.get_actor(act_uuid)
         if not actr:
             return
 
@@ -127,6 +126,19 @@ class GameInstance(CoordParseMixin):
                 if isinstance(z, Actor):
                     return z
         return None
+
+    def check_actor(self, xy):
+        """ Check to see if actor is currently in location specified by param
+        :param xy: x,y coord of gameInstance
+        :return Boolean if Actor is at xy location or False if not
+        """
+        x, y = self.coord_parse(xy)
+        content = self[x][y]
+        if len(content) > 1:
+            for z in content:
+                if isinstance(z, Actor):
+                    return True
+        return False
 
     def move_actor(self, actor_or_UUID_or_coords, xy_or_WI):
         """Move an actor to a location.

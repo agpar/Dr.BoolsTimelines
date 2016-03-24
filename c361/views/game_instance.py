@@ -89,12 +89,31 @@ class GameDetail(BaseDetailView):
 
     def patch(self, request, *args, **kwargs):
         changes = request.POST
-        new_actor_id = changes.get('add-actor')
-        if not new_actor_id:
-            return Response(data={'error': "Actor does not exist."}, status=HTTP_400_BAD_REQUEST)
         game = self.get_object()
-        act = GameActorModel.objects.get(id=int(new_actor_id))
-        copy_act = act.deep_copy()
-        game.actors.add(copy_act)
-        game.save()
+        game_proxy = game.get_pactor_proxy() if game.is_active() else None
+
+        if changes['type'] == 'actor':
+            if changes['action'] == 'add':
+                copy_act = GameActorModel.objects.get(id=int(changes['id'])).deep_copy()
+                coords = changes.get('coords')
+                if coords:
+                    coords = coords['x'], coords['y']
+                    copy_act.x_coord, copy_act.y_coord = coords
+                copy_act.save()
+
+                if game_proxy:
+                    future = game_proxy.add_actor(copy_act, coords)
+                    future.get()
+
+                game.actors.add(copy_act)
+                game.save()
+            if changes['action'] == 'remove':
+                act = GameActorModel.objects.get(id=int(changes['id']))
+
+                if game_proxy():
+                    future = game_proxy.remove_actor(act)
+                    future.get()
+
+                act.delete()
+
         return Response(status=HTTP_202_ACCEPTED)

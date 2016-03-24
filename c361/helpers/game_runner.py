@@ -10,6 +10,7 @@ from c361.models.game_instance import GameInstanceModel
 from c361.models.game_actor import GameActorModel
 from c361.models.turn import TurnModel
 from c361.gamelogic.game_instance import GameInstance
+from c361.gamelogic.actor import Actor
 
 
 class GameRunner(pykka.ThreadingActor):
@@ -26,6 +27,7 @@ class GameRunner(pykka.ThreadingActor):
             not_cells = self.game_object.to_dict()
             del not_cells['cells']
             self.game_model.seed = json.dumps(not_cells)
+            self.game_model.cells = ""
             self.game_model.save()
 
     def do_turn(self, up_to=0):
@@ -93,9 +95,19 @@ class GameRunner(pykka.ThreadingActor):
             actor.save()
         print("Finished dumping.")
 
-
     def stop(self):
         """Stops and dumps all new information to the database."""
         cache.delete(str(self.game_uuid))
         self.dump_to_db()
         super().stop()
+
+    def add_actor(self, actor_model):
+        """Adds an actor to a running game. DOES NOT handle copying and saving in DB."""
+        self.game_object.add_actor(Actor(actor_model))
+
+    def remove_actor(self, actor_model):
+        self.game_object.remove_actor(str(actor_model.uuid))
+
+
+
+
