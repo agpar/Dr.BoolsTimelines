@@ -12,6 +12,9 @@ change operations to the renderer to move the view through time.
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
 module.exports = Class("GraphicsEngineController", {
+    'private _gameid': undefined,
+    'private _activeActor': undefined,
+    'private _updateLoop': null,
     'private _renderEngine': null,
     'private _camera': null,
     'private _camPos': null,
@@ -100,6 +103,8 @@ module.exports = Class("GraphicsEngineController", {
         this.startSimulationEngine()
 
         $("#simulation-render-target").click(function(evt){
+            var picked = scene.pick(evt.clientX, evt.clientY)
+            var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
             if(evt.ctrlKey)
                 return
             if (this._tool == "CAMERA") {
@@ -112,69 +117,127 @@ module.exports = Class("GraphicsEngineController", {
 
                 if(this._tool == "INSPECT") {
                     console.log("INS")
-                    var picked = scene.pick(evt.clientX, evt.clientY)
-                    var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
 
                     stats = this._renderer.getCell(coords[0], coords[1])
                     this._popupStats(stats)
                 }
                 else {
                     if(this._use == "ADD") {
-
+                        if (this._tool == "TERRAIN") {
+                            console.log("RAI_TER")
+                        }
+                        else if (this._tool == "GRASS") {
+                            console.log("ADD_GRA")
+                        }
+                        else if (this._tool == "ROCK") {
+                            console.log("ADD_ROC")
+                        }
+                        else if (this._tool == "WATER") {
+                            console.log("ADD_WAT")
+                        }
+                        else if (this._tool == "PLANT") {
+                            console.log("ADD_PLA")
+                        }
+                        else if (this._tool == "MUSHROOM") {
+                            console.log("ADD_MUS")
+                        }
+                        else if (this._tool == "WALL") {
+                            console.log("ADD_WAL")
+                        }
+                        else if (this._tool == "BLOCK") {
+                            console.log("ADD_BLO")
+                        }
+                        else if (this._tool == "ACTOR") {
+                            console.log("ADD_ACT")
+                            this._spawnActor(coord[0],coords[1])
+                        }
                     }
                     else if(this._use == "DELETE") {
-
+                        if (this._tool == "TERRAIN") {
+                            console.log("LOW_TER")
+                        }
+                        else if (this._tool == "GRASS") {
+                            console.log("DEL_GRA")
+                        }
+                        else if (this._tool == "ROCK") {
+                            console.log("DEL_ROC")
+                        }
+                        else if (this._tool == "WATER") {
+                            console.log("DEL_WAT")
+                        }
+                        else if (this._tool == "PLANT") {
+                            console.log("DEL_PLA")
+                        }
+                        else if (this._tool == "MUSHROOM") {
+                            console.log("DEL_MUS")
+                        }
+                        else if (this._tool == "WALL") {
+                            console.log("DEL_WAL")
+                        }
+                        else if (this._tool == "BLOCK") {
+                            console.log("DEL_BLO")
+                        }
+                        else if (this._tool == "ACTOR") {
+                            console.log("DEL_ACT")
+                        }
                     }
                 }
             }
 
         }.bind(this))
+    },
+    'prublic setActiveActor': function (actor_id) {
+          this._activeActor = actor_id
+    },
+    'public setGameID': function (gameid) {
+        this._gameid = gameid
+        var renderer = this.renderer
+        var cam = this._camPos
 
-        $(document).on("startgame", function (e) {
-            $.ajax({
-              type: "get",
-              url: "/game/"+GAMEID+"/?start=true",
-              contentType:"application/json",
-              statusCode: {
-                  200: function(data)
-                  {
-                      console.log(data)
-                  }
+        $.ajax({
+          type: "get",
+          url: "/game/"+GAMEID+"/?start=true",
+          contentType:"application/json",
+          statusCode: {
+              200: function(data)
+              {
+                  console.log(data)
               }
-            })
+          }
+        })
 
+        $.ajax({
+            type: "get",
+            url: "/game/"+GAMEID+"/?full_dump=true",
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    renderer.setWorldState(data)
+                }
+            }
+        })
+
+        renderer.updateView(this._camPos.x, this._camPos.y)
+
+        if(this._updateLoop != null)
+            clearInterval(this._updateLoop)
+
+        this._updateLoop = setInterval(function () {
             $.ajax({
                 type: "get",
-                url: "/game/"+GAMEID+"/?full_dump=true",
+                url: "/game/"+GAMEID+"/?light_dump=true",
                 contentType:"application/json",
                 statusCode: {
                     200: function(data)
                     {
                         renderer.setWorldState(data)
-                        console.log(renderer)
                     }
                 }
             })
 
             renderer.updateView(this._camPos.x, this._camPos.y)
-            /*
-            setInterval(function () {
-                $.ajax({
-                    type: "get",
-                    url: "/game/"+GAMEID+"/?light_dump=true",
-                    contentType:"application/json",
-                    statusCode: {
-                        200: function(data)
-                        {
-                            renderer.setWorldState(data)
-                        }
-                    }
-                })
-
-                renderer.updateView(this._camPos.x, this._camPos.y)
-            }.bind(this ), 1000)
-        */
-        }.bind(this))
+        }.bind(this), 1000)
 
     },
     /*

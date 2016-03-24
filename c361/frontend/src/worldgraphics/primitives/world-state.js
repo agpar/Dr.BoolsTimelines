@@ -19,7 +19,7 @@ module.exports = Class("WorldState", {
         this._waterThreshold = json_dump["waterThreshold"]
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
-        this._seedSize       = json_dump["seedSize"]
+        this._seedsize       = json_dump["seedsize"]
         this._cells          = json_dump["cells"]
 
     },

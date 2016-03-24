@@ -299,7 +299,7 @@ module.exports =  Class("WorldRenderer", {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-
+        this._sceneChunks.reset();
         this._worldState = WorldState(tstate)
     },
     /*

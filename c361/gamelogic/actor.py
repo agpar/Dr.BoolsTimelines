@@ -33,6 +33,8 @@ class Actor(WorldInhabitant):
             self.health = model.health
             self.hunger = model.hunger
             self.sleep = model.sleep
+            self.has_food = False
+            self.has_rock = False
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.script = model.behaviour_script
@@ -44,6 +46,8 @@ class Actor(WorldInhabitant):
             self.health = 100
             self.hunger = 100
             self.sleep = 100
+            self.has_food = True
+            self.has_rock = False
             self.is_sleeping = False
             self.direction = "NORTH"
             self.script = script
@@ -80,6 +84,7 @@ class Actor(WorldInhabitant):
         return d
 
     def do_turn(self):
+        """Returns a list of deltas the actor wishes to do."""
         self._turn_stat_change()
         return self.behaviours.get_action(self)
 
@@ -107,6 +112,16 @@ class Actor(WorldInhabitant):
         if direction == 'WEST':
             return self.west()
 
+    def get_oppCoord(self,direction):
+        if direction == 'NORTH':
+            return 'SOUTH'
+        if direction == 'EAST':
+            return 'WEST'
+        if direction == 'SOUTH':
+            return 'NORTH'
+        if direction == 'WEST':
+            return 'EAST'
+
     # Actions
     def _action_table(self):
         return {
@@ -119,16 +134,17 @@ class Actor(WorldInhabitant):
             "drop": self.drop,
             "see": self.see,
             "smell": self.smell,
-            "sleep": self.sleep_action
+            "sleep": self.sleep_action,
+            "attack": self.attack
         }
 
     def eat(self):
-        if self.is_food :
+        if self.has_food :
             return [{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
-                "varTarget": "food",
+                "varTarget": "has_food",
                 "from": True,
                 "to": False
             }, {
@@ -136,8 +152,26 @@ class Actor(WorldInhabitant):
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
                 "varTarget": "hunger",
-                "to": self.hunger + self.is_food
+                "to": self.hunger + 50
             }]
+            
+    def attack(self):
+        if direction not in DIRECTIONS:
+            direction = self.direction
+
+        x1,y1 = self.get_coord(direction)
+        coord_contents = self.gameInstance.world.get_cell((x1,y1))
+
+        if self.gameInstance.has_attr(coord_contents, "ACTOR"):
+            actor_ID = self.gameInstance.get_actor(x1,y1)
+            return {
+                "type": "actorDelta",
+                "coords": {'x': x1, 'y': y1},
+                "actorID": actor_ID,
+                "varTarget": "health",
+                "from": actor.health,
+                "to": actor.health - 10
+            }
 
     def walk(self, direction):
         """Return a delta for walking in direction."""
@@ -251,215 +285,92 @@ class Actor(WorldInhabitant):
             return False
         return True
 
-    # For picking up blocks only
-    def pickup(self):
-        if self.direction == "NORTH":
+    def pickup(self, direction):
+        """ Pickup something in a certain direction. If 
+        no direction given, attempt pickup in current direction
+
+        return: resulting delta from a pickup
+        """
+        if direction not in DIRECTIONS:
+            direction = self.direction
+
+
+        return [{
+            "type": "worldDelta",
+            "coords": self.get_coord(direction),
+            "actorID": self.uuid,
+            "varTarget": "ROCK",
+            "to": None
+        },{
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "has_rock",
+            "to": True
+        }]
+
+    def harvest(self, direction):
+        """ Harvest something in a direction. If no direction specified 
+        harvest in current direction
+
+        return: harvest resulting delta
+        """
+        if direction not in DIRECTIONS:
+            direction = self.direction
+
+        return [{
+            "type": "worldDelta",
+            "coords": self.get_coord(direction),
+            "actorID": self.uuid,
+            "varTarget": "plant",
+            "to": None
+        },{
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID" : self.uuid,
+            "varTarget": "has_food",
+            "to": True
+        }] 
+
+    def drop(self, direction):
+        """ Drop something in a certain direction. If no
+        direction specified drop in current direction
+
+        return: delta for drop
+        """
+        if direction not in DIRECTIONS:
+            direction = self.direction
+
+        if self.has_food:
             return [{
                 "type": "worldDelta",
-                "coords": self.north(),
+                "coords": self.get_coord(direction),
                 "actorID": self.uuid,
-                "varTarget": "ROCK",
-                "to": None
-            },{
+                "varTarget": "cell",
+                "to": "FOOD"
+            }, {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "ROCK",
-                "to": True
-            }]
-        elif self.direction == "EAST":
-            return [{
-                "type": "worldDelta",
-                "coords": self.east(),
-                "actorID": self.uuid,
-                "varTarget": "ROCK",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "ROCK",
-                "to": True
-            }]
-        elif self.direction == "WEST":
-            return [{
-                "type": "worldDelta",
-                "coords": self.west(),
-                "actorID": self.uuid,
-                "varTarget": "ROCK",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "ROCK",
-                "to": True
-            }]
-        elif self.direction == "SOUTH":
-            return [{
-                "type": "worldDelta",
-                "coords": self.south(),
-                "actorID": self.uuid,
-                "varTarget": "ROCK",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "ROCK",
-                "to": True
+                "actorID" : self.uuid,
+                "varTarget": "is_food",
+                "to": False
             }]
 
-    def harvest(self):
-        if self.direction == "NORTH":
+        if self.has_rock:
             return [{
                 "type": "worldDelta",
-                "coords": self.north(),
+                "coords": self.get_coord(direction),
                 "actorID": self.uuid,
-                "varTarget": "plant",
-                "to": None
-            },{
+                "varTarget": "cell",
+                "to": "ROCK"
+            }, {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "food",
-                "to": True
-            }]
-        elif self.direction == "EAST":
-            return [{
-                "type": "worldDelta",
-                "coords": self.east(),
                 "actorID": self.uuid,
-                "varTarget": "plant",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "food",
-                "to": True
-            }]
-        elif self.direction == "WEST":
-            return [{
-                "type": "worldDelta",
-                "coords": self.west(),
-                "actorID": self.uuid,
-                "varTarget": "plant",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "food",
-                "to": True
-            }]
-        elif self.direction == "SOUTH":
-            return [{
-                "type": "worldDelta",
-                "coords": self.south(),
-                "actorID": self.uuid,
-                "varTarget": "plant",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "food",
-                "to": True
+                "varTarget": "has_rock",
+                "to": False
             }]
 
-    def drop(self):
-        if self.is_food:
-            if self.direction == "NORTH":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.north(),
-                    "varTarget": "cell",
-                    "to": "FOOD"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_food",
-                    "to": False
-                }]
-            elif self.direction == "EAST":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.east(),
-                    "varTarget": "cell",
-                    "to": "FOOD"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_food",
-                    "to": False
-                }]
-            elif self.direction == "WEST":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.west(),
-                    "varTarget": "cell",
-                    "to": "FOOD"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_food",
-                    "to": False
-                }]
-            elif self.direction == "SOUTH":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.south(),
-                    "varTarget": "cell",
-                    "to": "FOOD"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_food",
-                    "to": False
-                }]
-
-        else:
-            if self.direction == "NORTH":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.north(),
-                    "varTarget": "cell",
-                    "to": "ROCK"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_rock",
-                    "to": False
-                }]
-            elif self.direction == "EAST":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.east(),
-                    "varTarget": "cell",
-                    "to": "ROCK"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_rock",
-                    "to": False
-                }]
-            elif self.direction == "WEST":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.west(),
-                    "varTarget": "cell",
-                    "to": "ROCK"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_rock",
-                    "to": False
-                }]
-            elif self.direction == "SOUTH":
-                return [{
-                    "type": "worldDelta",
-                    "coords": self.south(),
-                    "varTarget": "cell",
-                    "to": "ROCK"
-                }, {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
-                    "varTarget": "is_rock",
-                    "to": False
-                }]
 
     # See should return what is directly in front of avatar, as well as one extra cell further
     def see(self):

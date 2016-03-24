@@ -92,6 +92,18 @@ def actor_location(actor):
 def actor_health(actor):
     return actor.health
 
+def actor_direction(actor):
+    return actor.direction
+
+def actor_rock(actor):
+    return actor.has_rock
+
+def actor_food(actor):
+    return actor.has_food
+
+def actor_issleeping(actor):
+    return actor.is_sleeping
+
 # Action Functions #
 # ================ #
 
@@ -99,6 +111,42 @@ def actor_health(actor):
 def sleep_fn(actor):
     return actor.sleep_action()
 
+def eat_fn(actor):
+    """If an actor has food, eat, otherwise do nothing
+
+    :return delta for eat effec
+    """
+    if actor.has_food:
+        return actor.eat()
+    else:
+        return
+
+def drop_fn(actor) :
+    """ Drop rock object
+
+    :return delta for drop
+    """
+    return actor.drop(actor_direction)
+
+
+def harvest_fn(actor) :
+    """ Harvest a plant
+
+    :return delta for harvest
+    """
+
+    return actor.harvest(actor_direction)
+
+
+def pickup_fn(actor) :
+    """ Pickup a rock
+
+    :return delta to pick up rock
+    """
+    if actor.has_rock:
+        return 
+    else :
+        return actor.pickup(actor_direction)
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.
@@ -139,6 +187,33 @@ def walk_fn(actor, direction):
             if actor.can_walk(dir):
                 return actor.walk(dir)
 
+def scavenge_fn(actor,attr):
+    """ Search for nearest food source
+
+    :param actor: An actor to Search
+    :param attr: attribute (food type) to look for
+    """
+
+    if attr == "PLANT":        
+        walk_fn(direction_fn(nearest_fn("PLANT")));
+    if attr == "FOOD":
+        walk_fn(direction_fn(nearest_fn("FOOD")));
+
+
+def flee_fn(actor):
+    """ Move away from the nearest "deadly"
+    by going in the opposite direction of path to deadly
+    """
+
+    [direction] = (direction_fn(nearest_fn("DEADLY")));
+
+    for dir in direction:
+        if actor.can_walk(actor.get_oppCoord(dir)):
+            return actor.walk(actor.get_oppCoord(dir))
+
+def attack_fn(actor):
+    for dir in direction:
+        return actor.attack(dir)
 
 
 FUNC_MAP = {
@@ -157,7 +232,14 @@ FUNC_MAP = {
     'sleep': sleep_fn,
     'direction': direction_fn,
     'nearest': nearest_fn,
-    'walk': walk_fn
+    'walk': walk_fn,
+    'eat': eat_fn,
+    'drop': drop_fn,
+    'harvest': harvest_fn,
+    'pickup': pickup_fn,
+    'scavenge': scavenge_fn,
+    'flee': flee_fn,
+    'attack': attack_fn
 }
 
 SYM_MAP = {
@@ -167,5 +249,9 @@ SYM_MAP = {
     'WEST': lambda x: 'WEST',
     'myhunger': actor_hunger,
     'mylocation': actor_location,
-    'myhealth': actor_health
+    'myhealth': actor_health,
+    'mydirection' : actor_direction,
+    'myrock' : actor_rock,
+    'myfood' : actor_food,
+    'asleep' : actor_issleeping
 }

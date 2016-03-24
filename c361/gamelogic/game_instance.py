@@ -1,6 +1,7 @@
 import random
 import uuid
 import ujson as json
+import sys
 # Handle both relative and local importing schemes.
 try:
     from .actor import Actor
@@ -10,7 +11,6 @@ except SystemError:
     from actor import Actor
     from globals import *
     from world_state import WorldState
-
 
 
 class GameInstance(CoordParseMixin):
@@ -36,11 +36,13 @@ class GameInstance(CoordParseMixin):
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
             self.actors = {}
-
-            if model.world:
-                self.world = WorldState(json_dump=json.loads(model.world))
+            if model.seed:
+                seed = json.loads(model.seed)
+                seed['cells'] = json.loads(model.cells)
+                self.world = WorldState(json_dump=seed)
             else:
                 self.world = WorldState()
+
             self.current_turn = model.current_turn_number
 
             for a in model.actors.all():
@@ -51,7 +53,6 @@ class GameInstance(CoordParseMixin):
 
     def __setitem__(self, key, item):
         self.world[key] = item
-
 
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
@@ -70,22 +71,19 @@ class GameInstance(CoordParseMixin):
             x, y = self.coord_parse(a)
 
         # TEMP CODE FOR INSERTING MANY ACTORS INTO NEW WORLD
-        if x==0 and y==0:
-            for x, y in zip(range(10), range(10)):
-                atest = self.get_actor((x, y))
+        atest = self.get_actor((x, y))
+        if atest:
+            for x1, y1 in zip(range(10), range(10)):
+                atest = self.get_actor((x1, y1))
                 if not atest:
                     self.actors[a.uuid] = a
-                    a._coords = (x, y)
+                    a._coords = (x1, y1)
                     a.gameInstance = self
                     self.world.add_inhabitant(a)
+                    warn = "Warning, actor already at ({},{}): '{}' inserted at ({},{})."
+                    print(warn.format(x, y, a.name, x1, y1))
                     break
-
         else:
-            atest = self.get_actor((x, y))
-            if atest:
-                tmp = "{0} already at coord. Only 1 Actor on a cell at a time."
-                raise ValueError(tmp.format(atest))
-
             self.actors[a.uuid] = a
             a._coords = (x, y)
             a.gameInstance = self
@@ -220,6 +218,8 @@ class GameInstance(CoordParseMixin):
         """
 
         effects = []
+        if not actor_turn:
+            return []
         if not isinstance(actor_turn, list):
             actor_turn = [actor_turn]
 
@@ -279,7 +279,7 @@ class GameInstance(CoordParseMixin):
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in self.actors.items():
                 turn_res = []
-                turn_res.append(actor.do_turn())
+                turn_res.extend(actor.do_turn())
                 side_effects = self.turn_effects(turn_res)
                 turn_res.extend(side_effects)
                 self.apply_deltas(turn_res)

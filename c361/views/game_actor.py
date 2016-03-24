@@ -3,6 +3,8 @@ from django.http import HttpResponseRedirect
 from rest_framework.status import HTTP_201_CREATED, HTTP_202_ACCEPTED
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.db.models import Q
+from django.apps import apps
 
 from c361.models import GameActorModel
 from c361.serializers.game_actor import GameActorFullSerializer
@@ -39,6 +41,24 @@ class ActorList(BaseListCreateView):
         g = GameActorModel(**d)
         g.save()
         return Response(status=HTTP_201_CREATED)
+
+    def get_queryset(self):
+        user = None if self.request.user.is_anonymous() else self.request.user
+        Qlist = []
+
+        Qlist.append(Q(copy_of=None))
+        creator = self.request.GET.get('creator')
+        if creator:
+            Qlist.append(Q(creator__username=creator))
+
+        startswith = self.request.GET.get('startswith')
+        if startswith:
+            Qlist.append(Q(title__istartswith=startswith))
+
+        if Qlist:
+            return GameActorModel.objects.filter(*Qlist)
+        else:
+            return GameActorModel.objects.all()
 
 
 class ActorDetail(BaseDetailView):

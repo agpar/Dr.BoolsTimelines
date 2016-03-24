@@ -1,6 +1,7 @@
 from django.http import HttpResponseRedirect, HttpResponse
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_202_ACCEPTED
 from rest_framework.response import Response
-from c361.models import GameInstanceModel
+from c361.models import GameInstanceModel, GameActorModel
 from c361.serializers.game_instance import GameInstanceFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
@@ -29,6 +30,16 @@ class GameList(BaseListCreateView):
     model = GameInstanceModel
     serializer_class = GameInstanceFullSerializer
 
+    def post(self, request, *args, **kwargs):
+        inpt = request.POST
+        d = {
+            'title': inpt['title'],
+            'creator': request.user
+        }
+        g = GameInstanceModel(**d)
+        g.save()
+        return Response(status=HTTP_201_CREATED)
+
 
 class GameDetail(BaseDetailView):
     """View for detail of specific Game."""
@@ -51,21 +62,39 @@ class GameDetail(BaseDetailView):
                 return JsonResponse({"result": "Pykaa actor stopped."})
             else:
                 return JsonResponse({"result":"Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.GET.get('do_turn'):
+            game_proxy = game_instance.get_pactor_proxy()
             turn_num = request.GET.get('do_turn')
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.do_turn(int(turn_num))
+            future = game_proxy.do_turn(int(turn_num))
             current_turn = future.get()
             return JsonResponse({"result": "Advanced to turn {}.".format(current_turn)})
         if request.GET.get('full_dump'):
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.full_dump()
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.full_dump()
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
-
         if request.GET.get('light_dump'):
-            actor_proxy = game_instance.get_pactor_proxy()
-            future = actor_proxy.light_dump()
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.light_dump()
             full_dump = future.get()
             return HttpResponse(json.dumps(full_dump), content_type='application/json')
+        if request.GET.get('reset'):
+            game_proxy = game_instance.get_pactor_proxy()
+            future = game_proxy.reset_game()
+            future.get()
+            return JsonResponse({"result": "Game reset."}, content_type='application/json')
+
         return super().get(self, request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        changes = request.POST
+        new_actor_id = changes.get('add-actor')
+        if not new_actor_id:
+            return Response(data={'error': "Actor does not exist."}, status=HTTP_400_BAD_REQUEST)
+        game = self.get_object()
+        act = GameActorModel.objects.get(id=int(new_actor_id))
+        copy_act = act.deep_copy()
+        game.actors.add(copy_act)
+        game.save()
+        return Response(status=HTTP_202_ACCEPTED)

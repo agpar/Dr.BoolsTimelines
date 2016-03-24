@@ -11,7 +11,10 @@ class Behaviour(object):
     def get_action(self, actor):
         """return the first action whos conditions eval to True"""
         if not actor.is_alive:
-            return None
+            return []
         for rule in self.rules:
             if rule.eval(actor):
-                return rule.actions[0].eval(actor).value
+                res = rule.actions[0].eval(actor).value
+                if not isinstance(res, list):
+                    return [res]
+                return res
