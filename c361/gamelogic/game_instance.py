@@ -38,7 +38,10 @@ class GameInstance(CoordParseMixin):
             self.actors = {}
             if model.seed:
                 seed = json.loads(model.seed)
-                seed['cells'] = json.loads(model.cells)
+                if model.cells:
+                    seed['cells'] = json.loads(model.cells)
+                else:
+                    seed['cells'] = {}
                 self.world = WorldState(json_dump=seed)
             else:
                 self.world = WorldState()
