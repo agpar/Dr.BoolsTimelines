@@ -6,7 +6,7 @@
 </style>
 <script>
 
-$(document).ready(function () {
+$(document).on("loadview", function () {
 
     var mainMenuCache = {'my-games': null,   //Used to cache Ajax request results.
                          'my-actors': null,
@@ -264,18 +264,15 @@ $(document).ready(function () {
         if(options['load']) {
             $(".loadable-game-select").click(function (event) {
                 var gameid = event['currentTarget']['id'];
-                console.log(gameid);
+                gameid = gameid.split("-")[2]
+                window.CONTROLLER.setGameID(gameid)
             });
         }
         if(options['add-to-game'])
         {
             $(".loadable-game-select").click(function (event) {
                 var gameid = event['currentTarget']['id'].slice(14);
-                console.log("ASLKDFALS:FK")
-                GAMEID = event['currentTarget']['id'];
-                GAMEID = GAMEID.split("-")[2]
-                console.log(GAMEID)
-                $(document).trigger("startgame",[]);
+                console.log(gameid);
                 add_actor_to_game(gameid, options['actor-id'])
             });
         }
@@ -300,7 +297,6 @@ $(document).ready(function () {
         {
             $mainmenu_content.html("You have no actors");
         }
->>>>>>> 647d443d216cffce7c1fae44b4aeacee3f7e8840
 
         $mainmenu_header.html("Select an Actor");
         $mainmenu_scroller.html(actor_list.join(""));
@@ -313,7 +309,7 @@ $(document).ready(function () {
                 setup_modifyactor_edit_menu(event.target.id)
             })
         }
-        if (options['add-to-game'])
+        else if (options['add-to-game'])
         {
             $(".modifyable-actor-select").click(function(event) {
                 var actor_id = event['currentTarget']['id'].slice(17);
@@ -677,6 +673,7 @@ $(document).ready(function () {
         <div class = "cell-statinfo sim-ui-element" id = "cell-stats">
             <button type="button" class="close" id="close-stats">×</button>
             <h3>Cell Status</h3>
+            <span> Coordinates: </span><span id = "coords"></span><hr>
             <span> Elevation: </span><span id = "elevation"></span><hr>
             <span> CellType: </span><span id = "cell-type"></span><hr>
             <div id="stat-listing"></div>

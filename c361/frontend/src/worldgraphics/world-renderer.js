@@ -299,8 +299,12 @@ module.exports =  Class("WorldRenderer", {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._sceneChunks.reset();
         this._worldState = WorldState(tstate)
+        this._sceneChunks.reset()
+    },
+    'public updateWorldState': function (state) {
+        if(state.cells != undefined)
+            this._worldState.setCells(state.cells);
     },
     /*
     Update the world with the changes specified by a list of state change

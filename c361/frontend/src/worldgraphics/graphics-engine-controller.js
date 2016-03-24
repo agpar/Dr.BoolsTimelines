@@ -12,7 +12,7 @@ change operations to the renderer to move the view through time.
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
 module.exports = Class("GraphicsEngineController", {
-    'private _gameid': undefined,
+    'private _gameID': undefined,
     'private _activeActor': undefined,
     'private _updateLoop': null,
     'private _renderEngine': null,
@@ -31,7 +31,7 @@ module.exports = Class("GraphicsEngineController", {
 
         $("div#cell-stats span#elevation").html(Math.round(100*stats.elevation)/100 + " meters");
         $("div#cell-stats span#cell-type").html(stats.type);
-        $("div#cell-stats span#coords").html(stats.coords);
+        $("div#cell-stats span#coords").html(stats.coords.x +  ", " + stats.coords.y );
         $("div#cell-stats div#stat-listing").empty();
         $("div#cell-stats div#stat-listing").append("<h4>Contents:</h4>");
 
@@ -186,17 +186,17 @@ module.exports = Class("GraphicsEngineController", {
 
         }.bind(this))
     },
-    'prublic setActiveActor': function (actor_id) {
+    'public setActiveActor': function (actor_id) {
           this._activeActor = actor_id
     },
     'public setGameID': function (gameid) {
-        this._gameid = gameid
-        var renderer = this.renderer
+        this._gameID = gameid
+        var renderer = this._renderer
         var cam = this._camPos
 
         $.ajax({
           type: "get",
-          url: "/game/"+GAMEID+"/?start=true",
+          url: "/game/"+gameid+"/?start=true",
           contentType:"application/json",
           statusCode: {
               200: function(data)
@@ -208,37 +208,37 @@ module.exports = Class("GraphicsEngineController", {
 
         $.ajax({
             type: "get",
-            url: "/game/"+GAMEID+"/?full_dump=true",
+            url: "/game/"+gameid+"/?full_dump=true",
             contentType:"application/json",
             statusCode: {
                 200: function(data)
                 {
                     renderer.setWorldState(data)
+                    renderer.updateView(cam.x, cam.y)
                 }
             }
         })
 
-        renderer.updateView(this._camPos.x, this._camPos.y)
-
+        /*
         if(this._updateLoop != null)
             clearInterval(this._updateLoop)
 
         this._updateLoop = setInterval(function () {
             $.ajax({
                 type: "get",
-                url: "/game/"+GAMEID+"/?light_dump=true",
+                url: "/game/"+gameid+"/?light_dump=true",
                 contentType:"application/json",
                 statusCode: {
                     200: function(data)
                     {
-                        renderer.setWorldState(data)
+                        renderer.updateWorldState(data)
                     }
                 }
             })
 
             renderer.updateView(this._camPos.x, this._camPos.y)
-        }.bind(this), 1000)
-
+        }.bind(this), 5000)
+        */
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable

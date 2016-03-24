@@ -29,10 +29,7 @@ module.exports = Class("WorldState", {
     'public applyDeltas': function (deltas, backstep) {
 
     },
-    'public getCell': function(x,y) {
-        if(this._)
-        return {
-
-        }
+    'public setCells': function(cells) {
+        this._cells = cells
     }
 })

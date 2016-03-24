@@ -1,10 +1,8 @@
 var GraphicsEngineController = require('./worldgraphics/graphics-engine-controller')
 
-var GAMEID
-var CONTROLLER
 $(document).ready(function () {
     var canvas = document.getElementById("simulation-render-target")
-    CONTROLLER = GraphicsEngineController(canvas,  "div#sim-ui-container")
+    window.CONTROLLER = GraphicsEngineController(canvas,  "div#sim-ui-container")
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -21,4 +19,11 @@ $(document).ready(function () {
         $("#toolbar-bottom .modifier").removeClass("selected")
         $(this).addClass("selected")
     })
+
+    $("#add-raise").click(function (evt){CONTROLLER.setUse("ADD")})
+    $("#delete-lower").click(function (evt){CONTROLLER.setUse("DELETE")})
+    $("#camera").click(function (evt){CONTROLLER.setTool("CAMERA")})
+    $("#inspect").click(function (evt){CONTROLLER.setTool("INSPECT")})
+
+    $(document).trigger("loadview", [])
 });
