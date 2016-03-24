@@ -9,7 +9,7 @@ module.exports = Class("WorldState", {
     'private _waterThreshold': null,
     'private _rockThreshold': null,
     'private _seed': null,
-    'private _seedSize': null,
+    'private _seedsize': null,
     'private _cells': null,
     __construct: function(json_dump) {
         this._standardHeight = json_dump["standardHeight"]
@@ -19,7 +19,7 @@ module.exports = Class("WorldState", {
         this._waterThreshold = json_dump["waterThreshold"]
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
-        this._seedSize       = json_dump["seedSize"]
+        this._seedsize       = json_dump["seedsize"]
         this._cells          = json_dump["cells"]
 
     },

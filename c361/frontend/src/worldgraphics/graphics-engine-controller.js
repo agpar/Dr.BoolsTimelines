@@ -28,7 +28,7 @@ module.exports = Class("GraphicsEngineController", {
 
         $("div#cell-stats span#elevation").html(Math.round(100*stats.elevation)/100 + " meters");
         $("div#cell-stats span#cell-type").html(stats.type);
-        $("div#cell-stats span#coords").html(stats.coords);
+        $("div#cell-stats span#coords").html(stats.coords["x"] + ", " + stats.coords["y"]);
         $("div#cell-stats div#stat-listing").empty();
         $("div#cell-stats div#stat-listing").append("<h4>Contents:</h4>");
 
@@ -120,72 +120,67 @@ module.exports = Class("GraphicsEngineController", {
                 }
                 else {
                     if(this._use == "ADD") {
-                        if (this._tool == "TERRAIN") {
-                            console.log("RAI_TER")
-                        }
-                        else if (this._tool == "GRASS") {
-                            console.log("ADD_GRA")
-                        }
-                        else if (this._tool == "ROCK") {
-                            console.log("ADD_ROC")
-                        }
-                        else if (this._tool == "WATER") {
-                            console.log("ADD_WAT")
-                        }
-                        else if (this._tool == "PLANT") {
-                            console.log("ADD_PLA")
-                        }
-                        else if (this._tool == "MUSHROOM") {
-                            console.log("ADD_MUS")
-                        }
-                        else if (this._tool == "WALL") {
-                            console.log("ADD_WAL")
-                        }
-                        else if (this._tool == "BLOCK") {
-                            console.log("ADD_BLO")
-                        }
-                        else if (this._tool == "ACTOR") {
-                            console.log("ADD_ACT")
-                        }
+
                     }
                     else if(this._use == "DELETE") {
-                        if (this._tool == "TERRAIN") {
-                            console.log("LOW_TER")
-                        }
-                        else if (this._tool == "GRASS") {
-                            console.log("DEL_GRA")
-                        }
-                        else if (this._tool == "ROCK") {
-                            console.log("DEL_ROC")
-                        }
-                        else if (this._tool == "WATER") {
-                            console.log("DEL_WAT")
-                        }
-                        else if (this._tool == "PLANT") {
-                            console.log("DEL_PLA")
-                        }
-                        else if (this._tool == "MUSHROOM") {
-                            console.log("DEL_MUS")
-                        }
-                        else if (this._tool == "WALL") {
-                            console.log("DEL_WAL")
-                        }
-                        else if (this._tool == "BLOCK") {
-                            console.log("DEL_BLO")
-                        }
-                        else if (this._tool == "ACTOR") {
-                            console.log("DEL_ACT")
-                        }
+
                     }
                 }
             }
 
         }.bind(this))
 
-        setInterval(function () {
-            //ajax call to update state
-            //this._renderer.setWorldState(newstate)
-        }, 1000)
+        $(document).on("startgame", function (e) {
+            $.ajax({
+              type: "get",
+              url: "/game/"+GAMEID+"/?start=true",
+              contentType:"application/json",
+              statusCode: {
+                  200: function(data)
+                  {
+                      console.log(data)
+                  }
+              }
+            })
+
+            setTimeout(function(){}, 500)
+
+            var cam = this._camPos
+
+            $.ajax({
+                type: "get",
+                url: "/game/"+GAMEID+"/?full_dump=true",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        renderer.setWorldState(data)
+                        renderer.updateView(cam.x, cam.y)
+                    }
+                }
+            })
+
+            //renderer.updateView(this._camPos.x, this._camPos.y)
+            /*
+            setInterval(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/game/"+GAMEID+"/?light_dump=true",
+                    contentType:"application/json",
+                    statusCode: {
+                        200: function(data)
+                        {
+                            renderer.setWorldState(data)
+                            renderer.updateView(cam.x, cam.y)
+                        }
+                    }
+                })
+
+                renderer.updateView(this._camPos.x, this._camPos.y)
+            }.bind(this ), 1000)
+        */
+        }.bind(this))
+
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable

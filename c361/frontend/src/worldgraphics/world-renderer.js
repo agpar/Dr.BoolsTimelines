@@ -112,7 +112,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "ACTOR",
+                        "type": "MUSH",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -128,7 +128,7 @@ module.exports =  Class("WorldRenderer", {
             "waterThreshold": 0.2,
             "rockThreshold": 0.175,
             "seed": seed,
-            "seedSize": seedsize,
+            "seedsize": seedsize,
             "cells": cells
         })
 
@@ -244,7 +244,7 @@ module.exports =  Class("WorldRenderer", {
     */
     'private _computeCell': function (x,y) {
         var seed        = this._worldState.get("seed")
-        var seedsize    = this._worldState.get("seedSize")
+        var seedsize    = this._worldState.get("seedsize")
         var worldWidth  = this._worldState.get("width")
         var worldLength = this._worldState.get("length")
         var chunksize   = this._worldState.get("chunkSize")
@@ -296,7 +296,11 @@ module.exports =  Class("WorldRenderer", {
     param state: The new state to replace the state of the world.
     */
     'public setWorldState': function (state) {
-        this._worldState = WorldState(state)
+        var tstate = state
+        if(tstate["seed"] == undefined)
+            tstate["seed"] = this._worldState.get("seed")
+        this._sceneChunks.reset();
+        this._worldState = WorldState(tstate)
     },
     /*
     Update the world with the changes specified by a list of state change
