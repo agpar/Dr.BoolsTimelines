@@ -17,6 +17,8 @@ class GameActorModel(models.Model):
     hunger = models.IntegerField(default=100)
     sleep = models.IntegerField(default=100)
     is_sleeping = models.BooleanField(default=False)
+    has_rock = models.BooleanField(default = False)
+    has_food = models.BooleanField(default = False)
     direction = models.CharField(max_length=20, default='NORTH')
     block = models.BooleanField(default=False)
     x_coord = models.IntegerField(default=-1)

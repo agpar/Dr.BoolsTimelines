@@ -33,6 +33,8 @@ class Actor(WorldInhabitant):
             self.health = model.health
             self.hunger = model.hunger
             self.sleep = model.sleep
+            self.has_food = False
+            self.has_rock = False
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.script = model.behaviour_script
@@ -44,6 +46,8 @@ class Actor(WorldInhabitant):
             self.health = 100
             self.hunger = 100
             self.sleep = 100
+            self.has_food = False
+            self.has_rock = False
             self.is_sleeping = False
             self.direction = "NORTH"
             self.script = script
@@ -124,7 +128,7 @@ class Actor(WorldInhabitant):
         }
 
     def eat(self):
-        if self.is_food :
+        if self.has_food :
             return [{
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
@@ -137,7 +141,7 @@ class Actor(WorldInhabitant):
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
                 "varTarget": "hunger",
-                "to": self.hunger + self.is_food
+                "to": self.hunger + 50
             }]
 
     def walk(self, direction):
@@ -270,7 +274,7 @@ class Actor(WorldInhabitant):
         },{
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
-            "varTarget": "ROCK",
+            "varTarget": "has_rock",
             "to": True
         }]
 
@@ -292,7 +296,7 @@ class Actor(WorldInhabitant):
         },{
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
-            "varTarget": "food",
+            "varTarget": "has_food",
             "to": True
         }] 
 
@@ -305,7 +309,7 @@ class Actor(WorldInhabitant):
         if direction not in DIRECTIONS:
             direction = self.direction
 
-        if self.is_food:
+        if self.has_food:
             return [{
                 "type": "worldDelta",
                 "coords": self.get_coord(direction),
@@ -318,7 +322,7 @@ class Actor(WorldInhabitant):
                 "to": False
             }]
 
-        if self.is_rock:
+        if self.has_rock:
             return [{
                 "type": "worldDelta",
                 "coords": self.get_coord(direction),
@@ -327,7 +331,7 @@ class Actor(WorldInhabitant):
             }, {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "is_rock",
+                "varTarget": "has_rock",
                 "to": False
             }]
 
