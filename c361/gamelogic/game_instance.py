@@ -128,6 +128,19 @@ class GameInstance(CoordParseMixin):
                     return z
         return None
 
+    def check_actor(self, xy):
+        """ Check to see if actor is currently in location specified by param
+        :param xy: x,y coord of gameInstance
+        :return Boolean if Actor is at xy location or False if not
+        """
+        x, y = self.coord_parse(xy)
+        content = self[x][y]
+        if len(content) > 1:
+            for z in content:
+                if isinstance(z, Actor):
+                    return True
+        return False
+
     def move_actor(self, actor_or_UUID_or_coords, xy_or_WI):
         """Move an actor to a location.
 
