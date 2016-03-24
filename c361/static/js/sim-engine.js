@@ -8846,7 +8846,7 @@ var GraphicsEngineController = require('./worldgraphics/graphics-engine-controll
 
 var GAMEID
 $(document).ready(function () {
-    var canvas = document.getElementById("simulation-render-target")
+    var canvas = document.getElementById("simulation-render-target", "div#sim-ui-container")
     var controller = GraphicsEngineController(canvas)
 
     canvas.width = window.innerWidth
@@ -8864,12 +8864,6 @@ $(document).ready(function () {
         $("#toolbar-bottom .modifier").removeClass("selected")
         $(this).addClass("selected")
     })
-
-    $("#add-raise").click(function (evt){controller.setUse("ADD")})
-    $("#delete-lower").click(function (evt){controller.setUse("DELETE")})
-    $("#camera").click(function (evt){controller.setTool("CAMERA")})
-    $("#inspect").click(function (evt){controller.setTool("INSPECT")})
-
 });
 
 },{"./worldgraphics/graphics-engine-controller":35}],35:[function(require,module,exports){
@@ -8944,7 +8938,7 @@ module.exports = Class("GraphicsEngineController", {
             }.bind(this)
         ))
     },
-    __construct: function(renderTarget) {
+    __construct: function(renderTarget, view) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
         var loader = new BABYLON.AssetsManager(scene)
@@ -8973,7 +8967,13 @@ module.exports = Class("GraphicsEngineController", {
 
         this._setupKeys(scene)
         this.startSimulationEngine()
-
+        if(view) {
+            $(view).find("#add-raise").click(function (evt){this.setUse("ADD")}.bind(this))
+            $(view).find("#delete-lower").click(function (evt){this.setUse("DELETE")}.bind(this))
+            $(view).find("#camera").click(function (evt){this.setTool("CAMERA")}.bind(this))
+            $(view).find("#inspect").click(function (evt){this.setTool("INSPECT")}.bind(this))
+            $(view).find("#actor").click(function (evt){this.setTool("ACTOR")})
+        }
         $("#simulation-render-target").click(function(evt){
             if(evt.ctrlKey)
                 return
@@ -8995,7 +8995,9 @@ module.exports = Class("GraphicsEngineController", {
                 }
                 else {
                     if(this._use == "ADD") {
-
+                        if(this._tool == "ACTOR") {
+                            $("#create-actor-side-btn").click();
+                        }
                     }
                     else if(this._use == "DELETE") {
 
@@ -9036,7 +9038,7 @@ module.exports = Class("GraphicsEngineController", {
             })
 
             //renderer.updateView(this._camPos.x, this._camPos.y)
-            /*
+
             setInterval(function () {
                 $.ajax({
                     type: "get",
@@ -9053,7 +9055,7 @@ module.exports = Class("GraphicsEngineController", {
 
                 renderer.updateView(this._camPos.x, this._camPos.y)
             }.bind(this ), 1000)
-        */
+        
         }.bind(this))
 
     },

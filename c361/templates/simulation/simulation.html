@@ -115,41 +115,21 @@ $(document).ready(function () {
 
     });
 
-    $("#create-actor-side-btn").click(function(event){
-
-        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
-        {
-            console.log("Fetched info from cache.");
-            setup_createactor_menu(mainMenuCache['my-actors'], mainMenuCache['my-actors-names']);
-        }
-        else
-        {
-            $.ajax({
-                type: "get",
-                url: "/actors/mine",
-                contentType:"application/json",
-                statusCode: {
-                    200: function(data)
-                    {
-                        //Save data in cache.
-                        console.log("Fetched info from Ajax.");
-                        set_cache('my-actors', data);
-
-                        //Hash and set names of actors.
-                        var namehash = {};
-                        for(var i = 0; i < data.length; i++)
-                        {
-                            namehash[data[i]['title']] = true;
-                        }
-                        set_cache('my-actors-names', namehash);
-
-                        setup_createactor_menu(data, namehash);
-                    }
+    $("#toolbar-bottom#actor").click(function(event){
+        //TODO: Figure out how to do this with the cache
+        $.ajax({
+            type: "get",
+            url: "/actors/mine",
+            contentType:"application/json",
+            statusCode: {
+                200: function(data)
+                {
+                    setup_addactor_menu(data)
                 }
-            });
-        }
+            }
+        })
+    })
 
-    });
 
     $("#modify-actor-side-btn").click(function (event){
         if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
@@ -252,6 +232,10 @@ $(document).ready(function () {
 
     }
 
+    function setup_addactor_menu(data) {
+        flush_mainmenu();
+        var lines
+    }
     //Generate and display the createactor menu screen.
     function setup_createactor_menu(data, namehash)
     {

@@ -38,7 +38,12 @@ class GameInstance(CoordParseMixin):
             self.actors = {}
             if model.seed:
                 seed = json.loads(model.seed)
-                seed['cells'] = json.loads(model.cells)
+                #If the model was saved when empty, model.cells becomes NoneType
+                #causing failed game start requests. (Possible serializer problem in worldstate.py)
+                if model.cells:
+                    seed['cells'] = json.loads(model.cells)
+                else:
+                    seed['cells'] = {}
                 self.world = WorldState(json_dump=seed)
             else:
                 self.world = WorldState()
