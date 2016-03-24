@@ -103,7 +103,7 @@ class GameRunner(pykka.ThreadingActor):
 
     def add_actor(self, actor_model):
         """Adds an actor to a running game. DOES NOT handle copying and saving in DB."""
-        self.game_object.add_actor(Actor(actor_model))
+        self.game_object.add_actor(Actor(model=actor_model))
 
     def remove_actor(self, actor_model):
         self.game_object.remove_actor(str(actor_model.uuid))
