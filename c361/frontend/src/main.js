@@ -24,6 +24,14 @@ $(document).ready(function () {
     $("#add-raise").click(function (evt){controller.setUse("ADD")})
     $("#delete-lower").click(function (evt){controller.setUse("DELETE")})
     $("#camera").click(function (evt){controller.setTool("CAMERA")})
-    $("#inspect").click(function (evt){controller.setTool("INSPECT")})
+    $("#terrain").click(function (evt){controller.setTool("TERRAIN")})
+    $("#grass").click(function (evt){controller.setTool("GRASS")})
+    $("#rock").click(function (evt){controller.setTool("ROCK")})
+    $("#water").click(function (evt){controller.setTool("WATER")})
+    $("#plant").click(function (evt){controller.setTool("PLANT")})
+    $("#mushroom").click(function (evt){controller.setTool("MUSHROOM")})
+    $("#wall").click(function (evt){controller.setTool("WALL")})
+    $("#block").click(function (evt){controller.setTool("BLOCK")})
+    $("#actor").click(function (evt){controller.setTool("ACTOR")})
 
 });
