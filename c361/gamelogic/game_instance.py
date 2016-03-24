@@ -89,13 +89,12 @@ class GameInstance(CoordParseMixin):
             a.gameInstance = self
             self.world.add_inhabitant(a)
 
-    def remove_actor(self, xy_or_WI):
+    def remove_actor(self, act_uuid):
         """Remove an actor from the GameInstance. Fail silently.
 
         :param xy_or_WI: x,y coord OR a WorldInhabitant object.
         """
-        x,y = self.coord_parse(xy_or_WI)
-        actr = self.get_actor(xy_or_WI)
+        actr = self.get_actor(act_uuid)
         if not actr:
             return
 

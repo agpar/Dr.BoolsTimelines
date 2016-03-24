@@ -642,7 +642,7 @@ $(document).ready(function () {
         $.ajax({
             type: "patch",
             url: "/game/" + gameid +"/",
-            data: {'add-actor': actorid},
+            data: {'id': actorid, 'action': 'add', 'type': 'actor'},
             success: function (data) {
                 draw_status_menu("Success!", "Added actor to game!");
             },
