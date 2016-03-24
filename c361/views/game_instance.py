@@ -102,7 +102,7 @@ class GameDetail(BaseDetailView):
                 copy_act.save()
 
                 if game_proxy:
-                    future = game_proxy.add_actor(copy_act, coords)
+                    future = game_proxy.add_actor(copy_act)
                     future.get()
 
                 game.actors.add(copy_act)

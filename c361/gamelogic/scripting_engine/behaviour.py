@@ -18,3 +18,4 @@ class Behaviour(object):
                 if not isinstance(res, list):
                     return [res]
                 return res
+        return []
