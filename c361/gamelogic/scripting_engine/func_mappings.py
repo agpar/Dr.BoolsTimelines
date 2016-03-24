@@ -213,7 +213,7 @@ def flee_fn(actor):
 
 def attack_fn(actor):
     for dir in direction:
-    return actor.attack(dir)
+        return actor.attack(dir)
 
 
 FUNC_MAP = {
