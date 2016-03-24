@@ -112,6 +112,16 @@ class Actor(WorldInhabitant):
         if direction == 'WEST':
             return self.west()
 
+    def get_oppCoord(self,direction):
+        if direction == 'NORTH':
+            return 'SOUTH'
+        if direction == 'EAST':
+            return 'WEST'
+        if direction == 'SOUTH':
+            return 'NORTH'
+        if direction == 'WEST':
+            return 'EAST'
+
     # Actions
     def _action_table(self):
         return {
@@ -265,19 +275,20 @@ class Actor(WorldInhabitant):
         if direction not in DIRECTIONS:
             direction = self.direction
 
-        if not has_rock:
-            return [{
-                "type": "worldDelta",
-                "coords": self.get_coord(direction),
-                "actorID": self.uuid,
-                "varTarget": "ROCK",
-                "to": None
-            },{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "varTarget": "has_rock",
-                "to": True
-            }]
+
+        return [{
+            "type": "worldDelta",
+            "coords": self.get_coord(direction),
+            "actorID": self.uuid,
+            "varTarget": "ROCK",
+            "to": None
+        },{
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "has_rock",
+            "to": True
+        }]
 
     def harvest(self, direction):
         """ Harvest something in a direction. If no direction specified 

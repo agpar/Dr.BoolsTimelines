@@ -134,6 +134,7 @@ def harvest_fn(actor) :
 
     :return delta for harvest
     """
+
     return actor.harvest(actor_direction)
 
 
@@ -142,8 +143,10 @@ def pickup_fn(actor) :
 
     :return delta to pick up rock
     """
-
-    return actor.pickup("NORTH")
+    if actor.has_rock:
+        return 
+    else :
+        return actor.pickup(actor_direction)
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.
@@ -184,6 +187,29 @@ def walk_fn(actor, direction):
             if actor.can_walk(dir):
                 return actor.walk(dir)
 
+def scavenge_fn(actor,attr):
+    """ Search for nearest food source
+
+    :param actor: An actor to Search
+    :param attr: attribute (food type) to look for
+    """
+
+    if attr == "PLANT":        
+        walk_fn(direction_fn(nearest_fn("PLANT")));
+    if attr == "FOOD":
+        walk_fn(direction_fn(nearest_fn("FOOD")));
+
+
+def flee_fn(actor):
+    """ Move away from the nearest "deadly"
+    by going in the opposite direction of path to deadly
+    """
+
+    [direction] = (direction_fn(nearest_fn("DEADLY")));
+
+    for dir in direction:
+        if actor.can_walk(actor.get_oppCoord(dir)):
+            return actor.walk(actor.get_oppCoord(dir))
 
 
 FUNC_MAP = {
@@ -206,7 +232,9 @@ FUNC_MAP = {
     'eat': eat_fn,
     'drop': drop_fn,
     'harvest': harvest_fn,
-    'pickup': pickup_fn
+    'pickup': pickup_fn,
+    'scavenge': scavenge_fn,
+    'flee': flee_fn
 }
 
 SYM_MAP = {
