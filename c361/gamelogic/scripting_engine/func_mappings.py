@@ -211,6 +211,10 @@ def flee_fn(actor):
         if actor.can_walk(actor.get_oppCoord(dir)):
             return actor.walk(actor.get_oppCoord(dir))
 
+def attack_fn(actor):
+    for dir in direction:
+        return actor.attack(dir)
+
 
 FUNC_MAP = {
     '<': lt,
@@ -234,7 +238,8 @@ FUNC_MAP = {
     'harvest': harvest_fn,
     'pickup': pickup_fn,
     'scavenge': scavenge_fn,
-    'flee': flee_fn
+    'flee': flee_fn,
+    'attack': attack_fn
 }
 
 SYM_MAP = {

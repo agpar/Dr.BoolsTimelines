@@ -134,7 +134,8 @@ class Actor(WorldInhabitant):
             "drop": self.drop,
             "see": self.see,
             "smell": self.smell,
-            "sleep": self.sleep_action
+            "sleep": self.sleep_action,
+            "attack": self.attack
         }
 
     def eat(self):
@@ -153,6 +154,24 @@ class Actor(WorldInhabitant):
                 "varTarget": "hunger",
                 "to": self.hunger + 50
             }]
+            
+    def attack(self):
+        if direction not in DIRECTIONS:
+            direction = self.direction
+
+        x1,y1 = self.get_coord(direction)
+        coord_contents = self.gameInstance.world.get_cell((x1,y1))
+
+        if self.gameInstance.has_attr(coord_contents, "ACTOR"):
+            actor_ID = self.gameInstance.get_actor(x1,y1)
+            return {
+                "type": "actorDelta",
+                "coords": {'x': x1, 'y': y1},
+                "actorID": actor_ID,
+                "varTarget": "health",
+                "from": actor.health,
+                "to": actor.health - 10
+            }
 
     def walk(self, direction):
         """Return a delta for walking in direction."""

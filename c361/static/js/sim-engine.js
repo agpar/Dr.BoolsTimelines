@@ -8846,8 +8846,8 @@ var GraphicsEngineController = require('./worldgraphics/graphics-engine-controll
 
 var GAMEID
 $(document).ready(function () {
-    var canvas = document.getElementById("simulation-render-target", "div#sim-ui-container")
-    var controller = GraphicsEngineController(canvas)
+    var canvas = document.getElementById("simulation-render-target")
+    var controller = GraphicsEngineController(canvas,  "div#sim-ui-container")
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -8967,13 +8967,26 @@ module.exports = Class("GraphicsEngineController", {
 
         this._setupKeys(scene)
         this.startSimulationEngine()
-        if(view) {
-            $(view).find("#add-raise").click(function (evt){this.setUse("ADD")}.bind(this))
-            $(view).find("#delete-lower").click(function (evt){this.setUse("DELETE")}.bind(this))
-            $(view).find("#camera").click(function (evt){this.setTool("CAMERA")}.bind(this))
-            $(view).find("#inspect").click(function (evt){this.setTool("INSPECT")}.bind(this))
-            $(view).find("#actor").click(function (evt){this.setTool("ACTOR")})
-        }
+
+        $("#add-raise").click(function (evt){this.setUse("ADD")}.bind(this))
+        $("#delete-lower").click(function (evt){this.setUse("DELETE")}.bind(this))
+        $("#camera").click(function (evt){this.setTool("CAMERA")}.bind(this))
+        $("#inspect").click(function (evt){this.setTool("INSPECT")}.bind(this))
+        $("#actor").click(function (evt){this.setTool("ACTOR")})
+        $("#add-raise").click(function (evt){controller.setUse("ADD")})
+        $("#delete-lower").click(function (evt){controller.setUse("DELETE")})
+        $("#camera").click(function (evt){controller.setTool("CAMERA")})
+        $("#terrain").click(function (evt){controller.setTool("TERRAIN")})
+        $("#grass").click(function (evt){controller.setTool("GRASS")})
+        $("#rock").click(function (evt){controller.setTool("ROCK")})
+        $("#water").click(function (evt){controller.setTool("WATER")})
+        $("#plant").click(function (evt){controller.setTool("PLANT")})
+        $("#mushroom").click(function (evt){controller.setTool("MUSHROOM")})
+        $("#wall").click(function (evt){controller.setTool("WALL")})
+        $("#block").click(function (evt){controller.setTool("BLOCK")})
+        $("#actor").click(function (evt){controller.setTool("ACTOR")})
+
+
         $("#simulation-render-target").click(function(evt){
             if(evt.ctrlKey)
                 return
@@ -9055,7 +9068,7 @@ module.exports = Class("GraphicsEngineController", {
 
                 renderer.updateView(this._camPos.x, this._camPos.y)
             }.bind(this ), 1000)
-        
+
         }.bind(this))
 
     },

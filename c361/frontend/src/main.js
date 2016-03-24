@@ -2,8 +2,8 @@ var GraphicsEngineController = require('./worldgraphics/graphics-engine-controll
 
 var GAMEID
 $(document).ready(function () {
-    var canvas = document.getElementById("simulation-render-target", "div#sim-ui-container")
-    var controller = GraphicsEngineController(canvas)
+    var canvas = document.getElementById("simulation-render-target")
+    var controller = GraphicsEngineController(canvas,  "div#sim-ui-container")
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
