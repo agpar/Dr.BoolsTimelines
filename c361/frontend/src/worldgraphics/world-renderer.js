@@ -346,7 +346,10 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of view.
     param force: Force update over already defined chunks in the view.
     */
-    'public updateView': function(x,y) {
+    'public updateView': function(cam) {
+        console.log(cam)
+        var x = cam.x
+        var y = cam.y
         if(this._worldState == null)
             return
 

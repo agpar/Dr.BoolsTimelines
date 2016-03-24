@@ -97,6 +97,7 @@ module.exports = Class("GraphicsEngineController", {
 
         this._renderEngine = engine
         this._camera = camera
+        this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
         this._setupKeys(scene)
@@ -214,11 +215,27 @@ module.exports = Class("GraphicsEngineController", {
                 200: function(data)
                 {
                     renderer.setWorldState(data)
-                    renderer.updateView(cam.x, cam.y)
+                    renderer.updateView(cam)
                 }
             }
         })
 
+        $("#advance-btn").click(
+          function () {
+              $.ajax({
+                  type: "get",
+                  url: "/game/"+gameid+"/?light_dump=true",
+                  contentType:"application/json",
+                  statusCode: {
+                      200: function(data)
+                      {
+                          renderer.setWorldState(data)
+                          renderer.updateView(cam)
+                      }
+                  }
+              })
+
+          })
         /*
         if(this._updateLoop != null)
             clearInterval(this._updateLoop)
@@ -249,7 +266,7 @@ module.exports = Class("GraphicsEngineController", {
         var control = this
 
         loader.onFinish = function() {
-            this._renderer.updateView(0,0)
+            this._renderer.updateView(this._camPos)
             this._camPos = {x: 0, y: 0}
 
             this._renderEngine.runRenderLoop(function () {
@@ -261,8 +278,8 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._renderer.updateView(newx, newy)
                     this._camPos = {x: newx, y: newy}
+                    this._renderer.updateView(this._camPos)
                 }
             }.bind(this))
         }.bind(this)
