@@ -46,7 +46,7 @@ class Actor(WorldInhabitant):
             self.health = 100
             self.hunger = 100
             self.sleep = 100
-            self.has_food = False
+            self.has_food = True
             self.has_rock = False
             self.is_sleeping = False
             self.direction = "NORTH"
@@ -133,7 +133,7 @@ class Actor(WorldInhabitant):
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
-                "varTarget": "food",
+                "varTarget": "has_food",
                 "from": True,
                 "to": False
             }, {
@@ -265,18 +265,19 @@ class Actor(WorldInhabitant):
         if direction not in DIRECTIONS:
             direction = self.direction
 
-        return [{
-            "type": "worldDelta",
-            "coords": self.get_coord(direction),
-            "actorID": self.uuid,
-            "varTarget": "ROCK",
-            "to": None
-        },{
-            "type": "actorDelta",
-            "coords": {'x': self.x, 'y': self.y},
-            "varTarget": "has_rock",
-            "to": True
-        }]
+        if not has_rock:
+            return [{
+                "type": "worldDelta",
+                "coords": self.get_coord(direction),
+                "actorID": self.uuid,
+                "varTarget": "ROCK",
+                "to": None
+            },{
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "varTarget": "has_rock",
+                "to": True
+            }]
 
     def harvest(self, direction):
         """ Harvest something in a direction. If no direction specified 
@@ -296,6 +297,7 @@ class Actor(WorldInhabitant):
         },{
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
+            "actorID" : self.uuid,
             "varTarget": "has_food",
             "to": True
         }] 
@@ -313,11 +315,13 @@ class Actor(WorldInhabitant):
             return [{
                 "type": "worldDelta",
                 "coords": self.get_coord(direction),
+                "actorID": self.uuid,
                 "varTarget": "cell",
                 "to": "FOOD"
             }, {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
+                "actorID" : self.uuid,
                 "varTarget": "is_food",
                 "to": False
             }]
@@ -326,11 +330,13 @@ class Actor(WorldInhabitant):
             return [{
                 "type": "worldDelta",
                 "coords": self.get_coord(direction),
+                "actorID": self.uuid,
                 "varTarget": "cell",
                 "to": "ROCK"
             }, {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
                 "varTarget": "has_rock",
                 "to": False
             }]

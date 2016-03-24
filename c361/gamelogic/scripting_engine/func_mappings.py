@@ -96,10 +96,10 @@ def actor_direction(actor):
     return actor.direction
 
 def actor_rock(actor):
-    return actor.is_rock
+    return actor.has_rock
 
 def actor_food(actor):
-    return actor.is_food
+    return actor.has_food
 
 def actor_issleeping(actor):
     return actor.is_sleeping
@@ -114,12 +114,36 @@ def sleep_fn(actor):
 def eat_fn(actor):
     """If an actor has food, eat, otherwise do nothing
 
-    :return Delta 
+    :return delta for eat effec
     """
-    if actor_food(actor):
+    if actor.has_food:
         return actor.eat()
-    else: 
+    else:
         return
+
+def drop_fn(actor) :
+    """ Drop rock object
+
+    :return delta for drop
+    """
+    return actor.drop(actor_direction)
+
+
+def harvest_fn(actor) :
+    """ Harvest a plant
+
+    :return delta for harvest
+    """
+    return actor.harvest(actor_direction)
+
+
+def pickup_fn(actor) :
+    """ Pickup a rock
+
+    :return delta to pick up rock
+    """
+
+    return actor.pickup("NORTH")
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.
@@ -179,7 +203,10 @@ FUNC_MAP = {
     'direction': direction_fn,
     'nearest': nearest_fn,
     'walk': walk_fn,
-    'eat': eat_fn
+    'eat': eat_fn,
+    'drop': drop_fn,
+    'harvest': harvest_fn,
+    'pickup': pickup_fn
 }
 
 SYM_MAP = {
@@ -194,5 +221,4 @@ SYM_MAP = {
     'myrock' : actor_rock,
     'myfood' : actor_food,
     'asleep' : actor_issleeping
-
 }
