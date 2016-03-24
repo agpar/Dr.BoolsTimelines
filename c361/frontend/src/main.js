@@ -1,6 +1,6 @@
 var GraphicsEngineController = require('./worldgraphics/graphics-engine-controller')
 
-
+var GAMEID
 $(document).ready(function () {
     var canvas = document.getElementById("simulation-render-target")
     var controller = GraphicsEngineController(canvas)

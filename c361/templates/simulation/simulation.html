@@ -244,8 +244,12 @@ $(document).ready(function () {
 
         $(".loadable-game-select").click(function (event)
         {
-            var gameid = event['currentTarget']['id'];
-            console.log(gameid);
+            console.log("ASLKDFALS:FK")
+            GAMEID = event['currentTarget']['id'];
+            GAMEID = GAMEID.split("-")[2]
+            console.log(GAMEID)
+            $(document).trigger("startgame",[]);
+
         });
 
     }

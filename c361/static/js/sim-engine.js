@@ -8844,7 +8844,7 @@ function Node (value, prev, next, list) {
 },{}],34:[function(require,module,exports){
 var GraphicsEngineController = require('./worldgraphics/graphics-engine-controller')
 
-
+var GAMEID
 $(document).ready(function () {
     var canvas = document.getElementById("simulation-render-target")
     var controller = GraphicsEngineController(canvas)
@@ -9005,10 +9005,52 @@ module.exports = Class("GraphicsEngineController", {
 
         }.bind(this))
 
-        setInterval(function () {
-            //ajax call to update state
-            //this._renderer.setWorldState(newstate)
-        }, 1000)
+        $(document).on("startgame", function (e) {
+            $.ajax({
+              type: "get",
+              url: "/game/"+GAMEID+"/?start=true",
+              contentType:"application/json",
+              statusCode: {
+                  200: function(data)
+                  {
+                      console.log(data)
+                  }
+              }
+            })
+
+            $.ajax({
+                type: "get",
+                url: "/game/"+GAMEID+"/?full_dump=true",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        renderer.setWorldState(data)
+                        console.log(renderer)
+                    }
+                }
+            })
+
+            renderer.updateView(this._camPos.x, this._camPos.y)
+            /*
+            setInterval(function () {
+                $.ajax({
+                    type: "get",
+                    url: "/game/"+GAMEID+"/?light_dump=true",
+                    contentType:"application/json",
+                    statusCode: {
+                        200: function(data)
+                        {
+                            renderer.setWorldState(data)
+                        }
+                    }
+                })
+
+                renderer.updateView(this._camPos.x, this._camPos.y)
+            }.bind(this ), 1000)
+        */
+        }.bind(this))
+
     },
     /*
     Initialize the simulation view and start the render loop. Update the viewable
@@ -9170,7 +9212,7 @@ module.exports = Class("WorldState", {
     'private _waterThreshold': null,
     'private _rockThreshold': null,
     'private _seed': null,
-    'private _seedSize': null,
+    'private _seedsize': null,
     'private _cells': null,
     __construct: function(json_dump) {
         this._standardHeight = json_dump["standardHeight"]
@@ -9313,7 +9355,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "ACTOR",
+                        "type": "MUSH",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -9329,7 +9371,7 @@ module.exports =  Class("WorldRenderer", {
             "waterThreshold": 0.2,
             "rockThreshold": 0.175,
             "seed": seed,
-            "seedSize": seedsize,
+            "seedsize": seedsize,
             "cells": cells
         })
 
@@ -9445,7 +9487,7 @@ module.exports =  Class("WorldRenderer", {
     */
     'private _computeCell': function (x,y) {
         var seed        = this._worldState.get("seed")
-        var seedsize    = this._worldState.get("seedSize")
+        var seedsize    = this._worldState.get("seedsize")
         var worldWidth  = this._worldState.get("width")
         var worldLength = this._worldState.get("length")
         var chunksize   = this._worldState.get("chunkSize")
@@ -9497,7 +9539,11 @@ module.exports =  Class("WorldRenderer", {
     param state: The new state to replace the state of the world.
     */
     'public setWorldState': function (state) {
-        this._worldState = WorldState(state)
+        var tstate = state
+        if(tstate["seed"] == undefined)
+            tstate["seed"] = this._worldState.get("seed")
+
+        this._worldState = WorldState(tstate)
     },
     /*
     Update the world with the changes specified by a list of state change

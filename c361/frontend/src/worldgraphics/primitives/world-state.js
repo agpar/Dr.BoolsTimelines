@@ -9,7 +9,7 @@ module.exports = Class("WorldState", {
     'private _waterThreshold': null,
     'private _rockThreshold': null,
     'private _seed': null,
-    'private _seedSize': null,
+    'private _seedsize': null,
     'private _cells': null,
     __construct: function(json_dump) {
         this._standardHeight = json_dump["standardHeight"]
