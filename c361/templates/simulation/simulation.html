@@ -189,6 +189,23 @@ $(document).on("loadview", function () {
         }
     }
 
+    function refresh_active_games()
+    {
+        $.ajax({
+            type: "get",
+            url: "/games/active",
+            async: false,
+            contentType:"application/json",
+            statusCode: {
+                200: function(resp)
+                {
+                    console.log("Fetched info from Ajax.");
+                    set_cache('active-games', resp);
+                }
+            }
+        });
+    };
+
     //Draw a status update in the main menu.
     function draw_status_menu(header, message)
     {
@@ -215,6 +232,10 @@ $(document).on("loadview", function () {
         setup_game_select_menu({'load': true});
     });
 
+    $("#spectate-game-side-btn").click(function (event){
+        setup_game_select_menu({'spectate': true});
+    });
+
     //Click listener for the create-actor button in the sidemenu.
     $("#create-actor-side-btn").click(function(event){
 
@@ -237,24 +258,49 @@ $(document).on("loadview", function () {
     //on choosing an actor can be controlled via options.
     function setup_game_select_menu(options)
     {
-        refresh_game_cache();
         flush_mainmenu();
-        var data = mainMenuCache['my-games'];
+        var data;
+        var error_msg;
         var gamelist = [];
+        var menu_header;
 
-        for (var i = 0; i < data.length; i++)
+
+        //Use my-games or active-games depending on context.
+        if(options['spectate'])
         {
-            gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
-                    "id='loadable-game-"+data[i]['id']+"'>" + data[i]['title'] + "</button>")
+            refresh_active_games();
+            data = mainMenuCache['active-games'];
+            error_msg = "There are no running games right now!";
+            menu_header = "Choose a game to spectate."
+            for (var i = 0; i < data.length; i++)
+            {
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
+                        "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] +
+                        "</b> - Hosted by <i>"+data[i]['creator']['username']+"</i> - On turn "+data[i]['current_turn_number']+"</button>")
+            }
         }
+        else
+        {
+            refresh_game_cache();
+            data = mainMenuCache['my-games'];
+            error_msg = "You have no games!";
+            for (var i = 0; i < data.length; i++)
+            {
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
+                        "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] + "</b></button>")
+            }
+            menu_header = "Choose a game."
+        }
+
+
         if (gamelist.length == 0)
         {
-            $mainmenu_content.html("You have no games!");
+            $mainmenu_content.html(error_msg);
         }
         if(options['load'] && gamelist.length != 0)
             $mainmenu_buttons.html("<button class='btn btn-default'>Load Game</button>");
 
-        $("#mainmenu-header").html("Choose a Game");
+        $("#mainmenu-header").html(menu_header);
         $mainmenu_scroller.html(gamelist.join(""));
 
         $mainmenu.show();
@@ -659,6 +705,9 @@ $(document).on("loadview", function () {
     }
 
 
+
+
+
     $mainmenu.hide();
     $("#closed-sidemenu").hide();
     $("#opened-actorinfo").hide();
@@ -713,7 +762,7 @@ $(document).on("loadview", function () {
         <div class="opened-sidemenu sim-ui-element" id="opened-sidemenu">
             <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
             <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
-            <button class="btn btn-default btn-sidemenu">Spectate Game</button>
+            <button class="btn btn-default btn-sidemenu" id="spectate-game-side-btn">Spectate Game</button>
             <hr>
             <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
             <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>

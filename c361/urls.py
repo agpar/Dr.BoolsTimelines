@@ -53,6 +53,6 @@ urlpatterns = [
         name='turnmodel-list', kwargs={'model': "TurnModel"}),
 
     url(r'^users/$', UserList.as_view(), name='user-list'),
-    url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail'),
+    url(r'^user/(?P<pk>[0-9]+)/$', UserDetail.as_view(), name='user-detail'),
 
 ]
