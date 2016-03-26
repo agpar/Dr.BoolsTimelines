@@ -281,6 +281,8 @@ class Actor(WorldInhabitant):
         c2 = self.gameInstance.world.get_cell((x2,y2))
         if abs(c1.elevation - c2.elevation) > 5:
             return False
+        if self.gameInstance.get_actor((x2,y2)):
+            return False
         return True
 
     def pickup(self, direction):
