@@ -8,3 +8,7 @@ def home(request):
 @api_view(('GET',))
 def simulation(request):
     return render(request, 'simulation/simulation.html')
+
+@api_view(('GET',))
+def syntaxHelp(request):
+	return render(request, 'simulation/syntaxHelp.html')
