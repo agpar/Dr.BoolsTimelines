@@ -19,7 +19,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from c361.views.auth import UserLogin, UserRegister, user_logout
 from c361.views.game_actor import ActorList, ActorDetail, MyActorList, ScriptSyntaxChecker
-from c361.views.game_instance import GameList, GameDetail, MyGameList
+from c361.views.game_instance import GameList, GameDetail, MyGameList, RunningGameList
 from c361.views.turn import TurnList
 from c361.views.user import UserDetail, UserList
 from c361.views.views import simulation
@@ -44,6 +44,8 @@ urlpatterns = [
         name="gameinstancemodel-list", kwargs={'model': "GameInstanceModel"}),
     url(r'^games/mine/$', MyGameList.as_view(),
         name="my-gameinstancemodel-list"),
+    url(r'^games/active/$', RunningGameList.as_view(),
+        name="active-gameinstancemodel-list"),
     url(r'^game/(?P<pk>[0-9a-z-]+)/$', GameDetail.as_view(),
         name='gameinstancemodel-detail', kwargs={'model': "GameInstanceModel"}),
 

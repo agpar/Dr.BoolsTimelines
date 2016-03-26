@@ -1,11 +1,13 @@
 from django.http import HttpResponseRedirect, HttpResponse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_202_ACCEPTED
 from rest_framework.response import Response
+from rest_framework import generics
 from c361.models import GameInstanceModel, GameActorModel
 from c361.serializers.game_instance import GameInstanceFullSerializer
 from c361.views.main import BaseListCreateView, BaseDetailView
 from rest_framework import status
 from django.http import JsonResponse
+from django.core.cache import cache
 import ujson as json
 
 
@@ -23,6 +25,17 @@ class MyGameList(BaseDetailView):
                 return Response(data={"ERROR: You are not logged in."})
             else:
                 return HttpResponseRedirect("/login")
+
+
+class RunningGameList(generics.ListAPIView):
+    model = GameInstanceModel
+    serializer_class = GameInstanceFullSerializer
+
+    def get_queryset(self):
+        active_games = [game.pk for game in GameInstanceModel.objects.all() if game.is_active()]
+        return GameInstanceModel.objects.filter(id__in=active_games)
+
+
 
 
 class GameList(BaseListCreateView):
