@@ -18,6 +18,12 @@ $(document).on("loadview", function () {
     var $mainmenu_buttons = $("#mainmenu-buttons");
     var $mainmenu_header = $("#mainmenu-header");
 
+    window.onbeforeunload = function(){
+        // Should check if game is loaded by user (they are not spectating, but
+        // hosting, then send a request to /game/ID/?stop=true in order to stop
+        // and save the game.
+    };
+
     //Open the actorInfo on the page.
     $("#open-actorinfo").click(function (event){
         $("#opened-actorinfo").show();
