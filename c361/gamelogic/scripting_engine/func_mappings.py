@@ -1,3 +1,17 @@
+import random
+
+try:
+    from ..globals import *
+except ImportError:
+    from c361.gamelogic.globals import *
+
+def to_list(value):
+    """Cast any non-list to a list with one element."""
+    if isinstance(value, list):
+        return value
+    if value is None:
+        return []
+    return [value]
 
 # Comparisons #
 # =========== #
@@ -92,14 +106,18 @@ def actor_location(actor):
 def actor_health(actor):
     return actor.health
 
+
 def actor_direction(actor):
     return actor.direction
+
 
 def actor_rock(actor):
     return actor.has_rock
 
+
 def actor_food(actor):
     return actor.has_food
+
 
 def actor_issleeping(actor):
     return actor.is_sleeping
@@ -111,42 +129,48 @@ def actor_issleeping(actor):
 def sleep_fn(actor):
     return actor.sleep_action()
 
+
 def eat_fn(actor):
     """If an actor has food, eat, otherwise do nothing
 
-    :return delta for eat effec
+    :return delta for eat effect
     """
     if actor.has_food:
         return actor.eat()
     else:
         return
 
-def drop_fn(actor) :
+
+def drop_fn(actor):
     """ Drop rock object
 
     :return delta for drop
     """
-    return actor.drop(actor_direction)
+    return actor.drop(actor.direction)
 
 
-def harvest_fn(actor) :
-    """ Harvest a plant
+def harvest_fn(actor, direction):
+    """ Harvest a plant.
 
     :return delta for harvest
     """
+    direction = to_list(direction)
+    for dir in direction:
+        if dir:
+            return actor.harvest(dir)
+    return actor.harvest(actor.direction)
 
-    return actor.harvest(actor_direction)
 
-
-def pickup_fn(actor) :
+def pickup_fn(actor):
     """ Pickup a rock
 
     :return delta to pick up rock
     """
     if actor.has_rock:
         return 
-    else :
-        return actor.pickup(actor_direction)
+    else:
+        return actor.pickup(actor.direction)
+
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.
@@ -179,25 +203,31 @@ def walk_fn(actor, direction):
     :param direction: A constant (or list of) from globals.DIRECTIONS.
     """
 
-    if isinstance(direction, str):
-        direction = [direction]
+    direction = to_list(direction)
+    for dir in direction:
+        if actor.can_walk(dir):
+            return actor.walk(dir)
 
-    if isinstance(direction, list):
-        for dir in direction:
-            if actor.can_walk(dir):
-                return actor.walk(dir)
 
-def scavenge_fn(actor,attr):
+def scavenge_fn(actor, attr):
     """ Search for nearest food source
 
     :param actor: An actor to Search
     :param attr: attribute (food type) to look for
     """
+    if attr not in ("PLANT", "FOOD"):
+        return None
+    nearest = actor.gameInstance.find_nearest(actor, attr)
 
-    if attr == "PLANT":        
-        walk_fn(direction_fn(nearest_fn("PLANT")));
-    if attr == "FOOD":
-        walk_fn(direction_fn(nearest_fn("FOOD")));
+    if nearest == actor._coords:
+        dirs = list(DIRECTIONS)
+        walk_fn(actor, random.shuffle(dirs))
+    elif actor.can_reach(nearest):
+        return harvest_fn(actor, actor.direction(nearest))
+    else:
+        return actor.walk(actor.direction(nearest_fn(actor, attr)))
+
+
 
 
 def flee_fn(actor):
@@ -211,7 +241,9 @@ def flee_fn(actor):
         if actor.can_walk(actor.get_oppCoord(dir)):
             return actor.walk(actor.get_oppCoord(dir))
 
-def attack_fn(actor):
+
+def attack_fn(actor, direction):
+    direction = to_list(direction)
     for dir in direction:
         return actor.attack(dir)
 

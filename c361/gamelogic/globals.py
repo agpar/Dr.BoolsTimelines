@@ -1,4 +1,3 @@
-import json
 from functools import partial
 
 try:
@@ -137,6 +136,11 @@ class WorldInhabitant(CoordParseMixin):
     def west(self, n=1):
         x = self._coords[0] - n
         return x, self.y
+
+    def can_reach(self, coords):
+        if coords in [self.north(), self.south(), self.east(), self.west()]:
+            return True
+        return False
 
     def distance_to(self, other):
         """Calculate distance between self and other."""
