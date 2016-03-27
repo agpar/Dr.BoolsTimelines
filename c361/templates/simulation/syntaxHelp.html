@@ -2,9 +2,143 @@
 
 {% block container %}
 <style>
-  body{padding: 0 0; overflow: hidden}
+  body{padding: 100px 0; overflow: scroll}
+  h1{font-weight: bold;}
+  h3{font-style: italic;}
+  ul.nav-pills{position:fixed;}
 </style>
 
+<body data-spy="scroll" data-target="#tutorialButtons" data-offset="20">
+  	<div class="container">
+    	<div class="row">
+      		<nav class="col-sm-3" id="tutorialButtons">
+        		<ul class="nav nav-pills nav-stacked">
+          			<li><a type="button" class="btn btn-default" href="#intro">Intro</a></li>
+          			<li><a type="button" class="btn btn-default" href="#start">How to Begin</a></li>
+          			<li class="btn-group">
+          				<a type="button" class="btn btn-default" href="#actionFunctions">Action Words</a>
+          				<a type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          					<span class="caret"></span>
+          				</a>
+          				<ul class="dropdown-menu" role="menu">
+          					<li><a href="#attack">Attack</a></li>
+          					<li><a href="#drop">Drop</a></li>
+          					<li><a href="#direction">Direction</a></li>
+          					<li><a href="#eat">Eat</a></li>
+          					<li><a href="#flee">Flee</a></li>
+          					<li><a href="#harvest">Harvest</a></li>
+          					<li><a href="#nearest">Nearest</a></li>
+          					<li><a href="#pickup">Pickup</a></li>
+          					<li><a href="#scavenge">Scavenge</a></li>
+          					<li><a href="#sleep">Sleep</a></li>
+          					<li><a href="#walk">Walk</a></li>
+          				</ul>
+          			</li>
+          			<li class="btn-group">
+          				<a type="button" class="btn btn-default" href="#actorInformation">Actor Information</a>
+          				<a type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          					<span class="caret"></span>
+          				</a>
+          				<ul class="dropdown-menu" role="menu">
+          					<li><a href="#mydirection">Direction</a></li>
+          					<li><a href="#myfood">Food</a></li>
+          					<li><a href="#myhealth">Health</a></li>
+          					<li><a href="#myhunger">Hunger</a></li>
+          					<li><a href="#mylocation">Location</a></li>
+          					<li><a href="#asleep">Sleep</a></li>
+          					<li><a href="#myrock">Weapon</a></li>
+          				</ul>
+          			</li>
+        		</ul>
+      		</nav>
+     	<div class="col-sm-9">
+        	<div id="intro"> 
+          		<h1>Intro</h1>
+         		<p>In this tutorial, you will learn how to create your own AI script. This script is what will control your avatar throughout the game. The more complex you make it, the more interesting your avatar will become. By scrolling through this page, you will find all the necessary information to correctly write code for your avatar. At any time, you can press on the sidebar buttons to jump forward to any section of your choice. Once the tutorial is finished, close the tab and return to the Create Actor window to implement everything you've just learned.</p>
+        	</div> 
+        	<div id="start">
+        		<h1>How to Begin</h1>
+        		<p>For your AI script to function properly, you must write it in such a way that our program can understand it. Think of our program as a dog. Unfortunately, it only knows certain commands. If you ask it to do something that is not in its vocabulary, it will not understand and return an error. These commands must also be written in such a way so that they make sense syntatically. </p>
+      		</div>
+      		<div id="actionFunctions">
+        		<h1>Action Words</h1>
+        		<p>The following words are at t</p>
+      		</div>
+      		<div id="attack">
+        		<h3>Attack</h3>
+        		<p></p>
+      		</div>
+      		<div id="drop">
+        		<h3>Drop</h3>
+        		<p></p>
+      		</div>
+      		<div id="direction">
+        		<h3>Direction</h3>
+        		<p></p>
+      		</div>
+      		<div id="eat">
+        		<h3>Eat</h3>
+        		<p></p>
+      		</div>
+      		<div id="flee">
+        		<h3>Flee</h3>
+        		<p></p>
+      		</div>
+      		<div id="harvest">
+        		<h3>Harvest</h3>
+        		<p></p>
+      		</div>
+      		<div id="nearest">
+        		<h3>Nearest</h3>
+        		<p></p>
+      		</div>
+      		<div id="pickup">
+        		<h3>Pickup</h3>
+        		<p></p>
+      		</div>
+      		<div id="scavenge">
+        		<h3>Scavenge</h3>
+        		<p></p>
+      		</div>
+      		<div id="sleep">
+        		<h3>Sleep</h3>
+        		<p></p>
+      		</div>
+      		<div id="walk">
+        		<h3>Walk</h3>
+        		<p></p>
+      		</div>
+      		<div id="actorInformation">
+        		<h1>Actor Information</h1>
+        		<p>The following words are at t</p>
+      		</div>
+      		<div id="mydirection">
+        		<h3>Direction</h3>
+        		<p></p>
+      		</div>
+      		<div id="myfood">
+        		<h3>Food</h3>
+        		<p></p>
+      		</div>
+      		<div id="myhealth">
+        		<h3>Health</h3>
+        		<p></p>
+      		</div>
+      		<div id="mylocation">
+        		<h3>Location</h3>
+        		<p></p>
+      		</div>
+      		<div id="asleep">
+        		<h3>Sleep</h3>
+        		<p></p>
+      		</div>
+      		<div id="myrock">
+        		<h3>Weapon</h3>
+        		<p></p>
+      		</div>
+    	</div>
+  	</div>
+</body>
 
 
 {% endblock %}
