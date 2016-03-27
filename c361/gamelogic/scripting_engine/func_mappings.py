@@ -107,6 +107,10 @@ def actor_health(actor):
     return actor.health
 
 
+def actor_energy(actor):
+    return actor.sleep
+
+
 def actor_direction(actor):
     return actor.direction
 
@@ -128,6 +132,10 @@ def actor_issleeping(actor):
 
 def sleep_fn(actor):
     return actor.sleep_action()
+
+
+def wake_fn(actor):
+    return actor.wake_action()
 
 
 def eat_fn(actor):
@@ -262,6 +270,7 @@ FUNC_MAP = {
     '/': div_fn,
     '*': mult_fn,
     'sleep': sleep_fn,
+    'wake': wake_fn,
     'direction': direction_fn,
     'nearest': nearest_fn,
     'walk': walk_fn,
@@ -279,11 +288,12 @@ SYM_MAP = {
     'EAST': lambda x: 'EAST',
     'SOUTH': lambda x: 'SOUTH',
     'WEST': lambda x: 'WEST',
-    'myhunger': actor_hunger,
-    'mylocation': actor_location,
-    'myhealth': actor_health,
-    'mydirection' : actor_direction,
-    'myrock' : actor_rock,
-    'myfood' : actor_food,
-    'asleep' : actor_issleeping
+    'MY_HUNGER': actor_hunger,
+    'MY_LOCATION': actor_location,
+    'MY_HEALTH': actor_health,
+    'MY_ENERGY': actor_energy,
+    'MY_DIRECTION' : actor_direction,
+    'HOLDING_ROCK' : actor_rock,
+    'HOLDING_FOOD' : actor_food,
+    'SLEEPING' : actor_issleeping
 }

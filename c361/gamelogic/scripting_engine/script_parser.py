@@ -52,7 +52,7 @@ t_EQ     = r'=='
 LINENO = 1
 
 def t_SYMBOL(t):
-    r'[a-zA-Z][a-zA-Z0-9]*'
+    r'[a-zA-Z][a-zA-Z0-9_]*'
     t.type = reserved.get(t.value, 'SYMBOL')
     return t
 

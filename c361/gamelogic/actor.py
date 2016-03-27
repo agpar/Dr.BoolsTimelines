@@ -91,10 +91,7 @@ class Actor(WorldInhabitant):
     def _turn_stat_change(self):
         self.hunger -= 1
         if self.is_sleeping:
-            self.sleep = self.sleep + 7
-            if self.sleep >= 100:
-                self.is_sleeping = False
-                self.sleep = 100
+            self.sleep += 20
         else:
             self.sleep -= 1
 
@@ -447,22 +444,21 @@ class Actor(WorldInhabitant):
             }
 
     def sleep_action(self):
-        if not self.is_sleeping:
-            return {
-                        "type": "actorDelta",
-                        "coords": {'x': self.x, 'y': self.y},
-                        "actorID": self.uuid,
-                        "varTarget": "is_sleeping",
-                        "from": False,
-                        "to": True
-                    }
-        else:
-            return {
-                        "type": "actorDelta",
-                        "coords": {'x': self.x, 'y': self.y},
-                        "actorID": self.uuid,
-                        "varTarget": "is_sleeping",
-                        "from": True,
-                        "to": False
-                    }
+        return {
+                    "type": "actorDelta",
+                    "coords": {'x': self.x, 'y': self.y},
+                    "actorID": self.uuid,
+                    "varTarget": "is_sleeping",
+                    "from": False,
+                    "to": True
+                }
 
+    def wake_action(self):
+        return {
+            "type": "actorDelta",
+            "coords": {'x': self.x, 'y': self.y},
+            "actorID": self.uuid,
+            "varTarget": "is_sleeping",
+            "from": True,
+            "to": False
+        }

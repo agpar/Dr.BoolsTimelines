@@ -57,6 +57,10 @@ class GameInstance(CoordParseMixin):
     def __setitem__(self, key, item):
         self.world[key] = item
 
+    @property
+    def is_night(self):
+        return (self.current_turn / 12) % 2 == 0
+
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
 
@@ -194,7 +198,8 @@ class GameInstance(CoordParseMixin):
                 Returns original coords if not found.
         """
 
-        scan_area = self.circle_at(xy_or_WI, 2)
+        vision_radius = 2 if self.is_night else 4
+        scan_area = self.circle_at(xy_or_WI, vision_radius)
 
         for x, y in scan_area:
             coord_contents = self.world[x][y]
@@ -225,7 +230,7 @@ class GameInstance(CoordParseMixin):
             else:
                 return True
 
-    def turn_effects(self, actor_turn):
+    def actor_turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
 
         :param actor_turn: the delta that the actor wants to execute
@@ -266,6 +271,8 @@ class GameInstance(CoordParseMixin):
                         "from": actor.health,
                         "to": actor.health-50
                     })
+
+            # Check if actor is alive
             if delta['varTarget'] == 'health':
                 if delta['to'] <= 0:
                     effects.append({
@@ -280,10 +287,30 @@ class GameInstance(CoordParseMixin):
         # Calculate any side effects of the side effects.
         old_effects = effects
         while old_effects:
-            new_effects = self.turn_effects(old_effects)
+            new_effects = self.actor_turn_effects(old_effects)
             old_effects = new_effects
             effects.extend(old_effects)
 
+        return effects
+
+    def global_turn_effects(self):
+        """Calculate the effects of this turn in regards to the world."""
+        effects = []
+
+        for u, actr in self.actors.items():
+            if actr.sleep <= 1 and not actr.is_sleeping:
+                effects.append(actr.sleep_action())
+
+            if actr.sleep >= 100 and actr.is_sleeping:
+                effects.append(actr.wake_action())
+
+            if actr.hunger <= 1:
+                effects.append({
+                    "type": "actorDelta",
+                    "coords": {'x': actr.x, 'y': actr.y},
+                    "actorID": actr.uuid,
+                    "effects": ["health", actr.health, actr.health-5]
+                })
         return effects
 
     def do_turn(self, up_to=0):
@@ -295,11 +322,13 @@ class GameInstance(CoordParseMixin):
             for uuid, actor in self.actors.items():
                 turn_res = []
                 turn_res.extend(actor.do_turn())
-                side_effects = self.turn_effects(turn_res)
+                side_effects = self.actor_turn_effects(turn_res)
                 turn_res.extend(side_effects)
                 self.apply_deltas(turn_res)
                 this_turn['deltas'].extend(turn_res)
-
+            global_effects = self.global_turn_effects()
+            self.apply_deltas(global_effects)
+            this_turn['deltas'].extend(global_effects)
             all_turns.append(this_turn)
 
         return all_turns
@@ -314,6 +343,8 @@ class GameInstance(CoordParseMixin):
                 self.move_actor(actr, delta['to'])
             if delta['varTarget'] == 'health':
                 actr.health = delta['to']
+            if delta['varTarget'] == 'is_sleeping':
+                actr.is_sleeping = delta['to']
 
 
     def to_dict(self, withseed=True):
