@@ -270,6 +270,7 @@ module.exports = Class("GraphicsEngineController", {
 
         loader.onFinish = function() {
             this._renderer.updateView(this._camPos)
+            this._renderer.renderSmellField(true)
             this._camPos = {x: 0, y: 0}
 
             this._renderEngine.runRenderLoop(function () {
