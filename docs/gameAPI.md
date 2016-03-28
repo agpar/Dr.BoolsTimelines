@@ -30,11 +30,14 @@ make this request immediately after starting a game.
 
 `/game/[id]/turns/?first=[int]&last=[int]`
 Get all turns from `first` to `last`. Response is a list of dicts. Each
-dict has a `number` and a `delta_dump` lists. Both lists are correctly
+dict has a `number` and a `delta_dump` list. Both lists are correctly
 ordered by default. 
 
 This endpoint will either retrieve all the turns from the database,
 or it will compute up to `last` and return the computed deltas.
+
+If `last` is greater than the most recent computed turn for a game
+that is not running (or is paused), you will get an error.
 
 ## Patching
 
