@@ -85,16 +85,24 @@ class Assignment(Node):
 
 
 class IfStatement(Node):
-    def __init__(self, line, condition, inferences, actions):
+    def __init__(self, line, condition, inferences, actions, else_block):
         self.line = line
         self.condition = condition
         self.inferences = inferences
         self.actions = actions
+        self.alternative = else_block
 
     def eval(self, actor):
         """Test the condition."""
         return self.condition.eval(actor)
 
+
+class ElseBlock(Node):
+    def __init__(self, line, inferences, actions):
+        self.line = line
+        self.inferences = inferences
+        self.actions = actions
+        
 
 class BinaryNumOperation(Node):
     def __init__(self, line, left, operation, right):

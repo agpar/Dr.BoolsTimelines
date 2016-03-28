@@ -10,6 +10,7 @@ reserved = {
     'if': 'IF',
     'not': 'NOT',
     'then': 'THEN',
+    'else': 'ELSE',
     'endif': 'ENDIF',
     'do': 'DO',
     'done': 'DONE',
@@ -29,6 +30,7 @@ t_OR     = r'or'
 t_NOT    = r'not'
 t_IF     = r'if'
 t_THEN   = r'then'
+t_ELSE   = r'else'
 t_ENDIF  = r'endif'
 t_DO     = r'do'
 t_IS     = r'is'
@@ -112,13 +114,42 @@ def p_rule_actions(p):
          | IF boolexp THEN DO actions DONE ENDIF
     """
     if len(p) == 9:
-        p[0] = IfStatement(LINENO, p[2],p[4],p[6])
+        p[0] = IfStatement(LINENO, p[2],p[4],p[6],None)
     else:
-        p[0] = IfStatement(LINENO, p[2],[],p[5])
+        p[0] = IfStatement(LINENO, p[2],[],p[5],None)
+
+def p_rule_actions_alt(p):
+    """
+    rule : IF boolexp THEN inferences DO actions DONE else_block ENDIF
+         | IF boolexp THEN DO actions DONE else_block ENDIF
+    """
+    if len(p) == 10:
+        p[0] = IfStatement(LINENO, p[2],p[4],p[6],p[8])
+    else:
+        p[0] = IfStatement(LINENO, p[2],[],p[5],p[7])
+
+
 
 def p_rule_inference(p):
     "rule : IF boolexp THEN inferences ENDIF"
-    p[0] = IfStatement(LINENO, p[2],p[4],[])
+    p[0] = IfStatement(LINENO, p[2],p[4],[], None)
+
+def p_rule_inference_alt(p):
+    "rule : IF boolexp THEN inferences else_block ENDIF"
+    p[0] = IfStatement(LINENO, p[2], p[4], [], p[5])
+
+
+def p_else_block_inference(p):
+    "else_block : ELSE inferences"
+    p[0] = ElseBlock(LINENO, p[2], [])
+
+def p_else_block_actions(p):
+    "else_block : ELSE DO actions DONE"
+    p[0] = ElseBlock(LINENO, [], p[3])
+
+def p_else_block_mixed(p):
+    "else_block : ELSE inferences DO actions DONE"
+    p[0] = ElseBlock(LINENO, p[2], p[4])
 
 
 def p_actions(p):
