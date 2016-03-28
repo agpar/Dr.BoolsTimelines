@@ -9145,6 +9145,7 @@ module.exports = Class("GraphicsEngineController", {
 
         loader.onFinish = function() {
             this._renderer.updateView(this._camPos)
+            this._renderer.renderSmellField(true)
             this._camPos = {x: 0, y: 0}
 
             this._renderEngine.runRenderLoop(function () {
@@ -9351,7 +9352,8 @@ module.exports =  Class("WorldRenderer", {
         'BLOCK': null,
         'MUSH':  null,
         'PLANT': null,
-        'ACTOR': null
+        'ACTOR': null,
+        'SMELL': null
     },
     /*
     Load the prototype mesh assets and return an event handle to be bound to
@@ -9376,7 +9378,7 @@ module.exports =  Class("WorldRenderer", {
         this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
         this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
+        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("ACTOR", 20, 1.0, this._scene)
         this._proto["ACTOR"].position = new BABYLON.Vector3(-10000,-10000,-10000)
 
         var actormat = new BABYLON.StandardMaterial("actormat", this._scene)
@@ -9402,6 +9404,8 @@ module.exports =  Class("WorldRenderer", {
                         }
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
+                        if(cell.smell != undefined)
+                            cell.smell.dispose()
                         cell = chunk[row].pop()
                     }
                 }
@@ -9464,15 +9468,17 @@ module.exports =  Class("WorldRenderer", {
         var water = BABYLON.Mesh.CreateBox("WATER", 1.0, scene)
         var rock  = BABYLON.Mesh.CreateBox( "ROCK", 1.0, scene)
         var grass = BABYLON.Mesh.CreateBox("GRASS", 1.0, scene)
+        var smell = new BABYLON.Mesh.CreateBox("smellmush", 1.0, scene)
         //Define materials for each cell type
         var watermat = new BABYLON.StandardMaterial("watermat", scene)
         var rockmat  = new BABYLON.StandardMaterial( "rockmat", scene)
         var grassmat = new BABYLON.StandardMaterial("grassmat", scene)
-
+        var smellmat = new BABYLON.StandardMaterial("smellmat", scene)
 
         water.material = watermat
         rock.material  = rockmat
         grass.material = grassmat
+        smell.material = smellmat
 
         watermat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
         rockmat.specularColor  = new BABYLON.Color3(0.0, 0.0, 0.0)
@@ -9481,6 +9487,7 @@ module.exports =  Class("WorldRenderer", {
         watermat.diffuseColor = new BABYLON.Color3(0.0, 0.8, 1.0)
         rockmat.diffuseColor  = new BABYLON.Color3(0.3, 0.3, 0.3)
         grassmat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.0)
+        smellmat.alpha = 0.0
 
         //Place prototype meshes out of sight.
         water.position = new BABYLON.Vector3(-10000,-10000,-10000)
@@ -9490,7 +9497,7 @@ module.exports =  Class("WorldRenderer", {
         this._proto["WATER"] = water
         this._proto["ROCK"]  = rock
         this._proto["GRASS"] = grass
-
+        this._proto["SMELL"] = smell
         this._scene = scene
     },
     /*
@@ -9604,9 +9611,6 @@ module.exports =  Class("WorldRenderer", {
             grad: gradient
         }
     },
-    'public setInspectionMode': function (mode) {
-        this._inspect = mode;
-    },
     /*
     Render the geometry in the scene.
     */
@@ -9629,7 +9633,7 @@ module.exports =  Class("WorldRenderer", {
         if(state.cells != undefined)
             this._worldState.setCells(state.cells);
     },
-    /*
+    /*.material.diffuseColor = new C
     Update the world with the changes specified by a list of state change
     operations.
 
@@ -9694,6 +9698,70 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
+    'public initSmellField': function() {
+
+    },
+    'public renderSmellField': function (show) {
+
+        this._sceneChunks.forEach(function(val, key, cache) {
+            var cell
+            var ocell
+            var cont
+            var color
+            var intensity = 0
+            var x0
+            var y0
+            var n = 1
+            var m = 1
+            var worldcells = this._worldState.get("cells")
+            for(var row in val) {
+                for(var c in val[row]) {
+                    cell = val[row][c]
+                    color = {'r': 0, 'g': 0, 'b': 0}
+                    intensity = 0
+                    n = 1
+                    m = 1
+
+                    for(var cl in worldcells) {
+                        ocell = worldcells[cl]
+                        x0 = ocell.coords.x - cell.coords.x
+                        y0 = ocell.coords.y - cell.coords.y
+                        intensity += 0.05*Math.exp(-(x0*x0 + y0*y0)/this.SMELL_SPREAD)
+                        for(var ct in ocell["contents"]) {
+                            cont = ocell["contents"][ct]
+
+                            if(cont.type == "ACTOR") {
+                                color.r += 0.7
+                                color.g += 0.3
+                                color.b += 0.3
+                            }
+                            if(cont.type == "MUSH") {
+                                color.r += 0.6
+                                color.g += 0.6
+                                color.b += 0.6
+                            }
+                            if(cont.type == "PLANT") {
+                                color.r += 0.1
+                                color.g += 0.8
+                                color.b += 0.2
+                            }
+                            n++
+                        }
+                        m++
+                    }
+                    color.r /= n
+                    color.g /= n
+                    color.b /= n
+
+                    intensity = (show) ? intensity : 0
+
+                    cell.smell.material.diffuseColor = new BABYLON.Color3(color.r, color.g, color.b)
+                    console.log(intensity/m)
+                    cell.smell.material.alpha = 0.1
+                }
+            }
+        }.bind(this))
+    },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
     or otherwise generating it formulaically.
@@ -9712,7 +9780,7 @@ module.exports =  Class("WorldRenderer", {
         var celly = chunk_y*chunksize
 
         var chunk
-        var pcell, cell, mesh
+        var pcell, cell, mesh, smell
 
         chunk = this._sceneChunks.get(chunk_x + " " + chunk_y)
         cachemiss = chunk == undefined
@@ -9739,11 +9807,16 @@ module.exports =  Class("WorldRenderer", {
                 {
                     mesh = this._proto[cell["type"]]
                                .createInstance(cellx + " " + celly)
+                    smell = this._proto["SMELL"]
+                                .createInstance(cellx + " " + celly + "-SMELL")
+
 
                     mesh.scaling.y = cell["elevation"]/2
 
                     mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
+                    smell.position = new BABYLON.Vector3(cellx, cell["elevation"]/2 + 0.5, celly)
 
+                    cell["smell"] = smell
                     cell["mesh"] = mesh
 
                     if(cachemiss)
