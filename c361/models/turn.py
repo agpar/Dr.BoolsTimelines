@@ -9,3 +9,6 @@ class TurnModel(models.Model):
     game = models.ForeignKey(GameInstanceModel, on_delete=models.CASCADE, related_name='turns')
     number = models.IntegerField(default=0)
     delta_dump = JSONField()
+
+    class Meta:
+        ordering = ['number']

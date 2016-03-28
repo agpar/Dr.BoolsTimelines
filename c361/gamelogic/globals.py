@@ -32,7 +32,7 @@ class CoordParseMixin:
         if isinstance(x, WorldInhabitant):
             x, y = self.coord_parse(x._coords)
             return x, y
-        elif isinstance(x, tuple):
+        elif isinstance(x, (tuple, list)):
             y, z = x
             if isinstance(y, int) and isinstance(z, int):
                 return y, z

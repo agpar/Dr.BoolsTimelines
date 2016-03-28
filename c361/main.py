@@ -7,23 +7,26 @@ By running on command line, it will execute these lines then
 open an IPython shell for you to interact with."""
 
 testscript = """
-if nearest(WATER) == mylocation
+if MY_ENERGY < 20
+and not SLEEPING
 then
     do
-        walk(NORTH);
+        sleep();
     done
 endif
 
-if true
+if SLEEPING
+and MY_ENERGY >= 100
 then
     do
-        walk(direction(nearest(WATER)));
+        wake();
     done
 endif
     """
 
 a = Actor(1, 1, "Alex", testscript)
 g = GameInstance()
+a.sleep = 10
 #g.init_empty_world()
 g.add_actor(a)
 print(a.behaviours.rules[0].condition.eval(a))

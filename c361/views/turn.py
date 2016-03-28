@@ -29,6 +29,8 @@ class TurnList(BaseListCreateView):
             actor_proxy = game_instance.get_pactor_proxy()
             future = actor_proxy.do_turn(last)
             result = future.get()
+            if isinstance(result, dict) and result.get("error"):
+                raise NotAcceptable(result['error'])
 
         # Return queryset of the requested turns.
 

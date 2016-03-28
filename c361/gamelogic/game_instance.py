@@ -316,7 +316,7 @@ class GameInstance(CoordParseMixin):
     def do_turn(self, up_to=0):
         """High level function for returning a list of turns in this game."""
         all_turns = []
-        while self.current_turn <= up_to:
+        while self.current_turn < up_to:
             self.current_turn += 1
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in self.actors.items():
@@ -333,18 +333,22 @@ class GameInstance(CoordParseMixin):
 
         return all_turns
 
-    def apply_deltas(self, delta_list):
-        """Apply the deltas produced by inbetween turns."""
+    def apply_deltas(self, delta_list, reversed=False):
+        """Apply the deltas produced by inb-etween turns."""
         for delta in delta_list:
             if not delta:
                 continue
+            if reversed:
+                val = delta['from']
+            else:
+                val = delta['to']
             actr = self.get_actor(delta['actorID'])
             if delta['varTarget'] == '_coords':
-                self.move_actor(actr, delta['to'])
+                self.move_actor(actr, val)
             if delta['varTarget'] == 'health':
-                actr.health = delta['to']
+                actr.health = val
             if delta['varTarget'] == 'is_sleeping':
-                actr.is_sleeping = delta['to']
+                actr.is_sleeping = val
 
 
     def to_dict(self, withseed=True):

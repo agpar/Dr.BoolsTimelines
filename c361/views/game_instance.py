@@ -36,8 +36,6 @@ class RunningGameList(generics.ListAPIView):
         return GameInstanceModel.objects.filter(id__in=active_games)
 
 
-
-
 class GameList(BaseListCreateView):
     """View for list of Games"""
     model = GameInstanceModel
@@ -71,32 +69,35 @@ class GameDetail(BaseDetailView):
                 return JsonResponse({"result": "Pykka actor already exists."}, status=status.HTTP_400_BAD_REQUEST)
         if request.GET.get('stop'):
             if game_instance.is_active():
+                on_turn = request.GET.get('on_turn')
+                game_proxy = game_instance.get_pactor_proxy()
+                game_proxy.rewind_to(int(on_turn)).get()
                 game_instance.stop()
                 return JsonResponse({"result": "Pykaa actor stopped."})
             else:
                 return JsonResponse({"result":"Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if request.GET.get('do_turn'):
+        if game_instance.is_active:
+            future = None
             game_proxy = game_instance.get_pactor_proxy()
-            turn_num = request.GET.get('do_turn')
-            future = game_proxy.do_turn(int(turn_num))
-            current_turn = future.get()
-            return JsonResponse({"result": "Advanced to turn {}.".format(current_turn)})
-        if request.GET.get('full_dump'):
-            game_proxy = game_instance.get_pactor_proxy()
-            future = game_proxy.full_dump()
-            full_dump = future.get()
-            return HttpResponse(json.dumps(full_dump), content_type='application/json')
-        if request.GET.get('light_dump'):
-            game_proxy = game_instance.get_pactor_proxy()
-            future = game_proxy.light_dump()
-            full_dump = future.get()
-            return HttpResponse(json.dumps(full_dump), content_type='application/json')
-        if request.GET.get('reset'):
-            game_proxy = game_instance.get_pactor_proxy()
-            future = game_proxy.reset_game()
-            future.get()
-            return JsonResponse({"result": "Game reset."}, content_type='application/json')
+
+            if request.GET.get('full_dump'):
+                future = game_proxy.full_dump()
+            if request.GET.get('light_dump'):
+                future = game_proxy.light_dump()
+            if request.GET.get('reset'):
+                future = game_proxy.reset_game()
+            if request.GET.get('pause'):
+                on_turn = request.GET.get('on_turn')
+                future = game_proxy.pause(int(on_turn))
+            if request.GET.get('resume'):
+                future = game_proxy.resume()
+
+            if not future:
+                return JsonResponse({"error": "Unknown/missing query paraemters."}, content_type='application/json')
+
+            res = future.get()
+            return JsonResponse(res, content_type='application/json')
 
         return super().get(self, request, *args, **kwargs)
 
