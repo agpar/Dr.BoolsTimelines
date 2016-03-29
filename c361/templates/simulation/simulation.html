@@ -332,7 +332,7 @@ $(document).on("loadview", function () {
         if(options['load']) {
             $(".loadable-game-select").click(function (event) {
                 var gameid = event['currentTarget']['id'];
-                gameid = gameid.split("-")[2]
+                gameid = gameid.split("-")[2];
                 window.CONTROLLER.setGameID(gameid)
             });
         }
@@ -342,6 +342,14 @@ $(document).on("loadview", function () {
                 var gameid = event['currentTarget']['id'].slice(14);
                 console.log(gameid);
                 add_actor_to_game(gameid, options['actor-id'])
+            });
+        }
+        if(options['spectate'])
+        {
+            $(".loadable-game-select").click(function (event) {
+                var gameid = event['currentTarget']['id'];
+                gameid = gameid.split("-")[2];
+                window.CONTROLLER.setGameID(gameid, true);
             });
         }
     }

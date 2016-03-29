@@ -14,6 +14,7 @@ param renderTarget: The DOM element that the rendering engine will be bound to.
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
+    'private _is_hosting': undefined,
     'private _updateLoop': null,
     'private _renderEngine': null,
     'private _camera': null,
@@ -21,7 +22,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _renderer': null,
     'private _smellMode': false,
     'private _timeLine': null,
-    'private _turn': 0,
+    'private _current_turn': 0,
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
@@ -193,22 +194,33 @@ module.exports = Class("GraphicsEngineController", {
     'public setActiveActor': function (actor_id) {
           this._activeActor = actor_id
     },
-    'public setGameID': function (gameid) {
+    'public setGameID': function (gameid, spectate) {
+        if (spectate === null) //Added optional param to set up as spectator -AP.
+            spectate = false;
+
         this._gameID = gameid
         var renderer = this._renderer
         var cam = this._camPos
 
-        $.ajax({
-          type: "get",
-          url: "/game/"+gameid+"/?start=true",
-          contentType:"application/json",
-          statusCode: {
-              200: function(data)
-              {
-                  console.log(data)
-              }
-          }
-        })
+        if(spectate)
+            this._is_hosting = false;
+        else
+            this.is_hosting = true;
+
+        if(!spectate)
+        {
+            $.ajax({
+                type: "get",
+                url: "/game/"+gameid+"/?start=true",
+                contentType:"application/json",
+                statusCode: {
+                    200: function(data)
+                    {
+                        console.log(data)
+                    }
+                }
+            });
+        }
 
         $.ajax({
             type: "get",
@@ -219,6 +231,7 @@ module.exports = Class("GraphicsEngineController", {
                 {
                     renderer.setWorldState(data)
                     renderer.updateView(cam)
+                    this._current_turn = data['current_turn'];
                 }
             }
         })
