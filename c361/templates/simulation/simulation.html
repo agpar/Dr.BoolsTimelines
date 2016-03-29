@@ -27,11 +27,20 @@ $(document).on("loadview", function () {
         }
     });
 
-    window.onbeforeunload = function(){
-        // Should check if game is loaded by user (they are not spectating, but
-        // hosting, then send a request to /game/ID/?stop=true in order to stop
-        // and save the game.
-    };
+
+
+    $(window).on('beforeunload', function (event)
+    {
+        return 'Leaving this page will clear your form.'
+    });
+    $(window).unload(function(){
+
+        var turn = window.CONTROLLER.get_currentTurn();
+        var gameid = window.CONTROLLER.get_gameID();
+        if (gameid && window.CONTROLLER.is_hosting()){
+            $.ajax("/game/"+gameid+"/?stop=true&on_turn="+turn);
+        }
+    });
 
     //Open the actorInfo on the page.
     $("#open-actorinfo").click(function (event){
@@ -343,7 +352,6 @@ $(document).on("loadview", function () {
                 var gameid = event['currentTarget']['id'];
                 var gametitle = event['currentTarget'].getAttribute("data-game-title");
                 gameid = gameid.split("-")[2];
-                debugger;
                 window.CONTROLLER.loadGame(gametitle, gameid)
             });
         }
