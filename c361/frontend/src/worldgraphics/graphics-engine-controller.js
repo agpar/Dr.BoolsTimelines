@@ -15,6 +15,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
     'private _is_hosting': undefined,
+    'private _gameTitle': undefined,
     'private _updateLoop': null,
     'private _renderEngine': null,
     'private _camera': null,
@@ -22,7 +23,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _renderer': null,
     'private _smellMode': false,
     'private _timeLine': null,
-    'private _current_turn': 0,
+    'private _currentTurn': 0,
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
@@ -194,11 +195,12 @@ module.exports = Class("GraphicsEngineController", {
     'public setActiveActor': function (actor_id) {
           this._activeActor = actor_id
     },
-    'public setGameID': function (gameid, spectate) {
+    'public loadGame': function (gametitle, gameid, spectate) {
         if (spectate === null) //Added optional param to set up as spectator -AP.
             spectate = false;
 
         this._gameID = gameid
+        this._gameTitle = gametitle
         var renderer = this._renderer
         var cam = this._camPos
 
@@ -231,7 +233,14 @@ module.exports = Class("GraphicsEngineController", {
                 {
                     renderer.setWorldState(data)
                     renderer.updateView(cam)
-                    this._current_turn = data['current_turn'];
+                    this._currentTurn = data['current_turn'];
+
+                    //Enable 'game' tab of side menu.
+                    $("#side-game-menu-tab").removeClass("disabled");
+                    $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
+
+                    //Show game info.
+                    $("#loaded-game-info").html(gametitle + ": " + this._currentTurn)
                 }
             }
         })

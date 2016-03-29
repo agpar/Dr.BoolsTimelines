@@ -18,6 +18,15 @@ $(document).on("loadview", function () {
     var $mainmenu_buttons = $("#mainmenu-buttons");
     var $mainmenu_header = $("#mainmenu-header");
 
+    //Prevent links in tabs from firing if they have a disabled parent.
+    //Used for 'game' tab on sidemenu.
+    $(" a[data-toggle=tab]").on("click", function(e) {
+        if ($(this.parentNode).hasClass("disabled")) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
     window.onbeforeunload = function(){
         // Should check if game is loaded by user (they are not spectating, but
         // hosting, then send a request to /game/ID/?stop=true in order to stop
@@ -296,7 +305,7 @@ $(document).on("loadview", function () {
             menu_header = "Choose a game to spectate."
             for (var i = 0; i < data.length; i++)
             {
-                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' data-game-title='" + data[i]['title'] + "'"+
                         "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] +
                         "</b> - Hosted by <i>"+data[i]['creator']['username']+"</i> - On turn "+data[i]['current_turn_number']+"</button>")
             }
@@ -308,7 +317,7 @@ $(document).on("loadview", function () {
             error_msg = "You have no games!";
             for (var i = 0; i < data.length; i++)
             {
-                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' data-game-title='" + data[i]['title'] + "'"+
                         "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] + "</b></button>")
             }
             menu_header = "Choose a game."
@@ -332,8 +341,19 @@ $(document).on("loadview", function () {
         if(options['load']) {
             $(".loadable-game-select").click(function (event) {
                 var gameid = event['currentTarget']['id'];
+                var gametitle = event['currentTarget'].getAttribute("data-game-title");
                 gameid = gameid.split("-")[2];
-                window.CONTROLLER.setGameID(gameid)
+                debugger;
+                window.CONTROLLER.loadGame(gametitle, gameid)
+            });
+        }
+        if(options['spectate'])
+        {
+            $(".loadable-game-select").click(function (event) {
+                var gameid = event['currentTarget']['id'];
+                var gametitle = event['currentTarget'].getAttribute("data-game-title");
+                gameid = gameid.split("-")[2];
+                window.CONTROLLER.loadGame(gametitle, gameid, true);
             });
         }
         if(options['add-to-game'])
@@ -344,14 +364,7 @@ $(document).on("loadview", function () {
                 add_actor_to_game(gameid, options['actor-id'])
             });
         }
-        if(options['spectate'])
-        {
-            $(".loadable-game-select").click(function (event) {
-                var gameid = event['currentTarget']['id'];
-                gameid = gameid.split("-")[2];
-                window.CONTROLLER.setGameID(gameid, true);
-            });
-        }
+
     }
 
     //Sets up a menu for selecting from one of your existing actors. Action
@@ -411,7 +424,6 @@ $(document).on("loadview", function () {
                 var actor_id = parseInt(event['currentTarget']['id'].slice(17));
                 var users_actors = mainMenuCache[options['user']+"-actors"];
                 var selected_actor;
-                debugger;
                 for (var i = 0; i < users_actors.length; i ++)
                 {
                     if (users_actors[i].id === actor_id)
@@ -868,17 +880,28 @@ $(document).on("loadview", function () {
     </div>
     <div class="col-xs-3 fill" id="sidemenu-col" style="padding: 0">
         <div class="opened-sidemenu sim-ui-element" id="opened-sidemenu">
-            <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
-            <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
-            <button class="btn btn-default btn-sidemenu" id="spectate-game-side-btn">Spectate Game</button>
-            <hr>
-            <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
-            <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
-            <button class="btn btn-default btn-sidemenu" id="copy-actor-side-btn">Copy an Actor</button>
-            <button class="btn btn-default btn-sidemenu" id="add-actor-side-btn">Add Actor to Game</button>
-            <hr>
-            <button id="advance-btn" class="btn btn-default btn-sidemenu">Advance Simulation</button>
-            <hr>
+            <ul class="nav nav-tabs" id="side-menu-tabs">
+                <li role="presentation" class="active" id="side-main-menu-tab"><a href="#side-main-menu" data-toggle="tab">Menu</a></li>
+                <li role="presentation" class="disabled" id="side-game-menu-tab"><a href="#side-game-menu" data-toggle="tab">Game</a></li>
+            </ul>
+            <br>
+            <div class="tab-content">
+                <div id='side-main-menu' class="tab-pane active">
+                    <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
+                    <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
+                    <button class="btn btn-default btn-sidemenu" id="spectate-game-side-btn">Spectate Game</button>
+                    <hr>
+                    <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
+                    <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
+                    <button class="btn btn-default btn-sidemenu" id="copy-actor-side-btn">Copy an Actor</button>
+                    <button class="btn btn-default btn-sidemenu" id="add-actor-side-btn">Add Actor to Game</button>
+                    <hr>
+                </div>
+                <div id='side-game-menu' class="tab-pane">
+                    <p id="loaded-game-info"></p>
+                    <button id="advance-btn" class="btn btn-default btn-sidemenu">Advance Simulation</button>
+                </div>
+            </div>
         </div>
     </div>
 
