@@ -353,4 +353,5 @@ class GameInstance(CoordParseMixin):
 
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)
+        d['current_turn'] = self.current_turn
         return d
