@@ -664,11 +664,11 @@ $(document).on("loadview", function () {
     //Send an asynchronous request to create an actor, and record the result in the mainMenu.
     function create_newactor(nameval, scriptval)
     {
-        if (nameval === null)
+        if (nameval === undefined)
         {
             nameval = $("#new-actor-name").val();
         }
-        if (scriptval === null)
+        if (scriptval === undefined)
         {
             scriptval = $("#new-actor-script").val();
         }

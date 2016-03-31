@@ -24,7 +24,7 @@ class GameRunner(pykka.ThreadingActor):
         self.turns_done = 0
         self.last_dump = 0
         self.is_paused = True
-        self.pause_turn = self.game_model.current_turn_number
+        self.pause_turn = self.game_model.current_turn
         self.is_modified = False
         if not self.game_model.seed:
             not_cells = self.game_object.to_dict()
@@ -39,7 +39,7 @@ class GameRunner(pykka.ThreadingActor):
         You should pass in the turn number you wish to get up to.
         This class will tell its game_object to compute the turns, then save deltas as TurnModels.
         """
-        if self.is_paused and up_to > self.game_model.current_turn_number:
+        if self.is_paused and up_to > self.game_model.current_turn:
             return {"error": "Game must be un-paused to request new turns."}
 
         results = self.game_object.do_turn(up_to)
@@ -48,13 +48,13 @@ class GameRunner(pykka.ThreadingActor):
             temp.save()
             self.turns_done += 1
 
-        self.game_model.current_turn_number = up_to
+        self.game_model.current_turn = up_to
         self.game_model.save()
 
         if self.turns_done - self.last_dump > 10:
             self.dump_to_db()
 
-        return self.game_model.current_turn_number
+        return self.game_model.current_turn
 
     def pause(self, on_turn):
         """Pause the game, allowing editing."""
@@ -75,7 +75,7 @@ class GameRunner(pykka.ThreadingActor):
 
     def reset_game(self):
         """Development function for restarting a running game."""
-        self.game_model.current_turn_number = 0
+        self.game_model.current_turn = 0
         self.game_model.cells = json.dumps({})
 
         # Reset all actors
@@ -103,7 +103,7 @@ class GameRunner(pykka.ThreadingActor):
         """Dump all information about actors and games to the database."""
         cells = self.game_object.to_dict(withseed=False)['cells']
         self.game_model.cells = json.dumps(cells)
-        self.game_model.current_turn_number = self.game_object.current_turn
+        self.game_model.current_turn = self.game_object.current_turn
         self.game_model.save()
 
         # Figure out which attributes and actor model has.
@@ -141,7 +141,6 @@ class GameRunner(pykka.ThreadingActor):
 
         return {"result": "Rewound to turn {}.".format(turn_number)}
 
-
     def add_actor(self, actor_model):
         """Adds an actor to a running game.
 
@@ -151,8 +150,11 @@ class GameRunner(pykka.ThreadingActor):
         if not self.is_paused:
             return {"error": "Running game must be paused to modify."}
 
-        # Find the last turn, and delete any newer, precomputed turns.
-        lastTurn = self.game_model.turns.get(number=self.pause_turn)
+        # Find the latest turn.
+        if self.pause_turn != 0:
+            lastTurn = self.game_model.turns.get(number=self.pause_turn)
+        else:
+            lastTurn = TurnModel(game=self.game_model, number=0)
 
         self.game_object.add_actor(Actor(model=actor_model))
         act = self.game_object.get_actor(str(actor_model.uuid))
@@ -165,7 +167,7 @@ class GameRunner(pykka.ThreadingActor):
             "to": None
         }
 
-        turn_deltas = lastTurn.delta_dump
+        turn_deltas = lastTurn.delta_dump if lastTurn.delta_dump else []
         turn_deltas.append(d)
         lastTurn.delta_dump = turn_deltas
         lastTurn.save()

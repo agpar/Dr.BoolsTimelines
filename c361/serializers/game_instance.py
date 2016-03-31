@@ -8,4 +8,4 @@ class GameInstanceFullSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameInstanceModel
-        fields = ('id', 'title', 'uuid', 'current_turn_number', 'creator', 'actors')
+        fields = ('id', 'title', 'uuid', 'current_turn', 'creator', 'actors')

@@ -18,4 +18,9 @@ class Behaviour(object):
                 if not isinstance(res, list):
                     return [res]
                 return res
+            elif rule.alternative:
+                res = rule.alternative.actions[0].eval(actor).value
+                if not isinstance(res, list):
+                    return [res]
+                return res
         return []
