@@ -34,7 +34,7 @@ class GameInstance(CoordParseMixin):
             self.world = WorldState(current_turn=self.current_turn)
         else:
             self.uuid = str(model.uuid)
-            self.current_turn = model.current_turn_number
+            self.current_turn = model.current_turn
             self.actors = {}
             if model.seed:
                 seed = json.loads(model.seed)
@@ -46,7 +46,7 @@ class GameInstance(CoordParseMixin):
             else:
                 self.world = WorldState(current_turn=self.current_turn)
 
-            self.current_turn = model.current_turn_number
+            self.current_turn = model.current_turn
 
             for a in model.actors.all():
                 self.add_actor(Actor(model=a))

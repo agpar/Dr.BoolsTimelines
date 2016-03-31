@@ -22,10 +22,10 @@ class TurnList(BaseListCreateView):
         last = int(self.request.GET.get('last'))
 
         # Raise error if requesting new turns but game not running.
-        if last > game_instance.current_turn_number and not game_instance.is_active():
+        if last > game_instance.current_turn and not game_instance.is_active():
             raise NotAcceptable("Requested new turns from non-running GameInstance.")
         # Calculate new turns if necessary.
-        elif last > game_instance.current_turn_number:
+        elif last > game_instance.current_turn:
             actor_proxy = game_instance.get_pactor_proxy()
             future = actor_proxy.do_turn(last)
             result = future.get()

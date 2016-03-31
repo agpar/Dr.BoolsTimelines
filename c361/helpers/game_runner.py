@@ -24,7 +24,7 @@ class GameRunner(pykka.ThreadingActor):
         self.turns_done = 0
         self.last_dump = 0
         self.is_paused = True
-        self.pause_turn = self.game_model.current_turn_number
+        self.pause_turn = self.game_model.current_turn
         self.is_modified = False
         if not self.game_model.seed:
             not_cells = self.game_object.to_dict()
@@ -39,7 +39,7 @@ class GameRunner(pykka.ThreadingActor):
         You should pass in the turn number you wish to get up to.
         This class will tell its game_object to compute the turns, then save deltas as TurnModels.
         """
-        if self.is_paused and up_to > self.game_model.current_turn_number:
+        if self.is_paused and up_to > self.game_model.current_turn:
             return {"error": "Game must be un-paused to request new turns."}
 
         results = self.game_object.do_turn(up_to)
@@ -48,13 +48,13 @@ class GameRunner(pykka.ThreadingActor):
             temp.save()
             self.turns_done += 1
 
-        self.game_model.current_turn_number = up_to
+        self.game_model.current_turn = up_to
         self.game_model.save()
 
         if self.turns_done - self.last_dump > 10:
             self.dump_to_db()
 
-        return self.game_model.current_turn_number
+        return self.game_model.current_turn
 
     def pause(self, on_turn):
         """Pause the game, allowing editing."""
@@ -75,7 +75,7 @@ class GameRunner(pykka.ThreadingActor):
 
     def reset_game(self):
         """Development function for restarting a running game."""
-        self.game_model.current_turn_number = 0
+        self.game_model.current_turn = 0
         self.game_model.cells = json.dumps({})
 
         # Reset all actors
@@ -103,7 +103,7 @@ class GameRunner(pykka.ThreadingActor):
         """Dump all information about actors and games to the database."""
         cells = self.game_object.to_dict(withseed=False)['cells']
         self.game_model.cells = json.dumps(cells)
-        self.game_model.current_turn_number = self.game_object.current_turn
+        self.game_model.current_turn = self.game_object.current_turn
         self.game_model.save()
 
         # Figure out which attributes and actor model has.

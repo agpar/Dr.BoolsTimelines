@@ -21,7 +21,7 @@ class GameInstanceModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     actors = models.ManyToManyField(GameActorModel, blank=True, related_name="games")
-    current_turn_number = models.IntegerField(default=0)
+    current_turn = models.IntegerField(default=0)
     seed = models.TextField(default="")
     cells = models.TextField(default="")
 
@@ -66,7 +66,7 @@ class GameInstanceModel(models.Model):
         future.get()
 
     def reset_game(self):
-        self.current_turn_number = 0
+        self.current_turn = 0
         for t in self.turns.all():
             t.delete()
         self.save()
