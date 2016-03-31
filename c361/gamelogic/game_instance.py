@@ -77,10 +77,10 @@ class GameInstance(CoordParseMixin):
         else:
             x, y = self.coord_parse(a)
 
-        # TEMP CODE FOR INSERTING MANY ACTORS INTO NEW WORLD
+        # Insert actor at nearby location if spot is full.
         atest = self.get_actor((x, y))
         if atest:
-            for x1, y1 in zip(range(10), range(10)):
+            for x1, y1 in self.circle_at((x, y), 4):
                 atest = self.get_actor((x1, y1))
                 if not atest:
                     self.actors[a.uuid] = a
