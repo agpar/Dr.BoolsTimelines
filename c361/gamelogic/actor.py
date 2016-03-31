@@ -85,6 +85,8 @@ class Actor(WorldInhabitant):
 
     def do_turn(self):
         """Returns a list of deltas the actor wishes to do."""
+        if not self.is_alive:
+            return None
         self._turn_stat_change()
         return self.behaviours.get_action(self)
 

@@ -135,7 +135,7 @@ class GameInstance(CoordParseMixin):
         return None
 
     def check_actor(self, xy):
-        """ Check to see if actor is currently in location specified by param
+        """ Check to see if actor is currently in location specified by param.
         :param xy: x,y coord of gameInstance
         :return Boolean if Actor is at xy location or False if not
         """
@@ -208,28 +208,6 @@ class GameInstance(CoordParseMixin):
                     return x, y
         return self.coord_parse(xy_or_WI)
 
-    def valid_turn(self, actor_turn):
-        """ Receive a turn and check whether or not the turn is valid.
-
-        :param actor_turn: the turn that the actor wants to execute
-        :return: boolean on validity of the turn attempted
-        """
-
-        actor = self.get_actor(actor_turn['actorID'])
-        if actor_turn['varTarget'] == "_coords":
-            check_x = actor_turn["to"][0]
-            check_y = actor_turn["to"][1]
-            check_coord = self.world[check_x][check_y]
-
-            if self.has_attr(check_coord, "ROCK"):
-                return False
-
-            elif self.has_attr(check_coord, "ACTOR"):
-                return False
-
-            else:
-                return True
-
     def actor_turn_effects(self, actor_turn):
         """ Receive a turn and determine if it has any reprocussions.
 
@@ -245,8 +223,6 @@ class GameInstance(CoordParseMixin):
 
         # Calculate side effects of the actor's turn.
         for delta in actor_turn:
-            if not delta:
-                continue
             actor = self.get_actor(delta['actorID'])
 
             if delta['varTarget'] == "_coords":
@@ -294,10 +270,12 @@ class GameInstance(CoordParseMixin):
         return effects
 
     def global_turn_effects(self):
-        """Calculate the effects of this turn in regards to the world."""
+        """Calculate the effects of this turn not necessarily related to actor action."""
         effects = []
 
         for u, actr in self.actors.items():
+            if not actr.is_alive:
+                continue
             if actr.sleep <= 1 and not actr.is_sleeping:
                 effects.append(actr.sleep_action())
 
@@ -320,13 +298,22 @@ class GameInstance(CoordParseMixin):
             self.current_turn += 1
             self.world.apply_updates() #Returns diff each call. They should be stored though.
             this_turn = {'number': self.current_turn, 'deltas': []}
+
             for uuid, actor in self.actors.items():
                 turn_res = []
-                turn_res.extend(actor.do_turn())
-                side_effects = self.actor_turn_effects(turn_res)
-                turn_res.extend(side_effects)
-                self.apply_deltas(turn_res)
-                this_turn['deltas'].extend(turn_res)
+
+                aturn = actor.do_turn()
+                if aturn:
+                    turn_res.append(aturn)
+
+                effects = self.actor_turn_effects(turn_res)
+                if effects:
+                    turn_res.extend(effects)
+
+                if turn_res:
+                    self.apply_deltas(turn_res)
+                    this_turn['deltas'].extend(turn_res)
+
             global_effects = self.global_turn_effects()
             self.apply_deltas(global_effects)
             this_turn['deltas'].extend(global_effects)
@@ -335,7 +322,7 @@ class GameInstance(CoordParseMixin):
         return all_turns
 
     def apply_deltas(self, delta_list, reversed=False):
-        """Apply the deltas produced by inb-etween turns."""
+        """Apply the deltas produced by inbetween turns."""
         for delta in delta_list:
             if not delta:
                 continue
@@ -350,7 +337,6 @@ class GameInstance(CoordParseMixin):
                 actr.health = val
             if delta['varTarget'] == 'is_sleeping':
                 actr.is_sleeping = val
-
 
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)

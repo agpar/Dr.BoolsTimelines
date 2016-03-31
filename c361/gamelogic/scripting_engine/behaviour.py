@@ -1,7 +1,7 @@
 from .func_mappings import FUNC_MAP
 
 
-class Behaviour(object):
+class Behaviour:
     def __init__(self, rules):
         self.rules = rules
 
@@ -9,18 +9,21 @@ class Behaviour(object):
         return iter(self.rules)
 
     def get_action(self, actor):
-        """return the first action whos conditions eval to True"""
-        if not actor.is_alive:
-            return []
+        # Test all conditions in actor's script.
+        possible_actions = []
+
         for rule in self.rules:
             if rule.eval(actor):
-                res = rule.actions[0].eval(actor).value
-                if not isinstance(res, list):
-                    return [res]
-                return res
+                possible_actions.append(rule.actions[0].eval(actor).value)
             elif rule.alternative:
-                res = rule.alternative.actions[0].eval(actor).value
-                if not isinstance(res, list):
-                    return [res]
-                return res
-        return []
+                possible_actions.append(rule.alternative.actions[0].eval(actor).value)
+
+        for action in possible_actions:
+            if self._is_possible(actor, action):
+                return action
+
+    def _is_possible(self, actor, action):
+        if actor.is_sleeping:
+            return action['varTarget'] == 'is_sleeping'
+        return True
+
