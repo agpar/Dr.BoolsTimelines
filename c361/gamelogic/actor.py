@@ -65,6 +65,10 @@ class Actor(WorldInhabitant):
         temp = "Actor({}, {}, '{}')"
         return temp.format(self.x, self.y, self.name)
 
+    @property
+    def is_alive(self):
+        return True if self.health > 0 else False
+    
     def to_dict(self):
         d = {
             'dbid': self.dbid,
@@ -97,9 +101,17 @@ class Actor(WorldInhabitant):
         else:
             self.sleep -= 1
 
-    @property
-    def is_alive(self):
-        return True if self.health > 0 else False
+    def can_walk(self, direction):
+        """Figure out if you can walk in a direction."""
+        x1,y1 = self._coords
+        x2,y2 = self.get_coord(direction)
+        c1 = self.gameInstance.world.get_cell((x1,y1))
+        c2 = self.gameInstance.world.get_cell((x2,y2))
+        if abs(c1.elevation - c2.elevation) > 5:
+            return False
+        if self.gameInstance.get_actor((x2,y2)):
+            return False
+        return True
 
     def get_coord(self, direction):
         if direction == 'NORTH':
@@ -271,18 +283,6 @@ class Actor(WorldInhabitant):
             "from": self.direction,
             "to": direction
         }
-
-    def can_walk(self, direction):
-        """Figure out if you can walk in a direction."""
-        x1,y1 = self._coords
-        x2,y2 = self.get_coord(direction)
-        c1 = self.gameInstance.world.get_cell((x1,y1))
-        c2 = self.gameInstance.world.get_cell((x2,y2))
-        if abs(c1.elevation - c2.elevation) > 5:
-            return False
-        if self.gameInstance.get_actor((x2,y2)):
-            return False
-        return True
 
     def pickup(self, direction):
         """ Pickup something in a certain direction. If 

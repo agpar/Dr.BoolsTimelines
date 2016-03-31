@@ -236,7 +236,8 @@ class GameInstance(CoordParseMixin):
                         "actorID": actor.uuid,
                         "varTarget": "health",
                         "from": actor.health,
-                        "to": 0
+                        "to": 0,
+                        "message": actor.name + " has drowned!"
                     })
                 if self.has_attr(coord_contents, "DEADLY"):
                      effects.append({
@@ -258,6 +259,7 @@ class GameInstance(CoordParseMixin):
                         "varTarget": "is_alive",
                         "from": True,
                         "to": False,
+                        "message:": actor.name + " has died!"
                     })
 
         # Calculate any side effects of the side effects.
@@ -277,17 +279,24 @@ class GameInstance(CoordParseMixin):
             if not actr.is_alive:
                 continue
             if actr.sleep <= 1 and not actr.is_sleeping:
-                effects.append(actr.sleep_action())
+                sleep_action = actr.sleep_action()
+                sleep_action['message'] = actr.name + " is exhauseted and fell asleep!"
+                effects.append(sleep_action)
 
             if actr.sleep >= 100 and actr.is_sleeping:
-                effects.append(actr.wake_action())
+                wake_action = actr.wake_action()
+                wake_action['message'] = actr.name + " is fully rested and has woken up!"
+                effects.append(wake_action)
 
             if actr.hunger <= 1:
                 effects.append({
                     "type": "actorDelta",
                     "coords": {'x': actr.x, 'y': actr.y},
                     "actorID": actr.uuid,
-                    "effects": ["health", actr.health, actr.health-5]
+                    "varTarget": "health",
+                    "from": actr.health,
+                    "to": actr.health-5,
+                    "message": actr.name + " is starving!"
                 })
         return effects
 
@@ -322,10 +331,8 @@ class GameInstance(CoordParseMixin):
         return all_turns
 
     def apply_deltas(self, delta_list, reversed=False):
-        """Apply the deltas produced by inbetween turns."""
+        """Apply the deltas produced during turns."""
         for delta in delta_list:
-            if not delta:
-                continue
             if reversed:
                 val = delta['from']
             else:
