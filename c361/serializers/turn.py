@@ -13,7 +13,9 @@ class JSONField(serializers.Field):
 class TurnFullSerializer(serializers.ModelSerializer):
 
     delta_dump = JSONField()
+    diff = JSONField()
+    
     class Meta:
         model = TurnModel
-        fields = ("number", "delta_dump")
+        fields = ("number", "delta_dump", "diff")
 

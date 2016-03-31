@@ -44,7 +44,7 @@ class GameRunner(pykka.ThreadingActor):
 
         results = self.game_object.do_turn(up_to)
         for turn in results:
-            temp = TurnModel(game=self.game_model, number=turn['number'], delta_dump=turn['deltas'])
+            temp = TurnModel(game=self.game_model, number=turn['number'], delta_dump=turn['deltas'], diff=turn['diff'])
             temp.save()
             self.turns_done += 1
 
@@ -141,6 +141,7 @@ class GameRunner(pykka.ThreadingActor):
 
         return {"result": "Rewound to turn {}.".format(turn_number)}
 
+
     def add_actor(self, actor_model):
         """Adds an actor to a running game.
 
@@ -150,7 +151,7 @@ class GameRunner(pykka.ThreadingActor):
         if not self.is_paused:
             return {"error": "Running game must be paused to modify."}
 
-        # Find the latest turn.
+        # Find the la
         if self.pause_turn != 0:
             lastTurn = self.game_model.turns.get(number=self.pause_turn)
         else:

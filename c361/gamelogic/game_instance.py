@@ -304,9 +304,9 @@ class GameInstance(CoordParseMixin):
         """High level function for returning a list of turns in this game."""
         all_turns = []
         while self.current_turn < up_to:
+            this_turn = {'number': self.current_turn, 'deltas': [], }
             self.current_turn += 1
-            self.world.apply_updates() #Returns diff each call. They should be stored though.
-            this_turn = {'number': self.current_turn, 'deltas': []}
+            this_turn['diff'] = self.world.apply_updates() #Returns diff each call. They should be stored though.
 
             for uuid, actor in self.actors.items():
                 turn_res = []
