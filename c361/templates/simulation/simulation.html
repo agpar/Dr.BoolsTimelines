@@ -836,9 +836,61 @@ $(document).on("loadview", function () {
     }
 
 
+    //IN GAME STUFF
+    $("#pause-game-btn").click(function() {
+        if ($(this).hasClass('disabled'))
+        {
+            return
+        }
+        window.CONTROLLER.pause();
+        var gameid = window.CONTROLLER.get_gameID();
+        var current_turn = window.CONTROLLER.get_currentTurn();
+
+        //Do something to stop the game-loop... First implement a game loop.
+
+        $.ajax({
+            type: "get",
+            url: "/game/" + gameid + "/?pause=true&on_turn=" + current_turn,
+            success: function (data) {
+                console.log("Game paused.");
+                $("#pause-game-btn").addClass("disabled");
+                $("#resume-game-btn").removeClass("disabled");
+
+            },
+            failure: function (data) {
+                console.log(data)
+                window.CONTROLLER.resume()
+            }
+        });
+    });
+    $("#resume-game-btn").click(function()
+    {
+        if ($(this).hasClass('disabled'))
+        {
+            return
+        }
+        var gameid = window.CONTROLLER.get_gameID();
+        var current_turn = window.CONTROLLER.get_currentTurn();
+        $.ajax({
+            type: "get",
+            url: "/game/" + gameid + "/?resume=true",
+            success: function (data) {
+                console.log("Game resumed.");
+                $("#resume-game-btn").addClass("disabled");
+                $("#pause-game-btn").removeClass("disabled");
+                window.CONTROLLER.resume()
+            },
+            failure: function (data) {
+                console.log(data)
+            }
+        });
+    });
+
+
     $mainmenu.hide();
     $("#closed-sidemenu").hide();
     $("#opened-actorinfo").hide();
+    $("#pause-game-btn").addClass("disabled");
     $("#cell-stats").hide();
 });
 </script>
@@ -908,6 +960,9 @@ $(document).on("loadview", function () {
                 <div id='side-game-menu' class="tab-pane">
                     <p id="loaded-game-info"></p>
                     <button id="advance-btn" class="btn btn-default btn-sidemenu">Advance Simulation</button>
+                    <hr>
+                    <button class="btn btn-default btn-sidemenu" id="pause-game-btn">Pause</button>
+                    <button class="btn btn-default btn-sidemenu" id="resume-game-btn">Play</button>
                 </div>
             </div>
         </div>
