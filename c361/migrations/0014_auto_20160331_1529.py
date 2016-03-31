@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         ),
         migrations.RenameField(
             model_name='gameinstancemodel',
-            old_name='current_turn',
+            old_name='current_turn_number',
             new_name='current_turn',
         ),
     ]
