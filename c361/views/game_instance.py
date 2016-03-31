@@ -75,9 +75,9 @@ class GameDetail(BaseDetailView):
                 game_instance.stop()
                 return JsonResponse({"result": "Pykaa actor stopped."})
             else:
-                return JsonResponse({"result":"Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse({"result": "Pykaa actor does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if game_instance.is_active:
+        if game_instance.is_active and request.GET:
             future = None
             game_proxy = game_instance.get_pactor_proxy()
 
