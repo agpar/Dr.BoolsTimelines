@@ -214,17 +214,17 @@ class WorldState(CoordParseMixin):
             if isinstance(x, Cell):
                 return x
 
-    def patch_dicts(self, f_diff, t_diff, cell_dict=False):
+    def patch_dicts(self, f_diff, t_diff, reverse=False, cell_dict=False):
         patched = f_diff
         for k in t_diff.keys():
             if f_diff.get(k) is None:
                 patched[k] = t_diff[k]
             elif isinstance(f_diff[k], dict) and isinstance(t_diff[k], dict):
-                patched[k] = self.patch_dicts(f_diff[k], t_diff[k], cell_dict=True)
+                patched[k] = self.patch_dicts(f_diff[k], t_diff[k], reverse=reverse, cell_dict=True)
             else:
                 patched[k] = t_diff[k]
 
-        if cell_dict:
+        if reverse and cell_dict:
             del_queue = []
             for k in f_diff.keys():
                 if t_diff.get(k) is None:
@@ -234,6 +234,9 @@ class WorldState(CoordParseMixin):
                 del patched[k]
 
         return patched
+
+    def unpatch_dicts(self, f_diff, t_diff):
+        return self.patch_dicts(f_diff, t_diff, reverse=True)
 
     def patch(self, diffs, reverse=False):
         patch_diffs = []
@@ -254,7 +257,11 @@ class WorldState(CoordParseMixin):
                 raise Exception("Diff stream contains holes.")
 
 
-        patched = reduce(self.patch_dicts, patch_diffs, self.to_dict(False))
+        if reverse:
+            patched = reduce(self.unpatch_dicts, patch_diffs, self.to_dict(False))
+        else:
+            patched = reduce(self.patch_dicts, patch_diffs, self.to_dict(False))
+        
         patched["seed"] = self._seed
         self.__init__(json_dump=patched)
         return patched
