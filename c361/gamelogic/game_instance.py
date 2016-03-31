@@ -30,8 +30,8 @@ class GameInstance(CoordParseMixin):
         if not model:
             # For testing.
             self.actors = {}
-            self.world = WorldState()
             self.current_turn = 0
+            self.world = WorldState(current_turn=self.current_turn)
         else:
             self.uuid = str(model.uuid)
             self.current_turn = model.current_turn_number
@@ -44,7 +44,7 @@ class GameInstance(CoordParseMixin):
                     seed['cells'] = {}
                 self.world = WorldState(json_dump=seed)
             else:
-                self.world = WorldState()
+                self.world = WorldState(current_turn=self.current_turn)
 
             self.current_turn = model.current_turn_number
 
@@ -318,6 +318,7 @@ class GameInstance(CoordParseMixin):
         all_turns = []
         while self.current_turn < up_to:
             self.current_turn += 1
+            self.world.apply_updates() #Returns diff each call. They should be stored though.
             this_turn = {'number': self.current_turn, 'deltas': []}
             for uuid, actor in self.actors.items():
                 turn_res = []
@@ -353,5 +354,4 @@ class GameInstance(CoordParseMixin):
 
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)
-        d['current_turn'] = self.current_turn
         return d

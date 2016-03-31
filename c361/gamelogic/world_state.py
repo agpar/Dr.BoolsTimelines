@@ -2,6 +2,7 @@ import math
 import json
 from random import random as rand
 from collections import defaultdict
+from functools import reduce
 
 try:
     from .globals import *
@@ -13,8 +14,9 @@ class WorldState(CoordParseMixin):
     SEED_SIZE = 300
     STANDARD_HEIGHT = 15
 
-    def __init__(self, size=(1000,1000), json_dump=None, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
+    def __init__(self, size=(1000,1000), json_dump=None, current_turn=0, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         if json_dump is not None:
+            self.current_turn = json_dump["current_turn"]
             self._size = (json_dump["width"], json_dump["length"])
             self._chunk_size = json_dump["chunkSize"]
             self._water_threshold = json_dump["waterThreshold"]
@@ -54,6 +56,7 @@ class WorldState(CoordParseMixin):
             else:
                 raise Exception("No seed present in JSON dump of world state.")
         else:
+            self.current_turn = current_turn
             self._size = size
             self._chunk_size = chunk_size
             self._water_threshold = water_threshold
@@ -61,6 +64,8 @@ class WorldState(CoordParseMixin):
             self._cells = {}
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
             self._inhabitants = defaultdict(list)
+
+        self._prev_state = self.to_dict()
 
     def __getitem__(self, key):
         return self.PartialTerrainGen(self, key)
@@ -71,9 +76,15 @@ class WorldState(CoordParseMixin):
     def __repr__(self):
         return json.dumps(self.to_dict(False))
 
+    def apply_updates(self):
+        self.current_turn += 1
+        diff = self.diff(self._prev_state)
+        self._prev_state = self.to_dict()
+        return diff
 
     def to_dict(self, withseed=True):
         serialized = {
+            "current_turn": self.current_turn,
             "standardHeight": self.STANDARD_HEIGHT,
             "width": self._size[0],
             "length": self._size[1],
@@ -203,6 +214,55 @@ class WorldState(CoordParseMixin):
             if isinstance(x, Cell):
                 return x
 
+    def patch_dicts(self, f_diff, t_diff, cell_dict=False):
+        patched = f_diff
+        for k in t_diff.keys():
+            if f_diff.get(k) is None:
+                patched[k] = t_diff[k]
+            elif isinstance(f_diff[k], dict) and isinstance(t_diff[k], dict):
+                patched[k] = self.patch_dicts(f_diff[k], t_diff[k], cell_dict=True)
+            else:
+                patched[k] = t_diff[k]
+
+        if cell_dict:
+            del_queue = []
+            for k in f_diff.keys():
+                if t_diff.get(k) is None:
+                    del_queue.append(k)
+
+            for k in del_queue:
+                del patched[k]
+
+        return patched
+
+    def patch(self, diffs, reverse=False):
+        patch_diffs = []
+        if reverse:
+            patch_diffs = [diff["pre"] for diff in diffs]
+        else:
+            patch_diffs = [diff["post"] for diff in diffs]
+
+        i = 0
+        for diff in patch_diffs:
+            i += diff["current_turn"]
+
+        if reverse:
+            if i != len(diffs)*(len(diffs) - 1)/2 - patch_diffs[-1]["current_turn"]:
+                raise Exception("Diff stream contains holes.")
+        else:
+            if i != len(diffs)*(len(diffs) + 1)/2 - patch_diffs[0]["current_turn"] + 1:
+                raise Exception("Diff stream contains holes.")
+
+
+        patched = reduce(self.patch_dicts, patch_diffs, self.to_dict(False))
+        patched["seed"] = self._seed
+        self.__init__(json_dump=patched)
+        return patched
+
+    def unpatch(self, diffs):
+        patched = self.patch(diffs, reverse=True)
+        return patched
+
     def _diff_dict(self, f_dict, t_dict):
         pre = {}
         post = {}
@@ -223,8 +283,8 @@ class WorldState(CoordParseMixin):
         return pre, post
 
     def diff(self, other):
-        f_dict = self.to_dict(False)
-        t_dict = other.to_dict(False)
+        f_dict = other
+        t_dict = self.to_dict(False)
         pre, post = self._diff_dict(f_dict, t_dict)
 
         return {
