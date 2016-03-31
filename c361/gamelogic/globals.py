@@ -161,9 +161,9 @@ class WorldInhabitant(CoordParseMixin):
 
 class Cell(WorldInhabitant):
 
-    def __init__(self, x=0, y=0, ctype=1, elevation=1, json_dump=None):
+    def __init__(self, x=0, y=0, ctype='GRASS', elevation=1, json_dump=None):
         if json_dump is not None:
-            self.type = CELL_TYPES[json_dump["type"]]
+            self.type = json_dump["type"]
             self._coords = (json_dump["coords"]["x"], json_dump["coords"]["y"])
             self.elevation = json_dump["elevation"]
         else:
@@ -200,8 +200,11 @@ class Cell(WorldInhabitant):
         return False
 
     def to_dict(self):
+        t = self.type
+        if isinstance(t, int):
+            t = CELL_TYPES[t]
         serialized = {
-            "type": CELL_TYPES[self.type],
+            "type": t,
             "coords": {"x": self.x, "y": self.y},
             "elevation": self.elevation
         }
@@ -222,7 +225,7 @@ class Plant(WorldInhabitant):
 
     def to_dict(self):
         to_dict = {
-            'type': self.type, 
+            'type': self.type,
             'health': self.health,
             'coords': {'x': self.x, 'y': self.y}
         }

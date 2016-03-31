@@ -14,8 +14,6 @@ param renderTarget: The DOM element that the rendering engine will be bound to.
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
-    'private _is_hosting': false,
-    'private _gameTitle': undefined,
     'private _updateLoop': null,
     'private _renderEngine': null,
     'private _camera': null,
@@ -23,7 +21,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _renderer': null,
     'private _smellMode': false,
     'private _timeLine': null,
-    'private _currentTurn': 0,
+    'private _turn': 0,
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
@@ -195,51 +193,22 @@ module.exports = Class("GraphicsEngineController", {
     'public setActiveActor': function (actor_id) {
           this._activeActor = actor_id
     },
-    'public get_gameID' : function()
-    {
-        return this._gameID
-    },
-    'public get_currentTurn' : function()
-    {
-        return this._currentTurn
-    },
-    'public set_currentTurn' : function(turn)
-    {
-        this._currentTurn = turn
-    },
-    'public is_hosting' : function()
-    {
-        return this._is_hosting
-    },
-
-    'public loadGame': function (gametitle, gameid, spectate) {
-        if (spectate === undefined) //Added optional param to set up as spectator -AP.
-            spectate = false;
-
+    'public setGameID': function (gameid) {
         this._gameID = gameid
-        this._gameTitle = gametitle
         var renderer = this._renderer
         var cam = this._camPos
-        
-        if(spectate)
-            this._is_hosting = false;
-        else
-            this._is_hosting = true;
 
-        if(!spectate)
-        {
-            $.ajax({
-                type: "get",
-                url: "/game/"+gameid+"/?start=true",
-                contentType:"application/json",
-                statusCode: {
-                    200: function(data)
-                    {
-                        console.log(data)
-                    }
-                }
-            });
-        }
+        $.ajax({
+          type: "get",
+          url: "/game/"+gameid+"/?start=true",
+          contentType:"application/json",
+          statusCode: {
+              200: function(data)
+              {
+                  console.log(data)
+              }
+          }
+        })
 
         $.ajax({
             type: "get",
@@ -250,14 +219,6 @@ module.exports = Class("GraphicsEngineController", {
                 {
                     renderer.setWorldState(data)
                     renderer.updateView(cam)
-                    window.CONTROLLER.set_currentTurn(data['current_turn']);
-
-                    //Enable 'game' tab of side menu.
-                    $("#side-game-menu-tab").removeClass("disabled");
-                    $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-                    //Show game info.
-                    $("#loaded-game-info").html("<b>Game: </b>" + gametitle + "<br><b>Turn</b> " + window.CONTROLLER.get_currentTurn())
                 }
             }
         })
@@ -308,7 +269,7 @@ module.exports = Class("GraphicsEngineController", {
         var control = this
 
         loader.onFinish = function() {
-            //this._renderer.smellFieldOn()
+            // this._renderer.smellFieldOn()
             this._renderer.updateView(this._camPos)
 
             this._camPos = {x: 0, y: 0}

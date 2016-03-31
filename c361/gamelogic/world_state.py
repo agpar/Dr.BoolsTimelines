@@ -23,9 +23,9 @@ class WorldState(CoordParseMixin):
             cell_data = [
                 {
                     "coords": (cell_json['coords']['x'], cell_json['coords']['y']),
-                    "cell": Cell(json_dump=cell_json), 
+                    "cell": Cell(json_dump=cell_json),
                     "contents": cell_json["contents"]
-                } 
+                }
 
                 for k, cell_json in json_dump["cells"].items()
             ]
@@ -85,7 +85,7 @@ class WorldState(CoordParseMixin):
 
         if withseed:
             serialized["seed"] = self._seed
-        
+
         #Force create cells with defined contents
         for inh in self._inhabitants:
             if inh[0] not in self._cells:
@@ -94,14 +94,14 @@ class WorldState(CoordParseMixin):
             if inh[1] not in self._cells[inh[0]]:
                 self._cells[inh[0]][inh[1]] = self.__getitem__(inh[0])[inh[1]][0]
 
-        
+
         #Remove useless cells if they are equal to default terrain cell
         delQueue = []
         for row in self._cells:
              for c in self._cells[row]:
                 fmt = (self._cells[row][c].x,
                         self._cells[row][c].y)
-                
+
                 tgen = self._terrainGen(row,c)
 
                 if not self._inhabitants[row, c] and str(self._cells[row][c]) == str(tgen):
@@ -124,7 +124,7 @@ class WorldState(CoordParseMixin):
 
                 cell_dict["%d %d" % fmt] = self._cells[row][c].to_dict()
                 cell_dict["%d %d" % fmt]["contents"] = [x.to_dict() for x in self._inhabitants[fmt]]
-        
+
         serialized["cells"] = cell_dict
         return serialized
 
@@ -133,11 +133,11 @@ class WorldState(CoordParseMixin):
         cellheight = height*self.STANDARD_HEIGHT + 1.0
 
         if height <= self._water_threshold:
-            return Cell(x, y, 3, cellheight)
+            return Cell(x, y, 'WATER', cellheight)
         if slope > self._rock_threshold:
-            return Cell(x, y, 2, cellheight)
+            return Cell(x, y, 'ROCK', cellheight)
 
-        return Cell(x, y, 1, cellheight)
+        return Cell(x, y, 'GRASS', cellheight)
 
     def _cosineInterp(self, v0, v1, t):
         phase = (1-math.cos(t*math.pi))/2.0
@@ -203,6 +203,36 @@ class WorldState(CoordParseMixin):
             if isinstance(x, Cell):
                 return x
 
+    def _diff_dict(self, f_dict, t_dict):
+        pre = {}
+        post = {}
+
+        for k in f_dict:
+            if t_dict.get(k) is None:
+                pre[k] = f_dict[k]
+            elif f_dict.get(k) != t_dict.get(k):
+                if isinstance(f_dict.get(k), dict) and isinstance(t_dict.get(k), dict):
+                    pre[k], post[k] = self._diff_dict(f_dict.get(k), t_dict.get(k))
+                else:
+                    pre[k], post[k] = f_dict.get(k), t_dict.get(k)
+
+        for k in t_dict:
+            if f_dict.get(k) is None:
+                post[k] = t_dict[k]
+
+        return pre, post
+
+    def diff(self, other):
+        f_dict = self.to_dict(False)
+        t_dict = other.to_dict(False)
+        pre, post = self._diff_dict(f_dict, t_dict)
+
+        return {
+            'pre': pre,
+            'post': post
+        }
+
+
     class PartialTerrainGen:
         """A class solely for storing half of a request to get or set a cell
 
@@ -223,13 +253,19 @@ class WorldState(CoordParseMixin):
 
         def __getitem__(self, key):
             col = self.world._cells.get(self.row)
+
+            val = []
             if col and key in col:
                 val = [col[key]]
-            val = [self.world._terrainGen(self.row, key)]
+            else:
+                val = [self.world._terrainGen(self.row, key)]
+
             val.extend(self.world._inhabitants[self.row, key])
             return val
 
         def __setitem__(self, key, value):
+            if isinstance(value, Cell):
+                value._coords = (self.row, key)
             col = self.world._cells.get(self.row)
             if not col:
                 self.world._cells[self.row] = {}

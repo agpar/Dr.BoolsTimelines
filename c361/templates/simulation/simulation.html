@@ -18,29 +18,11 @@ $(document).on("loadview", function () {
     var $mainmenu_buttons = $("#mainmenu-buttons");
     var $mainmenu_header = $("#mainmenu-header");
 
-    //Prevent links in tabs from firing if they have a disabled parent.
-    //Used for 'game' tab on sidemenu.
-    $(" a[data-toggle=tab]").on("click", function(e) {
-        if ($(this.parentNode).hasClass("disabled")) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-
-
-    $(window).on('beforeunload', function (event)
-    {
-        return 'Leaving this page will clear your form.'
-    });
-    $(window).unload(function(){
-
-        var turn = window.CONTROLLER.get_currentTurn();
-        var gameid = window.CONTROLLER.get_gameID();
-        if (gameid && window.CONTROLLER.is_hosting()){
-            $.ajax("/game/"+gameid+"/?stop=true&on_turn="+turn);
-        }
-    });
+    window.onbeforeunload = function(){
+        // Should check if game is loaded by user (they are not spectating, but
+        // hosting, then send a request to /game/ID/?stop=true in order to stop
+        // and save the game.
+    };
 
     //Open the actorInfo on the page.
     $("#open-actorinfo").click(function (event){
@@ -155,52 +137,38 @@ $(document).on("loadview", function () {
     }
 
     //Checks if actor info is cached, or else fetches it.
-    function refresh_actor_cache(user)
+    function refresh_actor_cache()
     {
-        if (user == null) {
-            if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names']) {
-                console.log("Fetched info from cache.");
-            }
-            else {
-                $.ajax({
-                    type: "get",
-                    url: "/actors/mine",
-                    contentType: "application/json",
-                    async: false,
-                    statusCode: {
-                        200: function (resp) {
-                            //Save data in cache.
-                            console.log("Fetched info from Ajax.");
-                            set_cache('my-actors', resp);
-
-                            //Hash and set names of actors.
-                            var namehash = {};
-                            for (var i = 0; i < resp.length; i++) {
-                                namehash[resp[i]['title']] = true;
-                            }
-                            set_cache('my-actors-names', namehash);
-                            set_cache('my-actors', resp);
-                        }
-                    }
-                });
-            }
+        if (mainMenuCache['my-actors'] && mainMenuCache['my-actors-names'])
+        {
+            console.log("Fetched info from cache.");
         }
-        else {
+        else
+        {
             $.ajax({
                 type: "get",
-                url: "/actors/?creator="+user,
-                contentType: "application/json",
+                url: "/actors/mine",
+                contentType:"application/json",
                 async: false,
                 statusCode: {
-                    200: function (resp) {
+                    200: function(resp)
+                    {
                         //Save data in cache.
                         console.log("Fetched info from Ajax.");
-                        set_cache(user + '-actors', resp);
+                        set_cache('my-actors', resp);
+
+                        //Hash and set names of actors.
+                        var namehash = {};
+                        for(var i = 0; i < resp.length; i++)
+                        {
+                            namehash[resp[i]['title']] = true;
+                        }
+                        set_cache('my-actors-names', namehash);
+                        set_cache('my-actors', resp);
                     }
                 }
             });
         }
-
     }
 
     //Checks if game info is cached, or else fetches it.
@@ -242,7 +210,7 @@ $(document).on("loadview", function () {
                 }
             }
         });
-    }
+    };
 
     //Draw a status update in the main menu.
     function draw_status_menu(header, message)
@@ -290,9 +258,7 @@ $(document).on("loadview", function () {
         setup_actor_select_menu({'add-to-game':true});
     });
 
-    $("#copy-actor-side-btn").click(function(event){
-        setup_user_select_menu({'copy': true});
-    });
+
 
     //Sets up a menu for selecting from one of your existing games. Action
     //on choosing an actor can be controlled via options.
@@ -314,7 +280,7 @@ $(document).on("loadview", function () {
             menu_header = "Choose a game to spectate."
             for (var i = 0; i < data.length; i++)
             {
-                gamelist.push("<button type='button' class='list-group-item loadable-game-select' data-game-title='" + data[i]['title'] + "'"+
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
                         "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] +
                         "</b> - Hosted by <i>"+data[i]['creator']['username']+"</i> - On turn "+data[i]['current_turn_number']+"</button>")
             }
@@ -326,7 +292,7 @@ $(document).on("loadview", function () {
             error_msg = "You have no games!";
             for (var i = 0; i < data.length; i++)
             {
-                gamelist.push("<button type='button' class='list-group-item loadable-game-select' data-game-title='" + data[i]['title'] + "'"+
+                gamelist.push("<button type='button' class='list-group-item loadable-game-select' " +
                         "id='loadable-game-"+data[i]['id']+"'><b>" + data[i]['title'] + "</b></button>")
             }
             menu_header = "Choose a game."
@@ -350,18 +316,8 @@ $(document).on("loadview", function () {
         if(options['load']) {
             $(".loadable-game-select").click(function (event) {
                 var gameid = event['currentTarget']['id'];
-                var gametitle = event['currentTarget'].getAttribute("data-game-title");
-                gameid = gameid.split("-")[2];
-                window.CONTROLLER.loadGame(gametitle, gameid)
-            });
-        }
-        if(options['spectate'])
-        {
-            $(".loadable-game-select").click(function (event) {
-                var gameid = event['currentTarget']['id'];
-                var gametitle = event['currentTarget'].getAttribute("data-game-title");
-                gameid = gameid.split("-")[2];
-                window.CONTROLLER.loadGame(gametitle, gameid, true);
+                gameid = gameid.split("-")[2]
+                window.CONTROLLER.setGameID(gameid)
             });
         }
         if(options['add-to-game'])
@@ -372,30 +328,16 @@ $(document).on("loadview", function () {
                 add_actor_to_game(gameid, options['actor-id'])
             });
         }
-
     }
 
     //Sets up a menu for selecting from one of your existing actors. Action
     //on choosing an actor can be controled via options.
     function setup_actor_select_menu(options)
     {
-        var data;
-        var header;
-
-        if (options['copy'])
-        {
-            refresh_actor_cache(options['user']);
-            data = mainMenuCache[options['user']+'-actors'];
-            header = "Select on of " + options['user']+"'s Actors to copy!"
-        }
-        else
-        {
-            refresh_actor_cache();
-            data = mainMenuCache['my-actors'];
-            header = "Select an Actor!"
-        }
-        
+        refresh_actor_cache();
         flush_mainmenu();
+        var data = mainMenuCache['my-actors'];
+
         var actor_list = [];
         for (var i = 0; i < data.length; i++)
         {
@@ -408,7 +350,7 @@ $(document).on("loadview", function () {
             $mainmenu_content.html("You have no actors");
         }
 
-        $mainmenu_header.html(header);
+        $mainmenu_header.html("Select an Actor");
         $mainmenu_scroller.html(actor_list.join(""));
         $mainmenu.show();
         $mainmenu_scroller.show();
@@ -425,66 +367,6 @@ $(document).on("loadview", function () {
                 var actor_id = event['currentTarget']['id'].slice(17);
                 setup_game_select_menu({ "add-to-game": true, 'actor-id': actor_id});
             });
-        }
-        else if (options['copy'])
-        {
-            $(".modifyable-actor-select").click(function(event) {
-                var actor_id = parseInt(event['currentTarget']['id'].slice(17));
-                var users_actors = mainMenuCache[options['user']+"-actors"];
-                var selected_actor;
-                for (var i = 0; i < users_actors.length; i ++)
-                {
-                    if (users_actors[i].id === actor_id)
-                    {
-                        selected_actor = users_actors[i];
-                        break;
-                    }
-                }
-                create_newactor(selected_actor['title'], selected_actor['behaviour_script']);
-            });
-        }
-    }
-
-    function setup_user_select_menu(options)
-    {
-        flush_mainmenu();
-        var data;
-        $.ajax({
-            type: "get",
-            url: "/users/?notme=True",
-            async: false,
-            contentType:"application/json",
-            statusCode: {
-                200: function(resp)
-                {
-                    console.log("Fetched info from Ajax.");
-                    data = resp;
-                }
-            }
-        });
-        console.log(data);
-        var user_list = [];
-        for (var i = 0; i < data.length; i++)
-        {
-            user_list.push("<button type='button' class='list-group-item user-select' " +
-                    "id='user-"+data[i]['username']+"'>" + data[i]['username'] + "</button>")
-        }
-
-        if (user_list.length == 0)
-        {
-            $mainmenu_content.html("There are no other users!");
-        }
-
-        $mainmenu_header.html("Select a User to copy from.");
-        $mainmenu_scroller.html(user_list.join(""));
-        $mainmenu.show();
-        $mainmenu_scroller.show();
-
-        if (options['copy'])
-        {
-            $(".user-select").click(function(event){
-                setup_actor_select_menu({'copy': true, 'user': event.target.textContent});
-            })
         }
     }
 
@@ -662,17 +544,10 @@ $(document).on("loadview", function () {
     }
 
     //Send an asynchronous request to create an actor, and record the result in the mainMenu.
-    function create_newactor(nameval, scriptval)
+    function create_newactor()
     {
-        if (nameval === null)
-        {
-            nameval = $("#new-actor-name").val();
-        }
-        if (scriptval === null)
-        {
-            scriptval = $("#new-actor-script").val();
-        }
-
+        var nameval = $("#new-actor-name").val();
+        var scriptval = $("#new-actor-script").val();
         $.ajax({
             type: "post",
             url: "/actors/",
@@ -836,6 +711,9 @@ $(document).on("loadview", function () {
     }
 
 
+
+
+
     $mainmenu.hide();
     $("#closed-sidemenu").hide();
     $("#opened-actorinfo").hide();
@@ -888,28 +766,16 @@ $(document).on("loadview", function () {
     </div>
     <div class="col-xs-3 fill" id="sidemenu-col" style="padding: 0">
         <div class="opened-sidemenu sim-ui-element" id="opened-sidemenu">
-            <ul class="nav nav-tabs" id="side-menu-tabs">
-                <li role="presentation" class="active" id="side-main-menu-tab"><a href="#side-main-menu" data-toggle="tab">Menu</a></li>
-                <li role="presentation" class="disabled" id="side-game-menu-tab"><a href="#side-game-menu" data-toggle="tab">Game</a></li>
-            </ul>
-            <br>
-            <div class="tab-content">
-                <div id='side-main-menu' class="tab-pane active">
-                    <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
-                    <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
-                    <button class="btn btn-default btn-sidemenu" id="spectate-game-side-btn">Spectate Game</button>
-                    <hr>
-                    <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
-                    <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
-                    <button class="btn btn-default btn-sidemenu" id="copy-actor-side-btn">Copy an Actor</button>
-                    <button class="btn btn-default btn-sidemenu" id="add-actor-side-btn">Add Actor to Game</button>
-                    <hr>
-                </div>
-                <div id='side-game-menu' class="tab-pane">
-                    <p id="loaded-game-info"></p>
-                    <button id="advance-btn" class="btn btn-default btn-sidemenu">Advance Simulation</button>
-                </div>
-            </div>
+            <button class="btn btn-default btn-sidemenu" id="create-game-side-btn">Start New Game</button>
+            <button class="btn btn-default btn-sidemenu" id="load-game-side-btn">Load Game</button>
+            <button class="btn btn-default btn-sidemenu" id="spectate-game-side-btn">Spectate Game</button>
+            <hr>
+            <button class="btn btn-default btn-sidemenu" id="create-actor-side-btn">Create Actor</button>
+            <button class="btn btn-default btn-sidemenu" id="modify-actor-side-btn">Modify Actor</button>
+            <button class="btn btn-default btn-sidemenu" id="add-actor-side-btn">Add Actor to Game</button>
+            <hr>
+            <button id="advance-btn" class="btn btn-default btn-sidemenu">Advance Simulation</button>
+            <hr>
         </div>
     </div>
 
