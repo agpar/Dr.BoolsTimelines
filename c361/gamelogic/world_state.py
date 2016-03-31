@@ -65,7 +65,7 @@ class WorldState(CoordParseMixin):
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
             self._inhabitants = defaultdict(list)
 
-        self._prev_state = self.to_dict()
+        self._prev_state = self.to_dict(False)
 
     def __getitem__(self, key):
         return self.PartialTerrainGen(self, key)
@@ -79,7 +79,7 @@ class WorldState(CoordParseMixin):
     def apply_updates(self):
         self.current_turn += 1
         diff = self.diff(self._prev_state)
-        self._prev_state = self.to_dict()
+        self._prev_state = self.to_dict(False)
         return diff
 
     def to_dict(self, withseed=True):
@@ -261,7 +261,7 @@ class WorldState(CoordParseMixin):
             patched = reduce(self.unpatch_dicts, patch_diffs, self.to_dict(False))
         else:
             patched = reduce(self.patch_dicts, patch_diffs, self.to_dict(False))
-        
+
         patched["seed"] = self._seed
         self.__init__(json_dump=patched)
         return patched
