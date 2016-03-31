@@ -6,17 +6,15 @@
   h1{font-weight: bold;}
   h3{font-style: italic;}
   ul.nav-pills{position:fixed;}
-
-  #drop-menu{
-    position:relative;
-    float:left;
-  }
-
   #nav-content{padding-top: 10px;}
   #introBtn{width:250px;}
   #beginBtn{width:250px;}
   #actionBtn{width:225px;}
   #infoBtn{ width:225px;}
+  #drop-menu{
+    position:relative;
+    float:left;
+  }
   #text-content{
     z-index: -1;
     padding-top: 40px;
@@ -25,12 +23,9 @@
     padding-top: 0px;
     font-size: 50px;
   }
-
   #text-content > div {
     padding-top: 35px;
   }
-
-
 </style>
 
 <body data-spy="scroll" data-target="#tutorialButtons" data-offset="20">
@@ -40,6 +35,7 @@
         		<ul class="nav nav-pills nav-stacked" id = "nav-content">
           			<li><a type="button" class="btn btn-default" href="#intro" id = "introBtn">Intro</a></li>
           			<li><a type="button" class="btn btn-default" href="#start" id = "beginBtn">How to Begin</a></li>
+                <li><a type="button" class="btn btn-default" href="#keywords" id = "beginBtn">Keywords and Structure</a></li>
           			<li class="btn-group">
           				<a type="button" class="btn btn-default" href="#actionFunctions" id = "actionBtn">Action Words</a>
           				<a type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
@@ -84,87 +80,275 @@
         	</div> 
         	<div id="start">
         		<h1>How to Begin</h1>
-        		<p>For your AI script to function properly, you must write it in such a way that our program can understand it. Think of our program as a dog. Unfortunately, it only knows certain commands. If you ask it to do something that is not in its vocabulary, it will not understand and return an error. These commands must also be written in such a way so that they make sense syntatically. </p>
+        		<p>For your AI script to function properly, you must write it in such a way that our program can understand it. Think of our program as a dog. Unfortunately, it only knows certain commands. If you ask it to do something that is not in its vocabulary, it will not understand and return an error. These commands must also be written in such a way so that they make sense syntatically. If you are continually getting error messages, be sure to refer back to this page to ensure that you are adhering to all the necessary syntax structure and format of your script as outlined in this help page. Much of the fun from this simulation will come from experimenting with many different styles of AI scripts! </p>
       		</div>
+          <div id = "keywords">
+            <h1> Keywords and Structure </h1>
+            <p>The AI script acts as a series of conditional statements combined with pre-determined action and attribute keywords. 
+            </p>
+              <ul>
+                <li>
+                    Flow Control 
+                    <ul>
+                        <li>'and'</li>
+                        <li>'or'</li>
+                        <li>'if'</li>
+                        <li>'not'</li>
+                        <li>'then'</li>
+                        <li>'endif'</li>
+                        <li>'do'</li>
+                        <li>'done'</li>
+                        <li>'is'</li>
+                        <li>'true'</li>
+                        <li>'false'</li>
+                    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li>
+                    Symbols 
+                    <ul>
+                        <li> Left Parentheses ( </li>
+                        <li> Right Parentheses ) </li>
+                        <li> Semi-colon ; </li>
+                        <li> Comma , </li>
+                        <li> Addition + </li>
+                        <li> Subtraction - </li>
+                        <li> Multiplication * </li>
+                        <li> Division / </li>
+                        <li> Less than < </li>
+                        <li> Less than or Equal <= </li>
+                        <li> Greater than > </li>
+                        <li> Greater than or Equal >= </li>
+                        <li> Equal == </li>
+ 
+                    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li>
+                    Other
+                    <ul>
+                        <li> 'NORTH'</li>
+                        <li> 'SOUTH' </li>
+                        <li> 'EAST' </li>
+                        <li> 'WEST'</li>
+                        <li> 'WATER' </li>
+                        <li> 'ACTOR' </li>
+                        <li> 'PLANT' </li>
+                        <li> 'FOOD'</li>
+                        <li> 'ROCK'</li>
+                    </ul>
+                </li>
+              </ul>
+              Example script structure:
+              <xmp>
+                if nearest(WATER) == mylocation
+                then
+                  do
+                    walk(NORTH);
+                  done
+                endif
+
+                if true
+                then
+                    do
+                      walk(direction(nearest(WATER)));
+                    done
+                endif
+              </xmp>
+              Referring to the example above, take note of the following rules regarding script syntax:
+              <ul>
+                <li> All calls to an action end with a semicolon </li>
+                <li> 'do' and 'done' enclose all resulting actions from a conditional evaluation </li>
+                <li> Note that we start with a conditional 'if'. The second block of script evaluates if the above condition evaluates to true </li>
+                <li> 'then' must follow any conditional, to tell the script what to do if a conditional is fulfilled </li>
+                <li>  All directions and cell attributes are in upper case</li>
+                <li> Adhering to the above structure, one can stack together multiple conditional statements to allow their AI to adapt to certain situations in the simulation </li>
+              </ul>
+          </div>
       		<div id="actionFunctions">
         		<h1>Action Words</h1>
-        		<p>The following words are actions that the actor can perform. They can be utilized in a variety of ways to help your avatar surive in the world. Each action will have an accompanying example in the scripting language to help better understand how it is used. </p>
+        		<p>The following words are actions that the actor can perform. They can be utilized in a variety of ways to help your avatar surive in the world. Each action will have an accompanying example in the scripting language to help better understand how it is used. These words will generally only occur within a do - done block. </p>
       		</div>
       		<div class "actionWords" id="attack">
         		<h3>Attack</h3>
         		<p>Attack in the direction that your avatar is facing. Attacking another avatar will cause that avatar to lose health.</p>
+            Example usage:
+            <xmp>
+              attack();
+            </xmp>
       		</div>
       		<div class "actionWords" id="drop">
         		<h3>Drop</h3>
         		<p>Drop (if possible) whatever the actor is holding, in the direction that the actor is currently facing</p>
+            Example usage:
+            <xmp>
+              drop();
+            </xmp>
       		</div>
       		<div class "actionWords" id="direction">
         		<h3>Direction</h3>
         		<p>Returns a list of directions to a specific coordinate. Accepts a tuple. Example calls: direction(nearest(WATER)), or direction (0 , 5). The first example will give you a list of directions to the nearest water element. The second will give you a list of directions to location (0,5) on the map.</p>
+            Example usage (combined):
+            <xmp>
+              walk(direction(nearest(PLANT)));
+            </xmp>
       		</div>
       		<div class "actionWords" id="eat">
         		<h3>Eat</h3>
         		<p>If you are currently holding food, actor will eat, and thus regenerate health.</p>
+            Example usage (combined):
+            <xmp>
+              if myhealth < 10
+              then
+                do
+                  eat();
+                done
+              endif
+            </xmp>
       		</div>
       		<div class "actionWords" id="flee">
         		<h3>Flee</h3>
         		<p>Action performs the opposite of a list of directions to something. </p>
+            Example usage:
+            <xmp>
+              if nearest(DANGER) == mylocation
+              then
+                do
+                 flee();
+                done
+              endif            
+            </xmp>
       		</div>
       		<div class "actionWords" id="harvest">
         		<h3>Harvest</h3>
         		<p>Attempt to harvest in the direction that you are facing.</p>
+            Example usage:
+            <xmp>
+              harvest();
+            </xmp>
       		</div>
       		<div class "actionWords" id="nearest">
         		<h3>Nearest</h3>
         		<p>Returns the coordinate of the nearest cell with the specified attribute.</p>
+            Example usage in conditional and resulting action
+            <xmp>
+              if nearest(WATER) == mylocation;
+            </xmp>
+            <xmp>
+              walk(direction(nearest(DANGER)));
+            </xmp>
       		</div>
       		<div  class "actionWords" id="pickup">
         		<h3>Pickup</h3>
         		<p> Attempt to pickup an object in the direction that you are facing. If no object is present nothing happens</p>
+            Example usage:
+            <xmp>
+              pickup();
+            </xmp>
       		</div>
       		<div class "actionWords" id="scavenge">
         		<h3>Scavenge</h3>
         		<p> Search for the nearest food source. </p>
+            Example usage:
+            <xmp>
+              if myhealth == 10
+              then
+                  do
+                    scavenge();
+                  done
+              endif
+            </xmp>
       		</div>
       		<div class "actionWords" id="sleep">
         		<h3>Sleep</h3>
         		<p> Puts your avatar to sleep, for a specified amount of time</p>
+            Example usage:
+            <xmp>
+              sleep();
+            </xmp>
       		</div>
       		<div class "actionWords" id="walk">
         		<h3>Walk</h3>
         		<p>Takes in a list of directions as an argument and performs them. The list can also be only one direction. </p>
+            Example usage:
+            <xmp>
+              walk(NORTH);
+            </xmp>
+            <xmp>
+              walk(direction(nearest(FOOD)));
+            </xmp>
       		</div>
       		<div id="actorInformation">
         		<h1>Actor Information</h1>
-        		<p>The following words are available to obtain characteristics of the current actor. They are useful to use as the 'conditionals' in your script. For example: 'if myhealth > 50' </p>
+        		<p>The following words are available to obtain characteristics of the current actor. They are useful to use as the 'conditionals' in your script. For example: 'if myhealth > 50'. The examples given will show their potential usage in conditionals and various situations </p>
       		</div>
       		<div id="mydirection">
         		<h3>mydirection</h3>
         		<p>Gives the direction that the current actor is facing. </p>
+            Example usage:
+            <xmp>
+              if mydirection == NORTH
+            </xmp>
       		</div>
       		<div id="myfood">
         		<h3>myfood</h3>
         		<p>Returns 'True' if the current actor is holding food. Otherwise will return 'False'.</p>
+            Example usage:
+            <xmp>
+              if myfood == true
+              then
+                do
+                  eat();
+                done
+              endif
+            </xmp>
       		</div>
       		<div id="myhealth">
         		<h3>myhealth</h3>
         		<p>Returns the current health of the actor</p>
+            Example usage:
+            <xmp>
+              if myhealth >= 40
+            </xmp>
       		</div>
       		<div id="mylocation">
         		<h3>mylocation</h3>
         		<p>Returns the current location of the actor in the form of a 2-tuple of integers</p>
+            Example usage:
+            <xmp>
+              if nearest(WATER) == mylocation
+            </xmp>
       		</div>
       		<div id="asleep">
         		<h3>asleep</h3>
         		<p>Returns 'True' if the actor is asleep, otherwise will return 'False'</p>
+            Example usage:
+            <xmp>
+              if asleep == false
+              then
+                do
+                  sleep();
+                done
+              endif
+            </xmp>
       		</div>
       		<div id="myrock">
         		<h3>myrock</h3>
         		<p>Returns 'True' if the actor is holding a rock, otherwise will return 'False'.</p>
+            Example usage:
+            <xmp>
+              if myrock == true
+              then
+                do 
+                  drop();
+                done
+              endif
+            </xmp>
       		</div>
     	</div>
   	</div>
 </body>
-
 
 {% endblock %}
