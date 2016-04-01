@@ -27,21 +27,6 @@ $(document).on("loadview", function () {
         }
     });
 
-
-
-    $(window).on('beforeunload', function (event)
-    {
-        return 'Leaving this page will clear your form.'
-    });
-    $(window).unload(function(){
-
-        var turn = window.CONTROLLER.get_currentTurn();
-        var gameid = window.CONTROLLER.get_gameID();
-        if (gameid && window.CONTROLLER.is_hosting()){
-            $.ajax("/game/"+gameid+"/?stop=true&on_turn="+turn);
-        }
-    });
-
     //Open the actorInfo on the page.
     $("#open-actorinfo").click(function (event){
         $("#opened-actorinfo").show();
@@ -394,7 +379,7 @@ $(document).on("loadview", function () {
             data = mainMenuCache['my-actors'];
             header = "Select an Actor!"
         }
-        
+
         flush_mainmenu();
         var actor_list = [];
         for (var i = 0; i < data.length; i++)
@@ -834,57 +819,6 @@ $(document).on("loadview", function () {
             }
         });
     }
-
-
-    //IN GAME STUFF
-    $("#pause-game-btn").click(function() {
-        if ($(this).hasClass('disabled'))
-        {
-            return
-        }
-        window.CONTROLLER.pause();
-        var gameid = window.CONTROLLER.get_gameID();
-        var current_turn = window.CONTROLLER.get_currentTurn();
-
-        //Do something to stop the game-loop... First implement a game loop.
-
-        $.ajax({
-            type: "get",
-            url: "/game/" + gameid + "/?pause=true&on_turn=" + current_turn,
-            success: function (data) {
-                console.log("Game paused.");
-                $("#pause-game-btn").addClass("disabled");
-                $("#resume-game-btn").removeClass("disabled");
-
-            },
-            failure: function (data) {
-                console.log(data)
-                window.CONTROLLER.resume()
-            }
-        });
-    });
-    $("#resume-game-btn").click(function()
-    {
-        if ($(this).hasClass('disabled'))
-        {
-            return
-        }
-        var gameid = window.CONTROLLER.get_gameID();
-        var current_turn = window.CONTROLLER.get_currentTurn();
-        $.ajax({
-            type: "get",
-            url: "/game/" + gameid + "/?resume=true",
-            success: function (data) {
-                console.log("Game resumed.");
-                $("#resume-game-btn").addClass("disabled");
-                $("#pause-game-btn").removeClass("disabled");
-                window.CONTROLLER.resume()
-            },
-            failure: function (data) {
-                console.log(data)
-            }
-        });
-    });
 
 
     $mainmenu.hide();

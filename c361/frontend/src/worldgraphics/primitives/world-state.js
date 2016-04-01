@@ -2,6 +2,7 @@ var Class = require("easejs").Class
 var WorldCell = require("./world-cell")
 
 module.exports = Class("WorldState", {
+    'private _currentTurn': null,
     'private _standardHeight': null,
     'private _width': null,
     'private _length': null,
@@ -12,6 +13,7 @@ module.exports = Class("WorldState", {
     'private _seedsize': null,
     'private _cells': null,
     __construct: function(json_dump) {
+        this._currentTurn    = json_dump["current_turn"]
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
         this._length         = json_dump["length"]
@@ -26,7 +28,10 @@ module.exports = Class("WorldState", {
     'public get': function(key) {
         return this["_" + key]
     },
-    'public applyDeltas': function (deltas, backstep) {
+    'public patch': function (diffs, options) {
+
+    },
+    'public unpatch': function (diffs) {
 
     },
     'public setCells': function(cells) {

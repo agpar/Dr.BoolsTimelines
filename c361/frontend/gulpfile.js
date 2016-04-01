@@ -7,9 +7,7 @@ gulp.task('make', function() {
     return (
         browserify('./src/main.js')
         .bundle()
-        .on('error', function(e) {
-            gutil.log(e)
-        })
+        .on('error', swallowError)
         .pipe(source('sim-engine.js'))
         .pipe(gulp.dest('../static/js'))
     )
@@ -18,3 +16,8 @@ gulp.task('make', function() {
 gulp.task('watch', function() {
     gulp.watch('src/**/*.js', ['make'])
 })
+
+function swallowError (error) {
+  console.log(error.toString());
+  this.emit('end');
+}

@@ -18,7 +18,7 @@ param camera: The BABYLON.Camera instance which the user views through
 param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
 */
 module.exports =  Class("WorldRenderer", {
-    'private SMELL_SPREAD': 100,
+    'private SMELL_SPREAD': 30,
     'private _smellMode': true,
     'private _scene': null,
     'private _sceneChunks': null,
@@ -176,6 +176,9 @@ module.exports =  Class("WorldRenderer", {
         this._proto["GRASS"] = grass
         this._scene = scene
     },
+    'public pickCell': function (x,y) {
+        return this._scene.pick(x,y)
+    },
     /*
     Terrain generation function. Produces a cell either from the ones defined
     in the world's state or otherwise generated formulaically.
@@ -305,28 +308,14 @@ module.exports =  Class("WorldRenderer", {
         this._worldState = WorldState(tstate)
         this._sceneChunks.reset()
     },
-    'public updateWorldState': function (state) {
-        if(state.cells != undefined)
-            this._worldState.setCells(state.cells);
+    'public getStateProp': function (key) {
+        return this._worldState.get(key)
     },
-    /*.material.diffuseColor = new C
-    Update the world with the changes specified by a list of state change
-    operations.
-
-    param deltas: List of state change operations.
-    param backstep: If true then the operations will be applied backwards.
-    */
-    'public applyDeltas': function (deltas, backstep) {
-        if (backstep) {
-            for (delta in deltas) {
-
-            }
-        } else {
-            for (delta in deltas) {
-
-            }
-        }
-
+    'public patch': function (diffs) {
+        this._worldState.patch(diffs)
+    },
+    'public unpatch': function (diffs) {
+        this._worldState.unpatch(diffs)
     },
     /*
     Return the cell information at the inputted grid position.
@@ -392,7 +381,11 @@ module.exports =  Class("WorldRenderer", {
 
             for(var ct in ocell.contents){
                 var cont = ocell.contents[ct]
-                intensity += 2*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
+                var its = Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
+                if(its < 0.3)
+                    continue
+
+                intensity += its
 
                 if(cont.type == "ACTOR") {
                     color.r += 0.8
@@ -400,14 +393,14 @@ module.exports =  Class("WorldRenderer", {
                     color.b += 0.1
                 }
                 if(cont.type == "MUSH") {
-                    color.r += 0.3
-                    color.g += 0.3
-                    color.b += 0.3
+                    color.r += 0.1
+                    color.g += 0.1
+                    color.b += 0.1
                 }
                 if(cont.type == "PLANT") {
                     color.r += 0.1
-                    color.g += 0.8
-                    color.b += 0.1
+                    color.g += 1.0
+                    color.b += 0.4
                 }
                 overlap++
             }
