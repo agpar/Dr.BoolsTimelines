@@ -40,7 +40,8 @@ class GameRunner(pykka.ThreadingActor):
         This class will tell its game_object to compute the turns, then save deltas as TurnModels.
         """
         if self.is_paused and up_to > self.game_model.current_turn:
-            return {"error": "Game must be un-paused to request new turns."}
+            return {"error": "Game must be un-paused to request new turns.",
+                    "latest_turn": self.pause_turn}
 
         results = self.game_object.do_turn(up_to)
         for turn in results:
@@ -59,7 +60,9 @@ class GameRunner(pykka.ThreadingActor):
     def pause(self, on_turn):
         """Pause the game, allowing editing."""
         if self.is_paused:
-            return {"error": "Game is already paused at turn {}.".format(self.pause_turn)}
+            return {"error": "Game is already paused at turn {}.".format(self.pause_turn),
+                    "latest_turn": self.pause_turn}
+
         self.is_paused = True
         self.is_modified = False
         self.pause_turn = on_turn
