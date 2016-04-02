@@ -62,8 +62,6 @@ class GameDetail(BaseDetailView):
 
     def get(self, request, *args, **kwargs):
         game_instance = self.get_object()
-        import pdb
-        pdb.set_trace()
         if (HOST_ONLY_ACTIONS.intersection(set(request.GET.keys())) and
                 request.user.pk != game_instance.creator.pk):
             return JsonResponse({"error": "SPECTATOR ACTION NOT ALLOWED",
