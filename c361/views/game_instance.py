@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.core.cache import cache
 import ujson as json
 
+HOST_ONLY_ACTIONS = {'reset', 'pause', 'resume', 'start', 'stop'}
 
 class MyGameList(BaseDetailView):
     """Redirect to the GameList with appropriate query parameter."""
@@ -61,9 +62,10 @@ class GameDetail(BaseDetailView):
 
     def get(self, request, *args, **kwargs):
         game_instance = self.get_object()
-
-        if ({'reset', 'pause', 'resume', 'start', 'stop'}.intersection(set(request.GET.keys())) and
-                request.user is not game_instance.creator):
+        import pdb
+        pdb.set_trace()
+        if (HOST_ONLY_ACTIONS.intersection(set(request.GET.keys())) and
+                request.user.pk != game_instance.creator.pk):
             return JsonResponse({"error": "SPECTATOR ACTION NOT ALLOWED",
                                  "message": "Only host may perform this action."})
 
