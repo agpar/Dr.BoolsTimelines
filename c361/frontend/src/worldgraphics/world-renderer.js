@@ -294,7 +294,7 @@ module.exports =  Class("WorldRenderer", {
     Render the geometry in the scene.
     */
     'public renderWorld': function() {
-      this._scene.render()
+        this._scene.render()
     },
     /*
     Set the entire state of the world to the new state.

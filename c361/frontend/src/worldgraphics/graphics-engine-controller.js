@@ -87,71 +87,36 @@ module.exports = Class("GraphicsEngineController", {
 //            controller.nextFrame()
 //        }, 1000)
     },
-    'public nextFrame': function() {
+    'public nextFrame': function(options) {
         var controller = this
-        if(this._gameID != undefined) {
-            if (this._timeLine.cursor >= this._timeLine.interval.length - this._timeLine.window){
-                var first = this._timeLine.last
-                var last = this._timeLine.last + this._timeLine.window
-                this._fetchTimeInterval(first,last,{
-                    "success": function (data) {
-                        console.log(data)
-                        for(var diff in data){
-                            controller._timeLine.cursor--
-                            controller._timeLine.shift()
-                            controller._timeLine.push(diff)
-                        }
-                    },
-                    "failure": function(data) {
-                        console.log("ERROR nextFrame")
-                        console.log(data)
-                    }
-                })
-            }
-
-            if (this._timeLine.cursor < this._timeLine.interval.length - 1)
-                this._renderer.patch(this._timeLine.interval[this._timeLine.cursor++])
-        }
     },
     'public prevFrame': function() {
         var controller = this
-        if(this._gameID != undefined) {
-            if (this._timeLine.cursor <= this._timeLine.window){
-                var first = this._timeLine.first - this._timeLine.window
-                var last = this._timeLine.first
-                if(first > 0) {
-                    this._fetchTimeInterval(first,last,{
-                        "success": function (data) {
-                            console.log(data)
-                            for(var diff in data) {
-                                controller._timeLine.cursor++
-                                controller._timeLine.pop()
-                                controller._timeLine.unshift(diff)
-                            }
-                        },
-                        "failure": function(data) {
-                            console.log("ERROR prevFrame")
-                            console.log(data)
-                        }
-                    })
-                }
-            }
-
-            if (this._timeLine.cursor > 0)
-                this._renderer.patch(this._timeLine.interval[this._timeLine.cursor--])
-
-        }
     },
-    'private _fetchTimeInterval': function(low, high, callback) {
+    'private _fetchTimeInterval': function(low, high, options) {
+        low = (low < 0) ? 0 : low
         var controller = this
         $.ajax({
             type: "get",
             url: "/game/" + controller._gameID + "/turns?first=" + low + "&last=" + high,
-            success: function (data) {
-                callback["success"](data)
-            },
-            failure: function (data) {
-                callback["failure"](data)
+            statusCode: {
+                200: function (data)
+                {
+                    console.log(data[0]["diff"])
+                },
+
+                400: function (data)
+                {
+                    if(options == undefined || options["retry"] == undefined) {
+                        console.log(data)
+                        console.log("RETRYING TIMELINE FETCH WITH CORRECTED INTERVAL.")
+                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"], {"retry": true})
+                    }
+                    else {
+                       console.log("RETRY FAILED")
+                       console.log(data)
+                    }
+                }
             }
         })
     },
@@ -400,20 +365,9 @@ module.exports = Class("GraphicsEngineController", {
                     var last = data["current_turn"] + 2*TIMELINE_WINDOW
 
                     controller._timeLine = {
-                        "cursor": data["current_turn"],
                         "interval": []
                     }
-
-                    controller._fetchTimeInterval(first, last, {
-                        "success": function(data) {
-                            console.log(data)
-                            for(var diff in data)
-                                controller._timeLine.push(diff)
-                        },
-                        "failure": function(data) {
-                            console.log(data)
-                        }
-                    })
+                    controller._fetchTimeInterval(first, last)
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
@@ -434,7 +388,7 @@ module.exports = Class("GraphicsEngineController", {
                     statusCode: {
                         200: function(data)
                         {
-                            renderer.setWorldState(data)
+                            controller.nextFrame()
                             renderer.updateView(cam)
                         }
                     }

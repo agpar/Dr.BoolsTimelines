@@ -28,7 +28,14 @@ module.exports = Class("WorldState", {
     'public get': function(key) {
         return this["_" + key]
     },
+    'private patch_dicts': function(f_diff, t_diff, options) {
+        patched = f_diff
+    },
     'public patch': function (diffs, options) {
+        patch_diffs = []
+        if (options["reverse"]) {
+          patch_diffs = null
+        }
 
     },
     'public unpatch': function (diffs) {
