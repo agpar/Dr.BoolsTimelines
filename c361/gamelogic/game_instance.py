@@ -330,10 +330,10 @@ class GameInstance(CoordParseMixin):
 
         return all_turns
 
-    def apply_deltas(self, delta_list, reversed=False):
+    def apply_deltas(self, delta_list, reverse=False):
         """Apply the deltas produced during turns."""
         for delta in delta_list:
-            if reversed:
+            if reverse:
                 val = delta['from']
             else:
                 val = delta['to']
@@ -344,6 +344,10 @@ class GameInstance(CoordParseMixin):
                 actr.health = val
             if delta['varTarget'] == 'is_sleeping':
                 actr.is_sleeping = val
+
+        if reverse:
+            for act in self.actors.values():
+                act._turn_stat_change(reverse=True)
 
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)

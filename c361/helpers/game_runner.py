@@ -134,9 +134,9 @@ class GameRunner(pykka.ThreadingActor):
 
         Deletes future turns and does a DB dump.
         """
-        turns = self.game_model.turns.filter(number__gt=turn_number)
+        turns = self.game_model.turns.filter(number__gte=turn_number)
         for turn in reversed(turns):
-            self.game_object.apply_deltas(reversed(turn.delta_dump), reversed=True)
+            self.game_object.apply_deltas(reversed(turn.delta_dump), reverse=True)
 
         self.game_object.current_turn = turn_number
         turns.delete()

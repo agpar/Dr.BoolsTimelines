@@ -39,7 +39,7 @@ class TurnList(BaseListCreateView):
             future = actor_proxy.do_turn(last)
             result = future.get()
             if isinstance(result, dict) and result.get("error"):
-                raise ValidationError(result['error'])
+                raise ValidationError(result)
 
         # Return queryset of the requested turns.
         if first > last:

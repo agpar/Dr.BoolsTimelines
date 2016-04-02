@@ -94,12 +94,19 @@ class Actor(WorldInhabitant):
         self._turn_stat_change()
         return self.behaviours.get_action(self)
 
-    def _turn_stat_change(self):
-        self.hunger -= 1
-        if self.is_sleeping:
-            self.sleep += 20
+    def _turn_stat_change(self, reverse=False):
+        if reverse:
+            self.hunger += 1
+            if self.is_sleeping:
+                self.sleep -= 20
+            else:
+                self.sleep += 1
         else:
-            self.sleep -= 1
+            self.hunger -= 1
+            if self.is_sleeping:
+                self.sleep += 20
+            else:
+                self.sleep -= 1
 
     def can_walk(self, direction):
         """Figure out if you can walk in a direction."""

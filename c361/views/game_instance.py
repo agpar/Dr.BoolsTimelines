@@ -61,6 +61,12 @@ class GameDetail(BaseDetailView):
 
     def get(self, request, *args, **kwargs):
         game_instance = self.get_object()
+
+        if ({'reset', 'pause', 'resume', 'start', 'stop'}.intersection(set(request.GET.keys())) and
+                request.user is not game_instance.creator):
+            return JsonResponse({"error": "SPECTATOR ACTION NOT ALLOWED",
+                                 "message": "Only host may perform this action."})
+
         if request.GET.get('start'):
             if not game_instance.is_active():
                 game_instance.start()
