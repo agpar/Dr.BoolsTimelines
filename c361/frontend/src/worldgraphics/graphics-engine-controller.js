@@ -11,7 +11,7 @@ change operations to the renderer to move the view through time.
 
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
-var TIMELINE_WINDOW = 10
+var TIMELINE_WINDOW = 1
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
@@ -28,7 +28,8 @@ module.exports = Class("GraphicsEngineController", {
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
-
+    'private _low': 0,
+    'private _high': 0,
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
 
@@ -89,6 +90,11 @@ module.exports = Class("GraphicsEngineController", {
     },
     'public nextFrame': function(options) {
         var controller = this
+        var first = controller._renderer.getStateProp("currentTurn") - TIMELINE_WINDOW + 1
+        first = (first < 0) ? 0 : first
+        var last = controller._renderer.getStateProp("currentTurn") + TIMELINE_WINDOW + 1
+        console.log(first + " TO " + last)
+        controller._fetchTimeInterval(first, last)
     },
     'public prevFrame': function() {
         var controller = this
@@ -102,7 +108,10 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function (data)
                 {
-                    console.log(data[0]["diff"])
+                    var diffs = data.map(function(e,i,a){return e["diff"]})
+                    controller._renderer.patch(diffs)
+                    controller._renderer.updateView(controller._camPos)
+                    console.log("PATCHED DIFFS")
                 },
 
                 400: function (data)
@@ -367,6 +376,16 @@ module.exports = Class("GraphicsEngineController", {
                     controller._timeLine = {
                         "interval": []
                     }
+
+                    $.ajax({
+                        type: "get",
+                        url: "/game/" + controller._gameID + "/?resume=true",
+                        success: function (data) {
+                        },
+                        failure: function (data) {
+                        }
+                    });
+
                     controller._fetchTimeInterval(first, last)
 
                     //Enable 'game' tab of side menu.
