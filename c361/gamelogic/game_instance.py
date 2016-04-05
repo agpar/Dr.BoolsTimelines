@@ -1,7 +1,10 @@
 import random
 import uuid
 import ujson as json
+import math
 import sys
+from collections import deque, defaultdict
+
 # Handle both relative and local importing schemes.
 try:
     from .actor import Actor
@@ -12,6 +15,8 @@ except SystemError:
     from globals import *
     from world_state import WorldState
 
+
+SMELL_SPREAD = 30
 
 class GameInstance(CoordParseMixin):
     """Container for world and actors in world.
@@ -50,6 +55,8 @@ class GameInstance(CoordParseMixin):
 
             for a in model.actors.all():
                 self.add_actor(Actor(model=a))
+
+        self.smell_matrix = defaultdict(list)
 
     def __getitem__(self, key):
         return self.world[key]
@@ -300,6 +307,7 @@ class GameInstance(CoordParseMixin):
                 })
         return effects
 
+
     def do_turn(self, up_to=0):
         """High level function for returning a list of turns in this game."""
         all_turns = []
@@ -307,6 +315,7 @@ class GameInstance(CoordParseMixin):
             this_turn = {'number': self.current_turn, 'deltas': [], }
             self.current_turn += 1
             this_turn['diff'] = self.world.apply_updates() #Returns diff each call. They should be stored though.
+            self.compute_smells()
 
             for uuid, actor in self.actors.items():
                 turn_res = []
@@ -352,3 +361,45 @@ class GameInstance(CoordParseMixin):
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)
         return d
+
+    def _coord_neighbors(self, xy):
+        x, y = xy
+        return (x-1, y), (x+1, y), (x,y-1), (x, y+1)
+
+    def compute_smells(self):
+        self.smell_matrix = defaultdict(list)
+        for act in self.actors.values():
+            self._bfs_smell_spread(act)
+
+    def _bfs_smell_spread(self, world_inhabitant):
+        smell_code = world_inhabitant.smell_code
+        x, y = world_inhabitant._coords
+        z = self.world.get_cell((x, y)).elevation
+
+        q = deque()
+        visited = set()
+
+        neighbors = world_inhabitant.neighbors
+        q.extendleft(neighbors)
+        visited.add(world_inhabitant._coords)
+        visited = visited.union(neighbors)
+
+        #  BFS to populate smell matrix for the turn.
+        while q:
+            # get first coord
+            x1, y1 = q.pop()
+            z1 = self.world.get_cell((x1,y1)).elevation
+
+            x2,y2,z2 = x1-x, y1-y, z1-z
+            intensity = math.exp(-(x2**2 + y2**2 + z2**2)/SMELL_SPREAD)
+
+            if intensity > .3:
+                # get its unvisited neighbors and put them in their place.
+                neighbors = set(self._coord_neighbors((x1, y1)))
+                neighbors = neighbors.difference(visited)
+                q.extendleft(neighbors)
+                visited = visited.union(neighbors)
+
+                self.smell_matrix[(x1, y1)].append((smell_code, intensity))
+
+
