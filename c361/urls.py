@@ -22,11 +22,13 @@ from c361.views.game_actor import ActorList, ActorDetail, MyActorList, ScriptSyn
 from c361.views.game_instance import GameList, GameDetail, MyGameList, RunningGameList
 from c361.views.turn import TurnList
 from c361.views.user import UserDetail, UserList
-from c361.views.views import simulation
+from c361.views.views import simulation, syntaxHelp
+
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', simulation, name="simulation"),
+    url(r'^syntaxHelp/', syntaxHelp, name="syntaxHelp"),
     url(r'^login/', UserLogin.as_view(), name="login"),
     url(r'^logout/', user_logout, name="logout"),
     url(r'^register/', UserRegister.as_view(), name="register"),
