@@ -204,7 +204,6 @@ class WorldState(CoordParseMixin):
     def remove_inhabitant(self, worldinhabitant):
         """Add a WI to the inhabitants using their current coord."""
         x, y = self.coord_parse(worldinhabitant)
-        print(str(x) + " " + str(y))
         self._inhabitants[x, y].remove(worldinhabitant)
 
     def get_cell(self, xy):

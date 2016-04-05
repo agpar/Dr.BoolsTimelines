@@ -18,8 +18,10 @@ param camera: The BABYLON.Camera instance which the user views through
 param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
 */
 module.exports =  Class("WorldRenderer", {
-    'private SMELL_SPREAD': 30,
-    'private _smellMode': true,
+    'private SMELL_SPREAD': 100,
+    'private SMELL_RAD': 0.3,
+    'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
+    'private _smellMode': false,
     'private _scene': null,
     'private _sceneChunks': null,
     'private _smells': null,
@@ -301,11 +303,11 @@ module.exports =  Class("WorldRenderer", {
 
     param state: The new state to replace the state of the world.
     */
-    'public setWorldState': function (state) {
+    'public setWorldState': function (state, title) {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate)
+        this._worldState = WorldState(tstate, title)
         this._sceneChunks.reset()
     },
     'public getStateProp': function (key) {
@@ -362,9 +364,22 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'public renderSmell': function(cell) {
+    'private _computeSmell': function(cell) {
+        var proto = this._proto
+        function drop() {
+            if(cell.smell) {
+                if(cell.mesh.material)
+                    cell.mesh.material.dispose()
+                if(cell.mesh)
+                    cell.mesh.dispose()
+
+                cell.mesh = proto[cell.type].createInstance(cell.coords.x + " " + cell.coords.y)
+                cell.smell = false
+            }
+        }
+
         if(!this._smellMode){
-            cell.smell = false
+            drop()
             return false
         }
 
@@ -372,48 +387,55 @@ module.exports =  Class("WorldRenderer", {
         var color = {'r': 0, 'g': 0, 'b': 0}
         var worldcells = this._worldState.get("cells")
 
-        overlap = 1
+        var found
+        var i = 0
         for(var cl in worldcells){
             var ocell = worldcells[cl]
             var x0 = cell.coords.x - ocell.coords.x
             var y0 = cell.coords.y - ocell.coords.y
             var z0 = cell.elevation - ocell.elevation
-
+            found = false
             for(var ct in ocell.contents){
                 var cont = ocell.contents[ct]
-                var its = Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
-                if(its < 0.3)
+                var its = 0.75*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
+                if(its < this.SMELL_RAD)
                     continue
 
-                intensity += its
+                intensity = its
 
                 if(cont.type == "ACTOR") {
-                    color.r += 0.8
-                    color.g += 0.1
-                    color.b += 0.1
+                    color.r = 0.8
+                    color.g = 0.1
+                    color.b = 0.1
                 }
                 if(cont.type == "MUSH") {
-                    color.r += 0.1
-                    color.g += 0.1
-                    color.b += 0.1
+                    color.r = 0.1
+                    color.g = 0.1
+                    color.b = 0.1
                 }
                 if(cont.type == "PLANT") {
-                    color.r += 0.1
-                    color.g += 1.0
-                    color.b += 0.4
+                    color.r = 0.1
+                    color.g = 1.0
+                    color.b = 0.4
                 }
-                overlap++
+
+                console.log(i)
+                return {
+                  "intensity": intensity,
+                  "color": color
+                }
             }
+            i++
         }
 
-        intensity /= overlap
-        if(intensity < 0.3) {
-            cell.smell = false
-            return false
-        }
-        color.r /= overlap
-        color.g /= overlap
-        color.b /= overlap
+        drop()
+        return false
+    },
+    'private _renderSmell': function (cell, settings) {
+        var intensity = settings["intensity"]
+        var color = settings["color"]
+        var overlap = settings["overlap"]
+
 
         cell.mesh = this._proto[cell.type].clone(cell.coords.x + " " + cell.coords.y)
         cell.mesh.scaling.y = cell["elevation"]/2
@@ -428,7 +450,6 @@ module.exports =  Class("WorldRenderer", {
         cell.mesh.material.diffuseColor.g = intensity * color.g + (1 - intensity) * tcol.g
         cell.mesh.material.diffuseColor.b = intensity * color.b + (1 - intensity) * tcol.b
         cell.smell = true
-        return true
     },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
@@ -467,17 +488,23 @@ module.exports =  Class("WorldRenderer", {
                 }
 
                 cell = this._terrainGen(cellx, celly)
-
+                var shouldsmell = this._computeSmell(cell)
                 //If new cell is different, rerender.
                 if (cachemiss
+                    || this._worldState.isMarked(pcell.coords)
                     || pcell["type"] != cell["type"]
-                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100)
+                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100
+                    || (shouldsmell && !pcell.smell))
                 {
-                    var s = this.renderSmell(cell)
+                    if(pcell)
+                        this._worldState.unMark(pcell.coords)
 
-                    if(!s) {
+                    if(shouldsmell) {
+                        this._renderSmell(cell, shouldsmell)
+                    }
+                    else {
                         mesh = this._proto[cell["type"]]
-                                   .createInstance(cellx + " " + celly)
+                        .createInstance(cellx + " " + celly)
 
                         mesh.scaling.y = cell["elevation"]/2
 
@@ -485,6 +512,7 @@ module.exports =  Class("WorldRenderer", {
 
                         cell["mesh"] = mesh
                     }
+
 
                     if(cachemiss)
                         row.push(cell)

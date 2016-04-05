@@ -8872,7 +8872,8 @@ change operations to the renderer to move the view through time.
 
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
-var TIMELINE_WINDOW = 10
+var TIMELINE_WINDOW = 30
+var NLOCK = false
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
@@ -8939,23 +8940,56 @@ module.exports = Class("GraphicsEngineController", {
         ))
     },
     'public pauseSimulation': function () {
-//        if(this._updateLoop != null)
-//            clearInterval(this._updateLoop)
+        if(this._updateLoop != null)
+            clearInterval(this._updateLoop)
     },
     'public resumeSimulation': function () {
         var controller = this
-//        this._updateLoop = setInterval(function () {
-//            controller.nextFrame()
-//        }, 1000)
+        this._updateLoop = setInterval(function () {
+           controller.nextFrame()
+        }, 1000)
     },
     'public nextFrame': function(options) {
-        var controller = this
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
+        first = (first < 0) ? 0 : first
+        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4))
+            this._fetchTimeInterval(first, last)
+
+        if( this._timeLine.cursor < this._timeLine.interval.length-1){
+            this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
+            this._renderer.updateView(this._camPos)
+        }
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
     'public prevFrame': function() {
-        var controller = this
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
+
+        if(last > 0) {
+            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4))
+                this._fetchTimeInterval(first, last)
+        }
+
+        if(this._timeLine.cursor && this._timeLine.cursor > 0) {
+            this._renderer.unpatch([this._timeLine.interval[--this._timeLine.cursor]])
+            this._renderer.updateView(this._camPos)
+        }
+
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["pre"]["current_turn"] + " " + this._timeLine.last)
     },
     'private _fetchTimeInterval': function(low, high, options) {
         low = (low < 0) ? 0 : low
+
+        if(low == this._timeLine.first && high == this._timeLine.last)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
         var controller = this
         $.ajax({
             type: "get",
@@ -8963,7 +8997,20 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function (data)
                 {
-                    console.log(data[0]["diff"])
+                    if(NLOCK) return
+                    NLOCK = true
+                    var diffs = data.map(function(e,i,a){return e["diff"]})
+                    controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                    controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
+                    controller._timeLine.cursor = tnum.indexOf(cur_turn)
+                    if(controller._timeLine.cursor < 0)
+                        controller._timeLine.cursor = 0
+                    controller._timeLine.interval = diffs
+                    controller._timeLine.init = undefined
+
+                    console.log("Loaded timeline chunk")
+                    NLOCK = false
                 },
 
                 400: function (data)
@@ -8971,7 +9018,7 @@ module.exports = Class("GraphicsEngineController", {
                     if(options == undefined || options["retry"] == undefined) {
                         console.log(data)
                         console.log("RETRYING TIMELINE FETCH WITH CORRECTED INTERVAL.")
-                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"], {"retry": true})
+                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"]-1, {"retry": true})
                     }
                     else {
                        console.log("RETRY FAILED")
@@ -9009,7 +9056,8 @@ module.exports = Class("GraphicsEngineController", {
         this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
-        //this._setupKeys(scene)
+
+
         this._initializeButtons()
         this._initializeWindow()
         this.startSimulationEngine()
@@ -9145,7 +9193,7 @@ module.exports = Class("GraphicsEngineController", {
 
             $.ajax({
                 type: "get",
-                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._currentTurn,
+                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._renderer.getStateProp("currentTurn"),
                 success: function (data) {
                     console.log("Game paused.");
                     $("#pause-game-btn").addClass("disabled");
@@ -9181,6 +9229,19 @@ module.exports = Class("GraphicsEngineController", {
                 }
             });
         });
+
+        $("#advance-btn").click(
+            function () {
+                controller.nextFrame()
+
+            }
+        )
+
+        $("#reverse-btn").click(
+            function () {
+                controller.prevFrame()
+            }
+        )
     },
     'public loadGame': function (gametitle, gameid, spectate) {
         if (spectate === undefined) //Added optional param to set up as spectator -AP.
@@ -9211,6 +9272,14 @@ module.exports = Class("GraphicsEngineController", {
             });
         }
 
+        this._timeLine = {
+            "first": 0,
+            "last": 0,
+            "cursor": 0,
+            "interval": [],
+            "init": true
+        }
+
         $.ajax({
             type: "get",
             url: "/game/"+gameid+"/?full_dump=true",
@@ -9218,44 +9287,34 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function(data)
                 {
-                    renderer.setWorldState(data)
+                    renderer.setWorldState(data, gametitle)
                     renderer.updateView(cam)
 
-                    var first = data["current_turn"] - 2*TIMELINE_WINDOW
+                    var first = data["current_turn"] - Math.floor(TIMELINE_WINDOW/2)
                     first = (first < 0) ? 0 : first
-                    var last = data["current_turn"] + 2*TIMELINE_WINDOW
+                    var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-                    controller._timeLine = {
-                        "interval": []
-                    }
+
+                    $.ajax({
+                        type: "get",
+                        url: "/game/" + controller._gameID + "/?resume=true",
+                        success: function (data) {
+                        },
+                        failure: function (data) {
+                        }
+                    });
+
+
                     controller._fetchTimeInterval(first, last)
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
 
-                    //Show game info.
-                    $("#loaded-game-info").html("<b>Game: </b>" + gametitle + "<br><b>Turn</b> " + renderer.getStateProp("currentTurn"))
+
                 }
             }
         })
-
-        $("#advance-btn").click(
-            function () {
-                $.ajax({
-                    type: "get",
-                    url: "/game/"+gameid+"/?light_dump=true",
-                    contentType:"application/json",
-                    statusCode: {
-                        200: function(data)
-                        {
-                            controller.nextFrame()
-                            renderer.updateView(cam)
-                        }
-                    }
-                })
-            }
-        )
         /*
         if(this._updateLoop != null)
             clearInterval(this._updateLoop)
@@ -9289,8 +9348,8 @@ module.exports = Class("GraphicsEngineController", {
             //this._renderer.smellFieldOn()
             this._renderer.updateView(this._camPos)
 
-            this._camPos = {x: 0, y: 0}
-
+            this._camPos.x = 0
+            this._camPos.y = 0
             this._renderEngine.runRenderLoop(function () {
                 this._renderer.renderWorld()
 
@@ -9300,7 +9359,8 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._camPos = {x: newx, y: newy}
+                    this._camPos.x = newx
+                    this._camPos.y = newy
                     this._renderer.updateView(this._camPos)
                 }
             }.bind(this))
@@ -9442,8 +9502,13 @@ module.exports = Class("WorldState", {
     'private _seed': null,
     'private _seedsize': null,
     'private _cells': null,
-    __construct: function(json_dump) {
-        this._currentTurn    = json_dump["current_turn"]
+    'private _dump': null,
+    'private _marked': [],
+    'private _title': undefined,
+
+    __construct: function(json_dump, title) {
+        this._title          = title
+        this._dump           = JSON.parse(JSON.stringify(json_dump))
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
         this._length         = json_dump["length"]
@@ -9452,27 +9517,111 @@ module.exports = Class("WorldState", {
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
         this._seedsize       = json_dump["seedsize"]
+        this._currentTurn    = json_dump["current_turn"]
         this._cells          = json_dump["cells"]
-
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
+    },
+    'private _loadPatch': function(json_dump){
+        this._dump = JSON.parse(JSON.stringify(json_dump))
+        this._currentTurn    = json_dump["current_turn"]
+        this._cells          = json_dump["cells"]
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
     },
     'public get': function(key) {
         return this["_" + key]
     },
-    'private patch_dicts': function(f_diff, t_diff, options) {
-        patched = f_diff
-    },
-    'public patch': function (diffs, options) {
-        patch_diffs = []
-        if (options["reverse"]) {
-          patch_diffs = null
+    'private _patch_dicts': function(fr_diff, to_diff, options) {
+        var turn_difference = fr_diff["current_turn"] - to_diff["current_turn"]
+        var f_diff = JSON.parse(JSON.stringify(fr_diff))
+        if(turn_difference * turn_difference > 1) return f_diff
+        var patched = JSON.parse(JSON.stringify(f_diff))
+        var t_diff = JSON.parse(JSON.stringify(to_diff))
+        for(var k in t_diff){
+            if(f_diff[k] == undefined)
+                patched[k] = t_diff[k]
+            else if (f_diff[k] !== null
+                     && typeof f_diff[k] === 'object'
+                     && t_diff[k] !== null
+                     && typeof t_diff[k] === 'object')
+            {
+                if(options && options["reverse"] != undefined) {
+                    patched[k] = this._patch_dicts(f_diff[k], t_diff[k], {
+                        reverse: options["reverse"],
+                        celldict: true
+                    })
+                }
+                else {
+                    patched[k] = this._patch_dicts(f_diff[k], t_diff[k])
+                }
+            }
+            else {
+                patched[k] = t_diff[k]
+            }
         }
 
+        if(t_diff["cells"] == undefined) {
+            for(var c in this._cells){
+                var cell = this._cells[c]
+                for(var ct in cell["contents"]){
+                    var cts = cell["contents"][ct]
+                    if(cts.mesh != undefined)
+                        cts.mesh.dispose()
+                }
+                this._cells[c]["contents"] = undefined
+                this._marked.push(c)
+            }
+        }
+        for(k in f_diff) {
+            if(k == "cells")
+              continue
+            if(t_diff[k] == undefined)
+                patched[k] = undefined
+        }
+
+
+        return patched
+    },
+    'public patch': function (diffs, options) {
+        var patch_diffs = []
+        if (options && options["reverse"] == true) {
+            for(var k in diffs)
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["pre"])))
+        }
+        else {
+            for(var k in diffs)
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["post"])))
+        }
+
+        var patchdct = function(f,t) {
+            if(options && options["reverse"])
+                return this._patch_dicts(f,t, {reverse: options["reverse"]})
+            else
+                return this._patch_dicts(f,t)
+        }.bind(this)
+
+        var patched = patch_diffs.reduce(patchdct, this._dump)
+        for(var c in this._cells){
+            var cell = this._cells[c]
+            for(var ct in cell["contents"]){
+                var cts = cell["contents"][ct]
+                cts.mesh.dispose()
+            }
+        }
+        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+        return patched
     },
     'public unpatch': function (diffs) {
-
+        return this.patch(diffs, {reverse: true})
     },
     'public setCells': function(cells) {
         this._cells = cells
+    },
+    'public isMarked': function(coord){
+        return this._marked.indexOf(coord.x + " " + coord.y) > -1
+    },
+    'public unMark': function(coord){
+        if(this.isMarked(coord))
+            this._marked.splice(this._marked.indexOf(coord.x + " " + coord.y), 1)
     }
 })
 
@@ -9497,8 +9646,10 @@ param camera: The BABYLON.Camera instance which the user views through
 param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
 */
 module.exports =  Class("WorldRenderer", {
-    'private SMELL_SPREAD': 30,
-    'private _smellMode': true,
+    'private SMELL_SPREAD': 100,
+    'private SMELL_RAD': 0.3,
+    'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
+    'private _smellMode': false,
     'private _scene': null,
     'private _sceneChunks': null,
     'private _smells': null,
@@ -9780,11 +9931,11 @@ module.exports =  Class("WorldRenderer", {
 
     param state: The new state to replace the state of the world.
     */
-    'public setWorldState': function (state) {
+    'public setWorldState': function (state, title) {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate)
+        this._worldState = WorldState(tstate, title)
         this._sceneChunks.reset()
     },
     'public getStateProp': function (key) {
@@ -9841,9 +9992,22 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'public renderSmell': function(cell) {
+    'private _computeSmell': function(cell) {
+        var proto = this._proto
+        function drop() {
+            if(cell.smell) {
+                if(cell.mesh.material)
+                    cell.mesh.material.dispose()
+                if(cell.mesh)
+                    cell.mesh.dispose()
+
+                cell.mesh = proto[cell.type].createInstance(cell.coords.x + " " + cell.coords.y)
+                cell.smell = false
+            }
+        }
+
         if(!this._smellMode){
-            cell.smell = false
+            drop()
             return false
         }
 
@@ -9851,48 +10015,55 @@ module.exports =  Class("WorldRenderer", {
         var color = {'r': 0, 'g': 0, 'b': 0}
         var worldcells = this._worldState.get("cells")
 
-        overlap = 1
+        var found
+        var i = 0
         for(var cl in worldcells){
             var ocell = worldcells[cl]
             var x0 = cell.coords.x - ocell.coords.x
             var y0 = cell.coords.y - ocell.coords.y
             var z0 = cell.elevation - ocell.elevation
-
+            found = false
             for(var ct in ocell.contents){
                 var cont = ocell.contents[ct]
-                var its = Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
-                if(its < 0.3)
+                var its = 0.75*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
+                if(its < this.SMELL_RAD)
                     continue
 
-                intensity += its
+                intensity = its
 
                 if(cont.type == "ACTOR") {
-                    color.r += 0.8
-                    color.g += 0.1
-                    color.b += 0.1
+                    color.r = 0.8
+                    color.g = 0.1
+                    color.b = 0.1
                 }
                 if(cont.type == "MUSH") {
-                    color.r += 0.1
-                    color.g += 0.1
-                    color.b += 0.1
+                    color.r = 0.1
+                    color.g = 0.1
+                    color.b = 0.1
                 }
                 if(cont.type == "PLANT") {
-                    color.r += 0.1
-                    color.g += 1.0
-                    color.b += 0.4
+                    color.r = 0.1
+                    color.g = 1.0
+                    color.b = 0.4
                 }
-                overlap++
+
+                console.log(i)
+                return {
+                  "intensity": intensity,
+                  "color": color
+                }
             }
+            i++
         }
 
-        intensity /= overlap
-        if(intensity < 0.3) {
-            cell.smell = false
-            return false
-        }
-        color.r /= overlap
-        color.g /= overlap
-        color.b /= overlap
+        drop()
+        return false
+    },
+    'private _renderSmell': function (cell, settings) {
+        var intensity = settings["intensity"]
+        var color = settings["color"]
+        var overlap = settings["overlap"]
+
 
         cell.mesh = this._proto[cell.type].clone(cell.coords.x + " " + cell.coords.y)
         cell.mesh.scaling.y = cell["elevation"]/2
@@ -9907,7 +10078,6 @@ module.exports =  Class("WorldRenderer", {
         cell.mesh.material.diffuseColor.g = intensity * color.g + (1 - intensity) * tcol.g
         cell.mesh.material.diffuseColor.b = intensity * color.b + (1 - intensity) * tcol.b
         cell.smell = true
-        return true
     },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
@@ -9946,17 +10116,23 @@ module.exports =  Class("WorldRenderer", {
                 }
 
                 cell = this._terrainGen(cellx, celly)
-
+                var shouldsmell = this._computeSmell(cell)
                 //If new cell is different, rerender.
                 if (cachemiss
+                    || this._worldState.isMarked(pcell.coords)
                     || pcell["type"] != cell["type"]
-                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100)
+                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100
+                    || (shouldsmell && !pcell.smell))
                 {
-                    var s = this.renderSmell(cell)
+                    if(pcell)
+                        this._worldState.unMark(pcell.coords)
 
-                    if(!s) {
+                    if(shouldsmell) {
+                        this._renderSmell(cell, shouldsmell)
+                    }
+                    else {
                         mesh = this._proto[cell["type"]]
-                                   .createInstance(cellx + " " + celly)
+                        .createInstance(cellx + " " + celly)
 
                         mesh.scaling.y = cell["elevation"]/2
 
@@ -9964,6 +10140,7 @@ module.exports =  Class("WorldRenderer", {
 
                         cell["mesh"] = mesh
                     }
+
 
                     if(cachemiss)
                         row.push(cell)

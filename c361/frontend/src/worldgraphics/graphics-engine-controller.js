@@ -11,7 +11,8 @@ change operations to the renderer to move the view through time.
 
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
-var TIMELINE_WINDOW = 1
+var TIMELINE_WINDOW = 30
+var NLOCK = false
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
@@ -28,8 +29,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
-    'private _low': 0,
-    'private _high': 0,
+
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
 
@@ -79,28 +79,56 @@ module.exports = Class("GraphicsEngineController", {
         ))
     },
     'public pauseSimulation': function () {
-//        if(this._updateLoop != null)
-//            clearInterval(this._updateLoop)
+        if(this._updateLoop != null)
+            clearInterval(this._updateLoop)
     },
     'public resumeSimulation': function () {
         var controller = this
-//        this._updateLoop = setInterval(function () {
-//            controller.nextFrame()
-//        }, 1000)
+        this._updateLoop = setInterval(function () {
+           controller.nextFrame()
+        }, 1000)
     },
     'public nextFrame': function(options) {
-        var controller = this
-        var first = controller._renderer.getStateProp("currentTurn") - TIMELINE_WINDOW + 1
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
         first = (first < 0) ? 0 : first
-        var last = controller._renderer.getStateProp("currentTurn") + TIMELINE_WINDOW + 1
-        console.log(first + " TO " + last)
-        controller._fetchTimeInterval(first, last)
+        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4))
+            this._fetchTimeInterval(first, last)
+
+        if( this._timeLine.cursor < this._timeLine.interval.length-1){
+            this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
+            this._renderer.updateView(this._camPos)
+        }
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
     'public prevFrame': function() {
-        var controller = this
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
+
+        if(last > 0) {
+            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4))
+                this._fetchTimeInterval(first, last)
+        }
+
+        if(this._timeLine.cursor && this._timeLine.cursor > 0) {
+            this._renderer.unpatch([this._timeLine.interval[--this._timeLine.cursor]])
+            this._renderer.updateView(this._camPos)
+        }
+
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["pre"]["current_turn"] + " " + this._timeLine.last)
     },
     'private _fetchTimeInterval': function(low, high, options) {
         low = (low < 0) ? 0 : low
+
+        if(low == this._timeLine.first && high == this._timeLine.last)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
         var controller = this
         $.ajax({
             type: "get",
@@ -108,10 +136,20 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function (data)
                 {
+                    if(NLOCK) return
+                    NLOCK = true
                     var diffs = data.map(function(e,i,a){return e["diff"]})
-                    controller._renderer.patch(diffs)
-                    controller._renderer.updateView(controller._camPos)
-                    console.log("PATCHED DIFFS")
+                    controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                    controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
+                    controller._timeLine.cursor = tnum.indexOf(cur_turn)
+                    if(controller._timeLine.cursor < 0)
+                        controller._timeLine.cursor = 0
+                    controller._timeLine.interval = diffs
+                    controller._timeLine.init = undefined
+
+                    console.log("Loaded timeline chunk")
+                    NLOCK = false
                 },
 
                 400: function (data)
@@ -119,7 +157,7 @@ module.exports = Class("GraphicsEngineController", {
                     if(options == undefined || options["retry"] == undefined) {
                         console.log(data)
                         console.log("RETRYING TIMELINE FETCH WITH CORRECTED INTERVAL.")
-                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"], {"retry": true})
+                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"]-1, {"retry": true})
                     }
                     else {
                        console.log("RETRY FAILED")
@@ -157,7 +195,8 @@ module.exports = Class("GraphicsEngineController", {
         this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
-        //this._setupKeys(scene)
+
+
         this._initializeButtons()
         this._initializeWindow()
         this.startSimulationEngine()
@@ -293,7 +332,7 @@ module.exports = Class("GraphicsEngineController", {
 
             $.ajax({
                 type: "get",
-                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._currentTurn,
+                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._renderer.getStateProp("currentTurn"),
                 success: function (data) {
                     console.log("Game paused.");
                     $("#pause-game-btn").addClass("disabled");
@@ -329,6 +368,19 @@ module.exports = Class("GraphicsEngineController", {
                 }
             });
         });
+
+        $("#advance-btn").click(
+            function () {
+                controller.nextFrame()
+
+            }
+        )
+
+        $("#reverse-btn").click(
+            function () {
+                controller.prevFrame()
+            }
+        )
     },
     'public loadGame': function (gametitle, gameid, spectate) {
         if (spectate === undefined) //Added optional param to set up as spectator -AP.
@@ -359,6 +411,14 @@ module.exports = Class("GraphicsEngineController", {
             });
         }
 
+        this._timeLine = {
+            "first": 0,
+            "last": 0,
+            "cursor": 0,
+            "interval": [],
+            "init": true
+        }
+
         $.ajax({
             type: "get",
             url: "/game/"+gameid+"/?full_dump=true",
@@ -366,16 +426,13 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function(data)
                 {
-                    renderer.setWorldState(data)
+                    renderer.setWorldState(data, gametitle)
                     renderer.updateView(cam)
 
-                    var first = data["current_turn"] - 2*TIMELINE_WINDOW
+                    var first = data["current_turn"] - Math.floor(TIMELINE_WINDOW/2)
                     first = (first < 0) ? 0 : first
-                    var last = data["current_turn"] + 2*TIMELINE_WINDOW
+                    var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-                    controller._timeLine = {
-                        "interval": []
-                    }
 
                     $.ajax({
                         type: "get",
@@ -386,34 +443,17 @@ module.exports = Class("GraphicsEngineController", {
                         }
                     });
 
+
                     controller._fetchTimeInterval(first, last)
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
 
-                    //Show game info.
-                    $("#loaded-game-info").html("<b>Game: </b>" + gametitle + "<br><b>Turn</b> " + renderer.getStateProp("currentTurn"))
+
                 }
             }
         })
-
-        $("#advance-btn").click(
-            function () {
-                $.ajax({
-                    type: "get",
-                    url: "/game/"+gameid+"/?light_dump=true",
-                    contentType:"application/json",
-                    statusCode: {
-                        200: function(data)
-                        {
-                            controller.nextFrame()
-                            renderer.updateView(cam)
-                        }
-                    }
-                })
-            }
-        )
         /*
         if(this._updateLoop != null)
             clearInterval(this._updateLoop)
@@ -447,8 +487,8 @@ module.exports = Class("GraphicsEngineController", {
             //this._renderer.smellFieldOn()
             this._renderer.updateView(this._camPos)
 
-            this._camPos = {x: 0, y: 0}
-
+            this._camPos.x = 0
+            this._camPos.y = 0
             this._renderEngine.runRenderLoop(function () {
                 this._renderer.renderWorld()
 
@@ -458,7 +498,8 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._camPos = {x: newx, y: newy}
+                    this._camPos.x = newx
+                    this._camPos.y = newy
                     this._renderer.updateView(this._camPos)
                 }
             }.bind(this))

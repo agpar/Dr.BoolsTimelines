@@ -13,8 +13,12 @@ module.exports = Class("WorldState", {
     'private _seedsize': null,
     'private _cells': null,
     'private _dump': null,
+    'private _marked': [],
+    'private _title': undefined,
 
-    __construct: function(json_dump) {
+    __construct: function(json_dump, title) {
+        this._title          = title
+        this._dump           = JSON.parse(JSON.stringify(json_dump))
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
         this._length         = json_dump["length"]
@@ -23,18 +27,25 @@ module.exports = Class("WorldState", {
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
         this._seedsize       = json_dump["seedsize"]
-        this._loadPatch(json_dump)
-    },
-    'private _loadPatch': function(json_dump){
         this._currentTurn    = json_dump["current_turn"]
         this._cells          = json_dump["cells"]
-        this._dump           = json_dump
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
+    },
+    'private _loadPatch': function(json_dump){
+        this._dump = JSON.parse(JSON.stringify(json_dump))
+        this._currentTurn    = json_dump["current_turn"]
+        this._cells          = json_dump["cells"]
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
     },
     'public get': function(key) {
         return this["_" + key]
     },
-    'private _patch_dicts': function(f_diff, t_diff, options) {
-        patched = f_diff
+    'private _patch_dicts': function(fr_diff, to_diff, options) {
+        var turn_difference = fr_diff["current_turn"] - to_diff["current_turn"]
+        var f_diff = JSON.parse(JSON.stringify(fr_diff))
+        if(turn_difference * turn_difference > 1) return f_diff
+        var patched = JSON.parse(JSON.stringify(f_diff))
+        var t_diff = JSON.parse(JSON.stringify(to_diff))
         for(var k in t_diff){
             if(f_diff[k] == undefined)
                 patched[k] = t_diff[k]
@@ -58,24 +69,37 @@ module.exports = Class("WorldState", {
             }
         }
 
-        if(options && options["reverse"] == true && options["celldict"] == true){
-            for(k in f_diff) {
-                if(t_diff[k] == undefined)
-                    patched[k] = undefined
+        if(t_diff["cells"] == undefined) {
+            for(var c in this._cells){
+                var cell = this._cells[c]
+                for(var ct in cell["contents"]){
+                    var cts = cell["contents"][ct]
+                    if(cts.mesh != undefined)
+                        cts.mesh.dispose()
+                }
+                this._cells[c]["contents"] = undefined
+                this._marked.push(c)
             }
         }
+        for(k in f_diff) {
+            if(k == "cells")
+              continue
+            if(t_diff[k] == undefined)
+                patched[k] = undefined
+        }
+
 
         return patched
     },
     'public patch': function (diffs, options) {
-        patch_diffs = []
+        var patch_diffs = []
         if (options && options["reverse"] == true) {
             for(var k in diffs)
-                patch_diffs.push(diffs[k]["pre"])
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["pre"])))
         }
         else {
             for(var k in diffs)
-                patch_diffs.push(diffs[k]["post"])
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["post"])))
         }
 
         var patchdct = function(f,t) {
@@ -86,8 +110,14 @@ module.exports = Class("WorldState", {
         }.bind(this)
 
         var patched = patch_diffs.reduce(patchdct, this._dump)
-  
-        this._loadPatch(patched)
+        for(var c in this._cells){
+            var cell = this._cells[c]
+            for(var ct in cell["contents"]){
+                var cts = cell["contents"][ct]
+                cts.mesh.dispose()
+            }
+        }
+        this._loadPatch(JSON.parse(JSON.stringify(patched)))
         return patched
     },
     'public unpatch': function (diffs) {
@@ -95,5 +125,12 @@ module.exports = Class("WorldState", {
     },
     'public setCells': function(cells) {
         this._cells = cells
+    },
+    'public isMarked': function(coord){
+        return this._marked.indexOf(coord.x + " " + coord.y) > -1
+    },
+    'public unMark': function(coord){
+        if(this.isMarked(coord))
+            this._marked.splice(this._marked.indexOf(coord.x + " " + coord.y), 1)
     }
 })
