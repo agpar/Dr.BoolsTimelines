@@ -11,3 +11,7 @@ def simulation(request):
     if not request.user.is_authenticated():
         return HttpResponseRedirect("/login")
     return render(request, 'simulation/simulation.html')
+
+@api_view(('GET',))
+def syntaxHelp(request):
+	return render(request, 'simulation/syntaxHelp.html')

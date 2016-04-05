@@ -571,6 +571,7 @@ $(document).on("loadview", function () {
     {
         var lines = [];
         lines.push("<b>Behaviour Script</b><br>");
+        lines.push("<a href='/syntaxHelp'>Syntax Help</a>");
         lines.push("<textarea class='actor-script-input' cols='50' id='new-actor-script'></textarea><br>");
         $mainmenu_content.append(lines.join(""));
         $("#new-actor-script").linedtextarea();
