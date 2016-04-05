@@ -173,9 +173,9 @@ class Actor(WorldInhabitant):
                 "to": self.hunger + 50
             }]
             
-    def attack(self):
+    def attack(self, direction):
 
-        x1,y1 = self.get_coord(self.direction)
+        x1,y1 = self.get_coord(direction)
 
         if self.gameInstance.check_actor((x1,y1)):
             actor = self.gameInstance.get_actor((x1,y1))
