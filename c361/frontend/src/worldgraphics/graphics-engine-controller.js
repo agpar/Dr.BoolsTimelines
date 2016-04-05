@@ -139,8 +139,10 @@ module.exports = Class("GraphicsEngineController", {
                     if(NLOCK) return
                     NLOCK = true
                     var diffs = data.map(function(e,i,a){return e["diff"]})
-                    controller._timeLine.first = diffs[0]["pre"]["current_turn"]
-                    controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    if(diffs.length > 0){
+                      controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                      controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    }
                     var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
                     if(controller._timeLine.cursor < 0)

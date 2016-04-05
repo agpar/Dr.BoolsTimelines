@@ -9000,8 +9000,10 @@ module.exports = Class("GraphicsEngineController", {
                     if(NLOCK) return
                     NLOCK = true
                     var diffs = data.map(function(e,i,a){return e["diff"]})
-                    controller._timeLine.first = diffs[0]["pre"]["current_turn"]
-                    controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    if(diffs.length > 0){
+                      controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                      controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    }
                     var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
                     if(controller._timeLine.cursor < 0)
@@ -9646,10 +9648,10 @@ param camera: The BABYLON.Camera instance which the user views through
 param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
 */
 module.exports =  Class("WorldRenderer", {
-    'private SMELL_SPREAD': 100,
+    'private SMELL_SPREAD': 30,
     'private SMELL_RAD': 0.3,
     'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
-    'private _smellMode': false,
+    'private _smellMode': true,
     'private _scene': null,
     'private _sceneChunks': null,
     'private _smells': null,
@@ -9937,6 +9939,7 @@ module.exports =  Class("WorldRenderer", {
             tstate["seed"] = this._worldState.get("seed")
         this._worldState = WorldState(tstate, title)
         this._sceneChunks.reset()
+        this._smellMode = false
     },
     'public getStateProp': function (key) {
         return this._worldState.get(key)
