@@ -51,11 +51,9 @@
                         <ul class="dropdown-menu" role="menu" id = "drop-menu">
                             <li><a href="#attack">Attack</a></li>
                             <li><a href="#drop">Drop</a></li>
-                            <li><a href="#direction">Direction</a></li>
                             <li><a href="#eat">Eat</a></li>
                             <li><a href="#flee">Flee</a></li>
                             <li><a href="#harvest">Harvest</a></li>
-                            <li><a href="#nearest">Nearest</a></li>
                             <li><a href="#pickup">Pickup</a></li>
                             <li><a href="#scavenge">Scavenge</a></li>
                             <li><a href="#sleep">Sleep</a></li>
@@ -63,15 +61,17 @@
                         </ul>
                     </li>
                     <li>
-                        <a href="#" data-toggle="dropdown" class="dropdown-toggle nav-dropdown ">Variables <span class="caret"></span></a>
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle nav-dropdown ">Functions/Variables <span class="caret"></span></a>
                         <ul class="dropdown-menu" role="menu" id = "drop-menu">
-                            <li><a href="#MY_DIRECTION">Direction</a></li>
-                            <li><a href="#HOLDING_FOOD">Food</a></li>
-                            <li><a href="#MY_HEALTH">Health</a></li>
-                            <li><a href="#MY_HUNGER">Hunger</a></li>
-                            <li><a href="#MY_LOCATION">Location</a></li>
-                            <li><a href="#SLEEPING">Sleep</a></li>
-                            <li><a href="#HOLDING_ROCK">Weapon</a></li>
+                            <li><a href="#direction">direction()</a></li>
+                            <li><a href="#nearest">nearest()</a></li>
+                            <li><a href="#MY_DIRECTION">MY_DIRECTION</a></li>
+                            <li><a href="#MY_HEALTH">MY_HEALTH</a></li>
+                            <li><a href="#MY_HUNGER">MY_HUNGER</a></li>
+                            <li><a href="#MY_LOCATION">MY_LOCATION</a></li>
+                            <li><a href="#SLEEPING">SLEEPING</a></li>
+                            <li><a href="#HOLDING_FOOD">HOLDING_FOOD</a></li>
+                            <li><a href="#HOLDING_ROCK">HOLDING_ROCK</a></li>
                         </ul>
                     </li>
         		</ul>
@@ -191,14 +191,6 @@
               drop();
             </xmp>
       		</div>
-      		<div class "actionWords" id="direction">
-        		<h3>Direction</h3>
-        		<p>Returns a list of directions to a specific coordinate. Accepts a tuple. Example calls: direction(nearest(WATER)), or direction (0 , 5). The first example will give you a list of directions to the nearest water element. The second will give you a list of directions to location (0,5) on the map.</p>
-            Example usage (combined):
-            <xmp>
-              walk(direction(nearest(PLANT)));
-            </xmp>
-      		</div>
       		<div class "actionWords" id="eat">
         		<h3>Eat</h3>
         		<p>If you are currently holding food, actor will eat, and thus regenerate health.</p>
@@ -232,18 +224,6 @@
             <xmp>
               harvest();
             </xmp>
-      		</div>
-      		<div class "actionWords" id="nearest">
-        		<h3>Nearest</h3>
-        		<p>Returns the coordinate of the nearest cell with the specified attribute.</p>
-            Example usage in conditional and resulting action
-            <xmp>
-              if nearest(WATER) == MY_LOCATION;
-            </xmp>
-            <xmp>
-              walk(direction(nearest(DANGER)));
-            </xmp>
-      		</div>
       		<div  class "actionWords" id="pickup">
         		<h3>Pickup</h3>
         		<p> Attempt to pickup an object in the direction that you are facing. If no object is present nothing happens</p>
@@ -288,6 +268,30 @@
         		<h1>Actor Information</h1>
         		<p>The following words are available to obtain characteristics of the current actor. They are useful to use as the 'conditionals' in your script. For example: 'if MY_HEALTH > 50'. The examples given will show their potential usage in conditionals and various situations </p>
       		</div>
+
+            <div class "actionWord"  id="direction">
+            <h3>direction</h3>
+            <p>Returns a list of directions to a specific coordinate. Accepts a tuple. Example calls: direction(nearest(WATER)), or direction (0 , 5). The first example will give you a list of directions to the nearest water element. The second will give you a list of directions to location (0,5) on the map.</p>
+            Example usage (combined):
+            <xmp>
+                direction(1,0) := [NORTH]
+                direction(nearest(FOOD)) := [NORTH, WEST]
+            </xmp>
+            </div>
+
+            </div>
+            <div class "actionWords" id="nearest">
+            <h3>nearest()</h3>
+            <p>Returns the coordinate of the nearest cell with the specified attribute.</p>
+            Example usage in conditional and resulting action
+            <xmp>
+                if nearest(WATER) == MY_LOCATION;
+            </xmp>
+            <xmp>
+                walk(direction(nearest(DANGER)));
+            </xmp>
+            </div>
+
       		<div id="MY_DIRECTION">
         		<h3>MY_DIRECTION</h3>
         		<p>Gives the direction that the current actor is facing. </p>
