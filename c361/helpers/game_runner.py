@@ -140,6 +140,9 @@ class GameRunner(pykka.ThreadingActor):
 
         self.game_object.current_turn = turn_number
         turns.delete()
+        last_turn = self.get_last_turn()
+        last_turn.diff = self.game_object.to_dict(False)
+        last_turn.save()
         self.dump_to_db()
 
         return {"result": "Rewound to turn {}.".format(turn_number)}
@@ -183,12 +186,9 @@ class GameRunner(pykka.ThreadingActor):
         if not self.is_paused:
             return {"error": "Running game must be paused to modify."}
 
-        last_turn = self.get_last_turn()
         self.is_modified = True
-        self.game_object.world.patch(diff_list)
-        last_diff = last_turn.diff.update(diff_list)
-        last_turn.diff = last_diff
-        last_turn.save()
+        for diff in diff_list:
+            self.game_object.world.patch_dicts(diff['pre'], diff['post'])
 
     def remove_actor(self, actor_model):
         if not self.is_paused:
