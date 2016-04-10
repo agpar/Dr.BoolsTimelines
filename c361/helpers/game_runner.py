@@ -140,10 +140,12 @@ class GameRunner(pykka.ThreadingActor):
 
         self.game_object.current_turn = turn_number
         turns.delete()
+        last_turn = self.get_last_turn()
+        last_turn.diff = self.game_object.to_dict(False)
+        last_turn.save()
         self.dump_to_db()
 
         return {"result": "Rewound to turn {}.".format(turn_number)}
-
 
     def add_actor(self, actor_model):
         """Adds an actor to a running game.
@@ -154,11 +156,8 @@ class GameRunner(pykka.ThreadingActor):
         if not self.is_paused:
             return {"error": "Running game must be paused to modify."}
 
-        # Find the la
-        if self.pause_turn != 0:
-            lastTurn = self.game_model.turns.get(number=self.pause_turn)
-        else:
-            lastTurn = TurnModel(game=self.game_model, number=0)
+        # Find the latest turn.
+        last_turn = self.get_last_turn()
 
         self.game_object.add_actor(Actor(model=actor_model))
         act = self.game_object.get_actor(str(actor_model.uuid))
@@ -171,16 +170,40 @@ class GameRunner(pykka.ThreadingActor):
             "to": None
         }
 
-        turn_deltas = lastTurn.delta_dump if lastTurn.delta_dump else []
+        turn_deltas = last_turn.delta_dump if last_turn.delta_dump else []
         turn_deltas.append(d)
-        lastTurn.delta_dump = turn_deltas
-        lastTurn.save()
+        last_turn.delta_dump = turn_deltas
+        last_turn.save()
         self.is_modified = True
         return {"result": "Added actor to paused game at turn {}".format(self.pause_turn)}
 
+    def edit_world(self, diff_list):
+        """For patching in edits to the world while the game is paused and running.
+
+        :param diff_list: A list of dicts containing diffs in the world.
+        """
+        # Return error if not paused.
+        if not self.is_paused:
+            return {"error": "Running game must be paused to modify."}
+
+        self.is_modified = True
+        for diff in diff_list:
+            self.game_object.world.patch_dicts(diff['pre'], diff['post'])
+
     def remove_actor(self, actor_model):
+        if not self.is_paused:
+            return {"error": "Running game must be paused to modify."}
         self.game_object.remove_actor(str(actor_model.uuid))
 
-
+    def get_last_turn(self):
+        """Find the latest turn in the database."""
+        if self.is_paused:
+            if self.pause_turn != 0:
+                lastTurn = self.game_model.turns.get(number=self.pause_turn)
+            else:
+                lastTurn = TurnModel(game=self.game_model, number=0)
+        else:
+            lastTurn = self.game_model.turns.objects.last()
+        return lastTurn
 
 

@@ -138,4 +138,8 @@ class GameDetail(BaseDetailView):
 
                 act.delete()
 
+        if changes['type'] == 'diff':
+            future = game_proxy.edit_world(changes['diff'])
+            future.get()
+
         return Response(status=HTTP_202_ACCEPTED)
