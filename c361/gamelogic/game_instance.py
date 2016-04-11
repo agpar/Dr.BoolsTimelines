@@ -50,6 +50,7 @@ class GameInstance(CoordParseMixin):
                 self.world = WorldState(json_dump=seed)
             else:
                 self.world = WorldState(current_turn=self.current_turn)
+                self.world.current_turn = model.current_turn
 
             self.current_turn = model.current_turn
 
@@ -67,6 +68,10 @@ class GameInstance(CoordParseMixin):
     @property
     def is_night(self):
         return (self.current_turn / 12) % 2 == 0
+
+    def set_turn(self, num):
+        self.current_turn = num
+        self.world.current_turn = num
 
     def add_actor(self, a, xy=None):
         """Add an Actor to the GameInstance.
@@ -307,7 +312,6 @@ class GameInstance(CoordParseMixin):
                 })
         return effects
 
-
     def do_turn(self, up_to=0):
         """High level function for returning a list of turns in this game."""
         all_turns = []
@@ -360,6 +364,7 @@ class GameInstance(CoordParseMixin):
 
     def to_dict(self, withseed=True):
         d = self.world.to_dict(withseed=withseed)
+        d['current_turn'] = self.current_turn
         return d
 
     def _coord_neighbors(self, xy):

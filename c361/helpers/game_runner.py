@@ -138,7 +138,9 @@ class GameRunner(pykka.ThreadingActor):
         for turn in reversed(turns):
             self.game_object.apply_deltas(reversed(turn.delta_dump), reverse=True)
 
-        self.game_object.current_turn = turn_number
+        self.game_object.set_turn(turn_number)
+        self.game_model.current_turn = turn_number
+        turns = self.game_model.turns.filter(number__gt=turn_number)
         turns.delete()
         last_turn = self.get_last_turn()
         last_turn.diff = self.game_object.to_dict(False)
@@ -203,7 +205,7 @@ class GameRunner(pykka.ThreadingActor):
             else:
                 lastTurn = TurnModel(game=self.game_model, number=0)
         else:
-            lastTurn = self.game_model.turns.objects.last()
+            lastTurn = self.game_model.turns.last()
         return lastTurn
 
 
