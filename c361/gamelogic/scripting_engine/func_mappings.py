@@ -232,22 +232,25 @@ def scavenge_fn(actor, attr):
         walk_fn(actor, random.shuffle(dirs))
     elif actor.can_reach(nearest):
         return harvest_fn(actor, actor.direction(nearest))
-    else:
+    else: 
         return actor.walk(actor.direction(nearest_fn(actor, attr)))
 
 
 
 
-def flee_fn(actor):
-    """ Move away from the nearest "deadly"
-    by going in the opposite direction of path to deadly
+def flee_fn(actor,direction):
+    """ Move away from the nearest "deadly" or any other attribute
+    by going in the opposite direction of path to that attribute
+
+    :param actor: An actor to flee
+    :param direction: a list of directions
     """
 
-    [direction] = (direction_fn(nearest_fn("DEADLY")));
+    direction = to_list(direction);
 
     for dir in direction:
         if actor.can_walk(actor.get_oppCoord(dir)):
-            return actor.walk(actor.get_oppCoord(dir))
+            return actor.flee(dir)
 
 
 def attack_fn(actor, direction):

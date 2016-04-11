@@ -227,13 +227,13 @@
       		</div>
       		<div class "actionWords" id="flee">
         		<h3>Flee</h3>
-        		<p>Action performs the opposite of a list of directions to something. </p>
+        		<p>Action performs the opposite of a list of directions to something. Here we combine two previous actions to perform the flee. Flee takes a list of directions as an argument, obtained from 'direction(nearest(ATTRIBUTE)), and tells the actor to do the opposite of the directions to that attribute.</p>
             Example usage:
             <xmp>
               if nearest(DANGER) == mylocation
               then
                 do
-                 flee();
+                 flee(direction(nearest(DANGER)));
                 done
               endif            
             </xmp>

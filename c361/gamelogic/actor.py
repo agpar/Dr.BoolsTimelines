@@ -173,6 +173,11 @@ class Actor(WorldInhabitant):
                 "to": self.hunger + 50
             }]
             
+    def flee(self, direction):
+        new_dir = self.get_oppCoord(direction)
+
+        return self.walk(new_dir)
+            
     def attack(self, direction):
 
         x1,y1 = self.get_coord(direction)
