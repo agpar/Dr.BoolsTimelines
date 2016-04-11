@@ -8950,22 +8950,27 @@ module.exports = Class("GraphicsEngineController", {
         }, 1000)
     },
     'public nextFrame': function(options) {
+        var controller = this
         if(this._timeLine.init)
             return
         var cur_turn = this._renderer.getStateProp("currentTurn")
         var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
         var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
         first = (first < 0) ? 0 : first
-        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4))
-            this._fetchTimeInterval(first, last)
-
+        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4)) {
+          if(options && options.cbmode)
+              this._fetchTimeInterval(first, last)
+          else
+              this._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
+        }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
             this._renderer.updateView(this._camPos)
         }
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
-    'public prevFrame': function() {
+    'public prevFrame': function(options) {
+        var controller = this
         if(this._timeLine.init)
             return
         var cur_turn = this._renderer.getStateProp("currentTurn")
@@ -8973,8 +8978,12 @@ module.exports = Class("GraphicsEngineController", {
         var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
 
         if(last > 0) {
-            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4))
-                this._fetchTimeInterval(first, last)
+            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4)) {
+                if(options && options.cbmode)
+                    this._fetchTimeInterval(first, last)
+                else
+                    this._fetchTimeInterval(first, last, {'cb': controller.prevFrame.bind(controller)})
+            }
         }
 
         if(this._timeLine.cursor && this._timeLine.cursor > 0) {
@@ -9000,17 +9009,18 @@ module.exports = Class("GraphicsEngineController", {
                     if(NLOCK) return
                     NLOCK = true
                     var diffs = data.map(function(e,i,a){return e["diff"]})
-                    if(diffs.length > 0){
-                      controller._timeLine.first = diffs[0]["pre"]["current_turn"]
-                      controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    if(diffs.length > 0) {
+                        controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                        controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
                     }
                     var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
-                    if(controller._timeLine.cursor < 0)
+                    if (controller._timeLine.cursor < 0)
                         controller._timeLine.cursor = 0
                     controller._timeLine.interval = diffs
                     controller._timeLine.init = undefined
-
+                    if(options && options.cb)
+                        options.cb({'cbmode': true})
                     console.log("Loaded timeline chunk")
                     NLOCK = false
                 },
@@ -9307,7 +9317,7 @@ module.exports = Class("GraphicsEngineController", {
                     });
 
 
-                    controller._fetchTimeInterval(first, last)
+                    controller._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
@@ -9492,7 +9502,6 @@ module.exports = Class("WorldCell", {
 },{"./cell-content":36,"easejs":1}],38:[function(require,module,exports){
 var Class = require("easejs").Class
 var WorldCell = require("./world-cell")
-
 module.exports = Class("WorldState", {
     'private _currentTurn': null,
     'private _standardHeight': null,
@@ -9507,9 +9516,11 @@ module.exports = Class("WorldState", {
     'private _dump': null,
     'private _marked': [],
     'private _title': undefined,
+    'private _updatechunk': null,
 
-    __construct: function(json_dump, title) {
+    __construct: function(json_dump, title, update_chunk_hook) {
         this._title          = title
+        this._updatechunk    = update_chunk_hook
         this._dump           = JSON.parse(JSON.stringify(json_dump))
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
@@ -9538,9 +9549,13 @@ module.exports = Class("WorldState", {
         if(turn_difference * turn_difference > 1) return f_diff
         var patched = JSON.parse(JSON.stringify(f_diff))
         var t_diff = JSON.parse(JSON.stringify(to_diff))
-        for(var k in t_diff){
-            if(f_diff[k] == undefined)
+
+
+
+        for(var k in t_diff) {
+            if(f_diff[k] == undefined){
                 patched[k] = t_diff[k]
+            }
             else if (f_diff[k] !== null
                      && typeof f_diff[k] === 'object'
                      && t_diff[k] !== null
@@ -9561,25 +9576,26 @@ module.exports = Class("WorldState", {
             }
         }
 
-        if(t_diff["cells"] == undefined) {
-            for(var c in this._cells){
-                var cell = this._cells[c]
-                for(var ct in cell["contents"]){
-                    var cts = cell["contents"][ct]
-                    if(cts.mesh != undefined)
-                        cts.mesh.dispose()
-                }
-                this._cells[c]["contents"] = undefined
-                this._marked.push(c)
-            }
-        }
         for(k in f_diff) {
             if(k == "cells")
-              continue
-            if(t_diff[k] == undefined)
-                patched[k] = undefined
-        }
+                continue
 
+            if(t_diff[k] == undefined) {
+                var cell = this._cells[k]
+                if(cell && cell.contents) {
+                    for(cont in cell.contents){
+                        var ct = cell.contents[cont]
+                        if(ct.mesh != undefined){
+                            ct.mesh.dispose()
+                        }
+                    }
+
+                  if(cell.mesh != undefined)
+                      cell.mesh.dispose()
+                }
+                patched[k] = undefined
+            }
+        }
 
         return patched
     },
@@ -9602,14 +9618,28 @@ module.exports = Class("WorldState", {
         }.bind(this)
 
         var patched = patch_diffs.reduce(patchdct, this._dump)
-        for(var c in this._cells){
-            var cell = this._cells[c]
-            for(var ct in cell["contents"]){
-                var cts = cell["contents"][ct]
-                cts.mesh.dispose()
+
+        for(c in patched["cells"])
+            this._marked.push(c)
+        for(c in this._cells)
+            this._marked.push(c)
+
+        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+        var chunks = {}
+        for(c in this._marked) {
+            var s = this._marked[c].split(" ")
+            var sp = {
+              'x': Math.floor(Number(s[0])/this._chunkSize),
+              'y': Math.floor(Number(s[1])/this._chunkSize)
+            }
+            var clab = sp.x + " " + sp.y
+            if(!chunks[clab]) {
+                chunks[clab] = true
+                this._updatechunk(sp.x, sp.y, true)
             }
         }
-        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+        this._marked = []
+
         return patched
     },
     'public unpatch': function (diffs) {
@@ -9651,7 +9681,7 @@ module.exports =  Class("WorldRenderer", {
     'private SMELL_SPREAD': 30,
     'private SMELL_RAD': 0.3,
     'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
-    'private _smellMode': true,
+    'private _smellMode': false,
     'private _scene': null,
     'private _sceneChunks': null,
     'private _smells': null,
@@ -9712,10 +9742,6 @@ module.exports =  Class("WorldRenderer", {
                             if(cont.mesh != undefined)
                                 cont.mesh.dispose()
                         }
-
-                        if(cell.smell)
-                            cell.mesh.material.dispose()
-
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
 
@@ -9937,9 +9963,8 @@ module.exports =  Class("WorldRenderer", {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate, title)
+        this._worldState = WorldState(tstate, title, this.updateChunk.bind(this))
         this._sceneChunks.reset()
-        this._smellMode = false
     },
     'public getStateProp': function (key) {
         return this._worldState.get(key)
@@ -9995,93 +10020,6 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'private _computeSmell': function(cell) {
-        var proto = this._proto
-        function drop() {
-            if(cell.smell) {
-                if(cell.mesh.material)
-                    cell.mesh.material.dispose()
-                if(cell.mesh)
-                    cell.mesh.dispose()
-
-                cell.mesh = proto[cell.type].createInstance(cell.coords.x + " " + cell.coords.y)
-                cell.smell = false
-            }
-        }
-
-        if(!this._smellMode){
-            drop()
-            return false
-        }
-
-        var intensity = 0
-        var color = {'r': 0, 'g': 0, 'b': 0}
-        var worldcells = this._worldState.get("cells")
-
-        var found
-        var i = 0
-        for(var cl in worldcells){
-            var ocell = worldcells[cl]
-            var x0 = cell.coords.x - ocell.coords.x
-            var y0 = cell.coords.y - ocell.coords.y
-            var z0 = cell.elevation - ocell.elevation
-            found = false
-            for(var ct in ocell.contents){
-                var cont = ocell.contents[ct]
-                var its = 0.75*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
-                if(its < this.SMELL_RAD)
-                    continue
-
-                intensity = its
-
-                if(cont.type == "ACTOR") {
-                    color.r = 0.8
-                    color.g = 0.1
-                    color.b = 0.1
-                }
-                if(cont.type == "MUSH") {
-                    color.r = 0.1
-                    color.g = 0.1
-                    color.b = 0.1
-                }
-                if(cont.type == "PLANT") {
-                    color.r = 0.1
-                    color.g = 1.0
-                    color.b = 0.4
-                }
-
-                console.log(i)
-                return {
-                  "intensity": intensity,
-                  "color": color
-                }
-            }
-            i++
-        }
-
-        drop()
-        return false
-    },
-    'private _renderSmell': function (cell, settings) {
-        var intensity = settings["intensity"]
-        var color = settings["color"]
-        var overlap = settings["overlap"]
-
-
-        cell.mesh = this._proto[cell.type].clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.scaling.y = cell["elevation"]/2
-        cell.mesh.position = new BABYLON.Vector3(cell.coords.x, cell["elevation"]/4, cell.coords.y)
-
-        cell.mesh.material = cell.mesh.material.clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.material.specularColor = new BABYLON.Color3(0,0,0)
-
-        var tcol = this._proto[cell.type].material.diffuseColor
-
-        cell.mesh.material.diffuseColor.r = intensity * color.r + (1 - intensity) * tcol.r
-        cell.mesh.material.diffuseColor.g = intensity * color.g + (1 - intensity) * tcol.g
-        cell.mesh.material.diffuseColor.b = intensity * color.b + (1 - intensity) * tcol.b
-        cell.smell = true
-    },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
     or otherwise generating it formulaically.
@@ -10090,7 +10028,7 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of chunk
     param force: Force update the chunk even if it's already loaded.
     */
-    'public updateChunk': function (x,y) {
+    'public updateChunk': function (x,y, force) {
         //Make sure to round key into chunk grid coordinates
         var chunksize = this._worldState.get("chunkSize")
         var chunk_x = Math.floor(x/chunksize)
@@ -10099,76 +10037,41 @@ module.exports =  Class("WorldRenderer", {
         var cellx = chunk_x*chunksize
         var celly = chunk_y*chunksize
 
-        var chunk
-        var pcell, cell, mesh, smell
+        var cell, mesh, smell, row
+        var chunk = []
 
-        chunk = this._sceneChunks.get(chunk_x + " " + chunk_y)
-        cachemiss = chunk == undefined
-        if(cachemiss)
-            chunk = []
+        if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y))
+            return
+
 
         for (var i = 0; i < chunksize; i++) {
-            var row
-            if(cachemiss)
-                row = []
+            row = []
             for (var j = 0; j < chunksize; j++) {
-                if(!cachemiss) {
-                    pcell = chunk[i][j]
-                    for(k in pcell.contents)
-                        pcell.contents[k]["mesh"].dispose()
-                }
-
                 cell = this._terrainGen(cellx, celly)
-                var shouldsmell = this._computeSmell(cell)
-                //If new cell is different, rerender.
-                if (cachemiss
-                    || this._worldState.isMarked(pcell.coords)
-                    || pcell["type"] != cell["type"]
-                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100
-                    || (shouldsmell && !pcell.smell))
-                {
-                    if(pcell)
-                        this._worldState.unMark(pcell.coords)
+                mesh = this._proto[cell["type"]]
+                          .createInstance(cellx + " " + celly)
 
-                    if(shouldsmell) {
-                        this._renderSmell(cell, shouldsmell)
-                    }
-                    else {
-                        mesh = this._proto[cell["type"]]
-                        .createInstance(cellx + " " + celly)
+                mesh.scaling.y = cell["elevation"]/2
 
-                        mesh.scaling.y = cell["elevation"]/2
+                mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
 
-                        mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
+                cell["mesh"] = mesh
 
-                        cell["mesh"] = mesh
-                    }
-
-
-                    if(cachemiss)
-                        row.push(cell)
-                    pcell = cell
-                }
-                else {
-                    pcell.contents = cell.contents
-                }
-
-                for(k in pcell.contents) {
-                    var cont = pcell.contents[k]
+                for(k in cell.contents) {
+                    var cont = cell.contents[k]
                     cont.mesh = this._proto[cont["type"]]
                                     .createInstance(cellx + " " + celly + " " + cont["type"])
-                    cont.mesh.position = new BABYLON.Vector3(cellx, pcell["elevation"]/2, celly)
+                    cont.mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/2, celly)
                     cont.mesh.isPickable = false;
                 }
+                row.push(cell)
                 cellx++
             }
-            if(cachemiss)
-                chunk.push(row)
+            chunk.push(row)
             cellx = chunk_x*chunksize
             celly++
         }
-        if(cachemiss)
-            this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
     }
 })
 

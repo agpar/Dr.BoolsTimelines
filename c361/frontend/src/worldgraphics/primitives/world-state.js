@@ -1,6 +1,5 @@
 var Class = require("easejs").Class
 var WorldCell = require("./world-cell")
-
 module.exports = Class("WorldState", {
     'private _currentTurn': null,
     'private _standardHeight': null,
@@ -15,9 +14,11 @@ module.exports = Class("WorldState", {
     'private _dump': null,
     'private _marked': [],
     'private _title': undefined,
+    'private _updatechunk': null,
 
-    __construct: function(json_dump, title) {
+    __construct: function(json_dump, title, update_chunk_hook) {
         this._title          = title
+        this._updatechunk    = update_chunk_hook
         this._dump           = JSON.parse(JSON.stringify(json_dump))
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
@@ -46,9 +47,13 @@ module.exports = Class("WorldState", {
         if(turn_difference * turn_difference > 1) return f_diff
         var patched = JSON.parse(JSON.stringify(f_diff))
         var t_diff = JSON.parse(JSON.stringify(to_diff))
-        for(var k in t_diff){
-            if(f_diff[k] == undefined)
+
+
+
+        for(var k in t_diff) {
+            if(f_diff[k] == undefined){
                 patched[k] = t_diff[k]
+            }
             else if (f_diff[k] !== null
                      && typeof f_diff[k] === 'object'
                      && t_diff[k] !== null
@@ -69,25 +74,26 @@ module.exports = Class("WorldState", {
             }
         }
 
-        if(t_diff["cells"] == undefined) {
-            for(var c in this._cells){
-                var cell = this._cells[c]
-                for(var ct in cell["contents"]){
-                    var cts = cell["contents"][ct]
-                    if(cts.mesh != undefined)
-                        cts.mesh.dispose()
-                }
-                this._cells[c]["contents"] = undefined
-                this._marked.push(c)
-            }
-        }
         for(k in f_diff) {
             if(k == "cells")
-              continue
-            if(t_diff[k] == undefined)
-                patched[k] = undefined
-        }
+                continue
 
+            if(t_diff[k] == undefined) {
+                var cell = this._cells[k]
+                if(cell && cell.contents) {
+                    for(cont in cell.contents){
+                        var ct = cell.contents[cont]
+                        if(ct.mesh != undefined){
+                            ct.mesh.dispose()
+                        }
+                    }
+
+                  if(cell.mesh != undefined)
+                      cell.mesh.dispose()
+                }
+                patched[k] = undefined
+            }
+        }
 
         return patched
     },
@@ -110,14 +116,28 @@ module.exports = Class("WorldState", {
         }.bind(this)
 
         var patched = patch_diffs.reduce(patchdct, this._dump)
-        for(var c in this._cells){
-            var cell = this._cells[c]
-            for(var ct in cell["contents"]){
-                var cts = cell["contents"][ct]
-                cts.mesh.dispose()
+
+        for(c in patched["cells"])
+            this._marked.push(c)
+        for(c in this._cells)
+            this._marked.push(c)
+
+        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+        var chunks = {}
+        for(c in this._marked) {
+            var s = this._marked[c].split(" ")
+            var sp = {
+              'x': Math.floor(Number(s[0])/this._chunkSize),
+              'y': Math.floor(Number(s[1])/this._chunkSize)
+            }
+            var clab = sp.x + " " + sp.y
+            if(!chunks[clab]) {
+                chunks[clab] = true
+                this._updatechunk(sp.x, sp.y, true)
             }
         }
-        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+        this._marked = []
+
         return patched
     },
     'public unpatch': function (diffs) {
