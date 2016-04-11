@@ -143,7 +143,7 @@ module.exports = Class("GraphicsEngineController", {
                       controller._timeLine.first = diffs[0]["pre"]["current_turn"]
                       controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
                     }
-                    var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
+                    var tnum = diffs.map(function(e,i,a){console.log(e); return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
                     if(controller._timeLine.cursor < 0)
                         controller._timeLine.cursor = 0
@@ -435,7 +435,6 @@ module.exports = Class("GraphicsEngineController", {
                     first = (first < 0) ? 0 : first
                     var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-
                     $.ajax({
                         type: "get",
                         url: "/game/" + controller._gameID + "/?resume=true",
@@ -451,8 +450,6 @@ module.exports = Class("GraphicsEngineController", {
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-
                 }
             }
         })

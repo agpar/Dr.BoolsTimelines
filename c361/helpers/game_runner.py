@@ -102,9 +102,12 @@ class GameRunner(pykka.ThreadingActor):
         """Return dump of running game without seed."""
         return self.game_object.to_dict(withseed=False)
 
-    def dump_to_db(self):
+    def dump_to_db(self, withseed=False):
         """Dump all information about actors and games to the database."""
-        cells = self.game_object.to_dict(withseed=False)['cells']
+        game_dump = self.game_object.to_dict(withseed=withseed)
+        cells = game_dump['cells']
+        if withseed:
+            self.game_model.seed = json.dumps(game_dump)
         self.game_model.cells = json.dumps(cells)
         self.game_model.current_turn = self.game_object.current_turn
         self.game_model.save()
@@ -126,7 +129,7 @@ class GameRunner(pykka.ThreadingActor):
     def stop(self):
         """Stops and dumps all new information to the database."""
         cache.delete(str(self.game_uuid))
-        self.dump_to_db()
+        self.dump_to_db(withseed=True)
         super().stop()
 
     def rewind_to(self, turn_number):
@@ -140,12 +143,8 @@ class GameRunner(pykka.ThreadingActor):
 
         self.game_object.set_turn(turn_number)
         self.game_model.current_turn = turn_number
-        turns = self.game_model.turns.filter(number__gt=turn_number)
         turns.delete()
-        last_turn = self.get_last_turn()
-        last_turn.diff = self.game_object.to_dict(False)
-        last_turn.save()
-        self.dump_to_db()
+        self.dump_to_db(withseed=True)
 
         return {"result": "Rewound to turn {}.".format(turn_number)}
 
