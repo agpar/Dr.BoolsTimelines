@@ -179,23 +179,23 @@ class Actor(WorldInhabitant):
         return self.walk(new_dir)
             
     def attack(self, direction):
-
-        x1,y1 = self.get_coord(direction)
-
-        if self.gameInstance.check_actor((x1,y1)):
-            actor = self.gameInstance.get_actor((x1,y1))
-            print(actor.uuid)
-            return {
-                "type": "actorDelta",
-                "coords": {'x': x1, 'y': y1},
-                "actorID": actor.uuid,
-                "varTarget": "health",
-                "from": actor.health,
-                "to": actor.health - 10
-            }
+        for dir in direction:
+            coords = self.get_coord(dir)
+        actor = self.gameInstance.get_actor(coords)
+        x,y = actor._coords
+        return {
+            "type": "actorDelta",
+            "coords": {'x': x, 'y': y},
+            "actorID": actor.uuid,
+            "varTarget": "health",
+            "from": actor.health,
+            "to": actor.health - 10
+        }
 
     def walk(self, direction):
         """Return a delta for walking in direction."""
+        print (direction)
+        print(self.north())
         return {
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
