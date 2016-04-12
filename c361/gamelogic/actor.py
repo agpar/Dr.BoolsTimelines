@@ -179,8 +179,7 @@ class Actor(WorldInhabitant):
         return self.walk(new_dir)
             
     def attack(self, direction):
-        for dir in direction:
-            coords = self.get_coord(dir)
+        coords = self.get_coord(direction)
         actor = self.gameInstance.get_actor(coords)
         x,y = actor._coords
         return {
