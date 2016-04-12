@@ -16,7 +16,7 @@ class WorldState(CoordParseMixin):
 
     def __init__(self, size=(1000,1000), json_dump=None, current_turn=0, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         if json_dump is not None:
-            self.current_turn = json_dump["current_turn"]
+            self.current_turn = current_turn
             self._size = (json_dump["width"], json_dump["length"])
             self._chunk_size = json_dump["chunkSize"]
             self._water_threshold = json_dump["waterThreshold"]

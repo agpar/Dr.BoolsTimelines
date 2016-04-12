@@ -445,7 +445,6 @@ module.exports = Class("GraphicsEngineController", {
                     first = (first < 0) ? 0 : first
                     var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-
                     $.ajax({
                         type: "get",
                         url: "/game/" + controller._gameID + "/?resume=true",
@@ -461,8 +460,6 @@ module.exports = Class("GraphicsEngineController", {
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-
                 }
             }
         })

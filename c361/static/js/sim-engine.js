@@ -9306,7 +9306,6 @@ module.exports = Class("GraphicsEngineController", {
                     first = (first < 0) ? 0 : first
                     var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-
                     $.ajax({
                         type: "get",
                         url: "/game/" + controller._gameID + "/?resume=true",
@@ -9322,8 +9321,6 @@ module.exports = Class("GraphicsEngineController", {
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-
                 }
             }
         })
@@ -9535,6 +9532,7 @@ module.exports = Class("WorldState", {
         $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
     },
     'private _loadPatch': function(json_dump){
+        console.log(json_dump)
         this._dump = JSON.parse(JSON.stringify(json_dump))
         this._currentTurn    = json_dump["current_turn"]
         this._cells          = json_dump["cells"]
@@ -9581,18 +9579,18 @@ module.exports = Class("WorldState", {
                 continue
 
             if(t_diff[k] == undefined) {
-                var cell = this._cells[k]
-                if(cell && cell.contents) {
-                    for(cont in cell.contents){
-                        var ct = cell.contents[cont]
-                        if(ct.mesh != undefined){
-                            ct.mesh.dispose()
-                        }
-                    }
-
-                  if(cell.mesh != undefined)
-                      cell.mesh.dispose()
-                }
+                // var cell = this._cells[k]
+                // if(cell && cell.contents) {
+                //     for(cont in cell.contents){
+                //         var ct = cell.contents[cont]
+                //         if(ct.mesh != undefined){
+                //             ct.mesh.dispose()
+                //         }
+                //     }
+                //
+                //   if(cell.mesh != undefined)
+                //       cell.mesh.dispose()
+                // }
                 patched[k] = undefined
             }
         }
@@ -10047,7 +10045,7 @@ module.exports =  Class("WorldRenderer", {
         for (var i = 0; i < chunksize; i++) {
             row = []
             for (var j = 0; j < chunksize; j++) {
-                cell = this._terrainGen(cellx, celly)
+                cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
                 mesh = this._proto[cell["type"]]
                           .createInstance(cellx + " " + celly)
 

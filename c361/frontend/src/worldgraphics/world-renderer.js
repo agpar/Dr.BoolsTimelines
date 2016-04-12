@@ -387,7 +387,7 @@ module.exports =  Class("WorldRenderer", {
         for (var i = 0; i < chunksize; i++) {
             row = []
             for (var j = 0; j < chunksize; j++) {
-                cell = this._terrainGen(cellx, celly)
+                cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
                 mesh = this._proto[cell["type"]]
                           .createInstance(cellx + " " + celly)
 
