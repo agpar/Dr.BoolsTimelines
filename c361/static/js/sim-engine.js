@@ -9562,6 +9562,8 @@ module.exports = Class("WorldState", {
 
 
         for(var k in t_diff) {
+            if(t_diff[k] == "REMOVE")
+                continue
             if(f_diff[k] == undefined){
                 patched[k] = t_diff[k]
             }
@@ -9586,10 +9588,7 @@ module.exports = Class("WorldState", {
         }
 
         for(k in f_diff) {
-            if(k == "cells")
-                continue
-
-            if(t_diff[k] == undefined) {
+            if(t_diff[k] == "REMOVE") {
                 patched[k] = undefined
             }
         }
@@ -10034,6 +10033,7 @@ module.exports =  Class("WorldRenderer", {
             row = []
             for (var j = 0; j < chunksize; j++) {
                 cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
+                
                 mesh = this._proto[cell["type"]]
                            .createInstance(cellx + " " + celly)
 

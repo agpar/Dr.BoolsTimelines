@@ -2,11 +2,12 @@ from c361.gamelogic.world_state import WorldState
 from c361.gamelogic.globals import *
 from random import random
 from math import floor
+from copy import deepcopy
 
 def random_diffs(n):
     a = WorldState()
-    b = WorldState(json_dump=a.to_dict().copy())
-    c = WorldState(json_dump=a.to_dict().copy())
+    b = WorldState(json_dump=deepcopy(a.to_dict()))
+    c = WorldState(json_dump=deepcopy(a.to_dict()))
 
     diffs = []
     for i in range(n):
@@ -20,7 +21,6 @@ def random_diffs(n):
             a[x][y] = Cell(ctype="WATER", elevation=typ*10)
 
         diffs.append(a.apply_updates())
-
 
     b.patch(diffs)
     assert a.to_dict(False) == b.to_dict(False)

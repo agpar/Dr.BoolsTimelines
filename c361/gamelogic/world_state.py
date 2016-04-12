@@ -3,7 +3,7 @@ import json
 from random import random as rand
 from collections import defaultdict
 from functools import reduce
-
+from copy import deepcopy
 try:
     from .globals import *
 except SystemError:
@@ -16,7 +16,7 @@ class WorldState(CoordParseMixin):
 
     def __init__(self, size=(1000,1000), json_dump=None, current_turn=0, chunk_size=6, water_threshold=0.2, rock_threshold=0.175):
         if json_dump is not None:
-            self.current_turn = current_turn
+            self.current_turn = json_dump["current_turn"]
             self._size = (json_dump["width"], json_dump["length"])
             self._chunk_size = json_dump["chunkSize"]
             self._water_threshold = json_dump["waterThreshold"]
@@ -213,9 +213,14 @@ class WorldState(CoordParseMixin):
             if isinstance(x, Cell):
                 return x
 
-    def patch_dicts(self, f_diff, t_diff, reverse=False, cell_dict=False):
+    def patch_dicts(self, f_diff_in, t_diff_in, reverse=False, cell_dict=False):
+        f_diff = deepcopy(f_diff_in)
+        t_diff = deepcopy(t_diff_in)
+
         patched = f_diff
         for k in t_diff.keys():
+            if tdiff[k] == "REMOVE":
+                continue
             if f_diff.get(k) is None:
                 patched[k] = t_diff[k]
             elif isinstance(f_diff[k], dict) and isinstance(t_diff[k], dict):
@@ -223,14 +228,13 @@ class WorldState(CoordParseMixin):
             else:
                 patched[k] = t_diff[k]
 
-        if reverse and cell_dict:
-            del_queue = []
-            for k in f_diff.keys():
-                if t_diff.get(k) is None:
-                    del_queue.append(k)
+        del_queue = []
+        for k in f_diff.keys():
+            if t_diff.get(k) == "REMOVE":
+                del_queue.append(k)
 
-            for k in del_queue:
-                del patched[k]
+        for k in del_queue:
+            del patched[k]
 
         return patched
 
@@ -243,7 +247,8 @@ class WorldState(CoordParseMixin):
             patch_diffs = [diff["pre"] for diff in diffs]
         else:
             patch_diffs = [diff["post"] for diff in diffs]
-
+        if len(patch_diffs) == 0:
+            return None
         i = 0
         for diff in patch_diffs:
             i += diff["current_turn"]
@@ -255,6 +260,7 @@ class WorldState(CoordParseMixin):
             if i != len(diffs)*(len(diffs) + 1)/2 - patch_diffs[0]["current_turn"] + 1:
                 raise Exception("Diff stream contains holes.")
 
+        patched = None
 
         if reverse:
             patched = reduce(self.unpatch_dicts, patch_diffs, self.to_dict(False))
@@ -269,13 +275,15 @@ class WorldState(CoordParseMixin):
         patched = self.patch(diffs, reverse=True)
         return patched
 
-    def _diff_dict(self, f_dict, t_dict):
+    def _diff_dict(self, f_dict_in, t_dict_in):
+        f_dict = deepcopy(f_dict_in)
+        t_dict = deepcopy(t_dict_in)
         pre = {}
         post = {}
 
         for k in f_dict:
             if t_dict.get(k) is None:
-                pre[k] = f_dict[k]
+                pre[k], post[k] = f_dict[k], "REMOVE"
             elif f_dict.get(k) != t_dict.get(k):
                 if isinstance(f_dict.get(k), dict) and isinstance(t_dict.get(k), dict):
                     pre[k], post[k] = self._diff_dict(f_dict.get(k), t_dict.get(k))
@@ -284,13 +292,13 @@ class WorldState(CoordParseMixin):
 
         for k in t_dict:
             if f_dict.get(k) is None:
-                post[k] = t_dict[k]
+                pre[k], post[k] = "REMOVE", t_dict[k]
 
         return pre, post
 
     def diff(self, other):
-        f_dict = other
-        t_dict = self.to_dict(False)
+        f_dict = other #previous state
+        t_dict = self.to_dict(False) #current state
         pre, post = self._diff_dict(f_dict, t_dict)
 
         return {
