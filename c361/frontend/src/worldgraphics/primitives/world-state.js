@@ -33,11 +33,24 @@ module.exports = Class("WorldState", {
         $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
     },
     'private _loadPatch': function(json_dump){
-        console.log(json_dump)
         this._dump = JSON.parse(JSON.stringify(json_dump))
         this._currentTurn    = json_dump["current_turn"]
         this._cells          = json_dump["cells"]
         $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
+        var chunks = {}
+        for(c in this._marked) {
+            var s = this._marked[c].split(" ")
+            var sp = {
+              'x': Math.floor(Number(s[0])/this._chunkSize),
+              'y': Math.floor(Number(s[1])/this._chunkSize)
+            }
+            var clab = sp.x + " " + sp.y
+            if(!chunks[clab]) {
+                this._updatechunk(sp.x, sp.y, true, true)
+                chunks[clab] = true
+            }
+        }
+        this._marked = []
     },
     'public get': function(key) {
         return this["_" + key]
@@ -80,18 +93,6 @@ module.exports = Class("WorldState", {
                 continue
 
             if(t_diff[k] == undefined) {
-                // var cell = this._cells[k]
-                // if(cell && cell.contents) {
-                //     for(cont in cell.contents){
-                //         var ct = cell.contents[cont]
-                //         if(ct.mesh != undefined){
-                //             ct.mesh.dispose()
-                //         }
-                //     }
-                //
-                //   if(cell.mesh != undefined)
-                //       cell.mesh.dispose()
-                // }
                 patched[k] = undefined
             }
         }
@@ -124,20 +125,6 @@ module.exports = Class("WorldState", {
             this._marked.push(c)
 
         this._loadPatch(JSON.parse(JSON.stringify(patched)))
-        var chunks = {}
-        for(c in this._marked) {
-            var s = this._marked[c].split(" ")
-            var sp = {
-              'x': Math.floor(Number(s[0])/this._chunkSize),
-              'y': Math.floor(Number(s[1])/this._chunkSize)
-            }
-            var clab = sp.x + " " + sp.y
-            if(!chunks[clab]) {
-                chunks[clab] = true
-                this._updatechunk(sp.x, sp.y, true)
-            }
-        }
-        this._marked = []
 
         return patched
     },

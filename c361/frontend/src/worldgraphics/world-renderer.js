@@ -368,11 +368,15 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of chunk
     param force: Force update the chunk even if it's already loaded.
     */
-    'public updateChunk': function (x,y, force) {
+    'public updateChunk': function (x,y, force, chunk_coords) {
         //Make sure to round key into chunk grid coordinates
         var chunksize = this._worldState.get("chunkSize")
         var chunk_x = Math.floor(x/chunksize)
         var chunk_y = Math.floor(y/chunksize)
+        if(chunk_coords){
+            chunk_x = x
+            chunk_y = y
+        }
 
         var cellx = chunk_x*chunksize
         var celly = chunk_y*chunksize
@@ -383,13 +387,12 @@ module.exports =  Class("WorldRenderer", {
         if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y))
             return
 
-
         for (var i = 0; i < chunksize; i++) {
             row = []
             for (var j = 0; j < chunksize; j++) {
                 cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
                 mesh = this._proto[cell["type"]]
-                          .createInstance(cellx + " " + celly)
+                           .createInstance(cellx + " " + celly)
 
                 mesh.scaling.y = cell["elevation"]/2
 

@@ -104,7 +104,6 @@ module.exports = Class("GraphicsEngineController", {
         }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
-            this._renderer.updateView(this._camPos)
         }
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
@@ -127,7 +126,6 @@ module.exports = Class("GraphicsEngineController", {
 
         if(this._timeLine.cursor && this._timeLine.cursor > 0) {
             this._renderer.unpatch([this._timeLine.interval[--this._timeLine.cursor]])
-            this._renderer.updateView(this._camPos)
         }
 
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["pre"]["current_turn"] + " " + this._timeLine.last)
@@ -152,7 +150,7 @@ module.exports = Class("GraphicsEngineController", {
                         controller._timeLine.first = diffs[0]["pre"]["current_turn"]
                         controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
                     }
-                    var tnum = diffs.map(function(e,i,a){console.log(e); return e["pre"]["current_turn"]})
+                    var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
                     if (controller._timeLine.cursor < 0)
                         controller._timeLine.cursor = 0
