@@ -21,7 +21,7 @@ module.exports =  Class("WorldRenderer", {
     'private SMELL_SPREAD': 30,
     'private SMELL_RAD': 0.3,
     'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
-    'private _smellMode': true,
+    'private _smellMode': false,
     'private _scene': null,
     'private _sceneChunks': null,
     'private _smells': null,
@@ -82,10 +82,6 @@ module.exports =  Class("WorldRenderer", {
                             if(cont.mesh != undefined)
                                 cont.mesh.dispose()
                         }
-
-                        if(cell.smell)
-                            cell.mesh.material.dispose()
-
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
 
@@ -307,9 +303,8 @@ module.exports =  Class("WorldRenderer", {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate, title)
+        this._worldState = WorldState(tstate, title, this.updateChunk.bind(this))
         this._sceneChunks.reset()
-        this._smellMode = false
     },
     'public getStateProp': function (key) {
         return this._worldState.get(key)
@@ -365,93 +360,6 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'private _computeSmell': function(cell) {
-        var proto = this._proto
-        function drop() {
-            if(cell.smell) {
-                if(cell.mesh.material)
-                    cell.mesh.material.dispose()
-                if(cell.mesh)
-                    cell.mesh.dispose()
-
-                cell.mesh = proto[cell.type].createInstance(cell.coords.x + " " + cell.coords.y)
-                cell.smell = false
-            }
-        }
-
-        if(!this._smellMode){
-            drop()
-            return false
-        }
-
-        var intensity = 0
-        var color = {'r': 0, 'g': 0, 'b': 0}
-        var worldcells = this._worldState.get("cells")
-
-        var found
-        var i = 0
-        for(var cl in worldcells){
-            var ocell = worldcells[cl]
-            var x0 = cell.coords.x - ocell.coords.x
-            var y0 = cell.coords.y - ocell.coords.y
-            var z0 = cell.elevation - ocell.elevation
-            found = false
-            for(var ct in ocell.contents){
-                var cont = ocell.contents[ct]
-                var its = 0.75*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
-                if(its < this.SMELL_RAD)
-                    continue
-
-                intensity = its
-
-                if(cont.type == "ACTOR") {
-                    color.r = 0.8
-                    color.g = 0.1
-                    color.b = 0.1
-                }
-                if(cont.type == "MUSH") {
-                    color.r = 0.1
-                    color.g = 0.1
-                    color.b = 0.1
-                }
-                if(cont.type == "PLANT") {
-                    color.r = 0.1
-                    color.g = 1.0
-                    color.b = 0.4
-                }
-
-                console.log(i)
-                return {
-                  "intensity": intensity,
-                  "color": color
-                }
-            }
-            i++
-        }
-
-        drop()
-        return false
-    },
-    'private _renderSmell': function (cell, settings) {
-        var intensity = settings["intensity"]
-        var color = settings["color"]
-        var overlap = settings["overlap"]
-
-
-        cell.mesh = this._proto[cell.type].clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.scaling.y = cell["elevation"]/2
-        cell.mesh.position = new BABYLON.Vector3(cell.coords.x, cell["elevation"]/4, cell.coords.y)
-
-        cell.mesh.material = cell.mesh.material.clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.material.specularColor = new BABYLON.Color3(0,0,0)
-
-        var tcol = this._proto[cell.type].material.diffuseColor
-
-        cell.mesh.material.diffuseColor.r = intensity * color.r + (1 - intensity) * tcol.r
-        cell.mesh.material.diffuseColor.g = intensity * color.g + (1 - intensity) * tcol.g
-        cell.mesh.material.diffuseColor.b = intensity * color.b + (1 - intensity) * tcol.b
-        cell.smell = true
-    },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
     or otherwise generating it formulaically.
@@ -460,84 +368,53 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of chunk
     param force: Force update the chunk even if it's already loaded.
     */
-    'public updateChunk': function (x,y) {
+    'public updateChunk': function (x,y, force, chunk_coords) {
         //Make sure to round key into chunk grid coordinates
         var chunksize = this._worldState.get("chunkSize")
         var chunk_x = Math.floor(x/chunksize)
         var chunk_y = Math.floor(y/chunksize)
+        if(chunk_coords){
+            chunk_x = x
+            chunk_y = y
+        }
 
         var cellx = chunk_x*chunksize
         var celly = chunk_y*chunksize
 
-        var chunk
-        var pcell, cell, mesh, smell
+        var cell, mesh, smell, row
+        var chunk = []
 
-        chunk = this._sceneChunks.get(chunk_x + " " + chunk_y)
-        cachemiss = chunk == undefined
-        if(cachemiss)
-            chunk = []
+        if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y))
+            return
 
         for (var i = 0; i < chunksize; i++) {
-            var row
-            if(cachemiss)
-                row = []
+            row = []
             for (var j = 0; j < chunksize; j++) {
-                if(!cachemiss) {
-                    pcell = chunk[i][j]
-                    for(k in pcell.contents)
-                        pcell.contents[k]["mesh"].dispose()
-                }
+                cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
+                
+                mesh = this._proto[cell["type"]]
+                           .createInstance(cellx + " " + celly)
 
-                cell = this._terrainGen(cellx, celly)
-                var shouldsmell = this._computeSmell(cell)
-                //If new cell is different, rerender.
-                if (cachemiss
-                    || this._worldState.isMarked(pcell.coords)
-                    || pcell["type"] != cell["type"]
-                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100
-                    || (shouldsmell && !pcell.smell))
-                {
-                    if(pcell)
-                        this._worldState.unMark(pcell.coords)
+                mesh.scaling.y = cell["elevation"]/2
 
-                    if(shouldsmell) {
-                        this._renderSmell(cell, shouldsmell)
-                    }
-                    else {
-                        mesh = this._proto[cell["type"]]
-                        .createInstance(cellx + " " + celly)
+                mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
 
-                        mesh.scaling.y = cell["elevation"]/2
+                cell["mesh"] = mesh
 
-                        mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
-
-                        cell["mesh"] = mesh
-                    }
-
-
-                    if(cachemiss)
-                        row.push(cell)
-                    pcell = cell
-                }
-                else {
-                    pcell.contents = cell.contents
-                }
-
-                for(k in pcell.contents) {
-                    var cont = pcell.contents[k]
+                for(k in cell.contents) {
+                    var cont = cell.contents[k]
                     cont.mesh = this._proto[cont["type"]]
                                     .createInstance(cellx + " " + celly + " " + cont["type"])
-                    cont.mesh.position = new BABYLON.Vector3(cellx, pcell["elevation"]/2, celly)
+                    cont.mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/2, celly)
                     cont.mesh.isPickable = false;
                 }
+                row.push(cell)
                 cellx++
             }
-            if(cachemiss)
-                chunk.push(row)
+            chunk.push(row)
             cellx = chunk_x*chunksize
             celly++
         }
-        if(cachemiss)
-            this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
     }
 })

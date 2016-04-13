@@ -89,22 +89,26 @@ module.exports = Class("GraphicsEngineController", {
         }, 1000)
     },
     'public nextFrame': function(options) {
+        var controller = this
         if(this._timeLine.init)
             return
         var cur_turn = this._renderer.getStateProp("currentTurn")
         var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
         var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
         first = (first < 0) ? 0 : first
-        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4))
-            this._fetchTimeInterval(first, last)
-
+        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4)) {
+          if(options && options.cbmode)
+              this._fetchTimeInterval(first, last)
+          else
+              this._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
+        }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
-            this._renderer.updateView(this._camPos)
         }
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
-    'public prevFrame': function() {
+    'public prevFrame': function(options) {
+        var controller = this
         if(this._timeLine.init)
             return
         var cur_turn = this._renderer.getStateProp("currentTurn")
@@ -112,13 +116,16 @@ module.exports = Class("GraphicsEngineController", {
         var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
 
         if(last > 0) {
-            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4))
-                this._fetchTimeInterval(first, last)
+            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4)) {
+                if(options && options.cbmode)
+                    this._fetchTimeInterval(first, last)
+                else
+                    this._fetchTimeInterval(first, last, {'cb': controller.prevFrame.bind(controller)})
+            }
         }
 
         if(this._timeLine.cursor && this._timeLine.cursor > 0) {
             this._renderer.unpatch([this._timeLine.interval[--this._timeLine.cursor]])
-            this._renderer.updateView(this._camPos)
         }
 
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["pre"]["current_turn"] + " " + this._timeLine.last)
@@ -139,17 +146,18 @@ module.exports = Class("GraphicsEngineController", {
                     if(NLOCK) return
                     NLOCK = true
                     var diffs = data.map(function(e,i,a){return e["diff"]})
-                    if(diffs.length > 0){
-                      controller._timeLine.first = diffs[0]["pre"]["current_turn"]
-                      controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    if(diffs.length > 0) {
+                        controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                        controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
                     }
                     var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
                     controller._timeLine.cursor = tnum.indexOf(cur_turn)
-                    if(controller._timeLine.cursor < 0)
+                    if (controller._timeLine.cursor < 0)
                         controller._timeLine.cursor = 0
                     controller._timeLine.interval = diffs
                     controller._timeLine.init = undefined
-
+                    if(options && options.cb)
+                        options.cb({'cbmode': true})
                     console.log("Loaded timeline chunk")
                     NLOCK = false
                 },
@@ -435,7 +443,6 @@ module.exports = Class("GraphicsEngineController", {
                     first = (first < 0) ? 0 : first
                     var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
 
-
                     $.ajax({
                         type: "get",
                         url: "/game/" + controller._gameID + "/?resume=true",
@@ -446,13 +453,11 @@ module.exports = Class("GraphicsEngineController", {
                     });
 
 
-                    controller._fetchTimeInterval(first, last)
+                    controller._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-
                 }
             }
         })
