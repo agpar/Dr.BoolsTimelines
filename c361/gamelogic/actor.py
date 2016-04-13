@@ -204,81 +204,7 @@ class Actor(WorldInhabitant):
             "to": self.get_coord(direction)
         }
 
-    def turn_right(self):
-        if self.direction == "NORTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "NORTH",
-                "to": "EAST"
-            }
-        elif self.direction == "EAST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "EAST",
-                "to": "SOUTH"
-            }
-        elif self.direction == "WEST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "WEST",
-                "to": "NORTH"
-            }
-        elif self.direction == "SOUTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  #Used instead of coords
-                "varTarget": "direction",
-                "from": "SOUTH",
-                "to": "WEST"
-            }
-
-    def turn_left(self):
-        if self.direction == "NORTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "NORTH",
-                "to": "WEST"
-            }
-        elif self.direction == "EAST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "EAST",
-                "to": "NORTH"
-            }
-        elif self.direction == "WEST":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "direction",
-                "from": "WEST",
-                "to": "SOUTH"
-            }
-        elif self.direction == "SOUTH":
-            return {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,  #Used instead of coords
-                "varTarget": "direction",
-                "from": "SOUTH",
-                "to": "EAST"
-            }
+   
 
     def face_direction(self, direction):
         """Return a delta to face the direction."""
@@ -304,20 +230,23 @@ class Actor(WorldInhabitant):
         if direction not in DIRECTIONS:
             direction = self.direction
 
+        x,y = self.get_coord(direction)
+        cellContent = self.gameInstance.world.get_cell((x,y))
 
-        return [{
-            "type": "worldDelta",
-            "coords": self.get_coord(direction),
-            "actorID": self.uuid,
-            "varTarget": "ROCK",
-            "to": None
-        },{
-            "type": "actorDelta",
-            "coords": {'x': self.x, 'y': self.y},
-            "actorID": self.uuid,
-            "varTarget": "has_rock",
-            "to": True
-        }]
+        if self.gameInstance.has_attr(cellContent, "ROCK"):
+            return [{
+                "type": "worldDelta",
+                "coords": self.get_coord(direction),
+                "actorID": self.uuid,
+                "varTarget": "ROCK",
+                "to": None
+            },{
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "has_rock",
+                "to": True
+            }]
 
     def harvest(self, direction):
         """ Harvest something in a direction. If no direction specified 
@@ -328,6 +257,10 @@ class Actor(WorldInhabitant):
         if direction not in DIRECTIONS:
             direction = self.direction
 
+        x,y = self.get_coord(direction)
+        cellContent = self.gameInstance.world.get_cell((x,y))
+
+        #if self.gameInstance.has_attr(cellContent, "PLANT"):
         return [{
             "type": "worldDelta",
             "coords": self.get_coord(direction),
@@ -350,6 +283,8 @@ class Actor(WorldInhabitant):
         """
         if direction not in DIRECTIONS:
             direction = self.direction
+
+        if self.gameInstance.has_attr(cellContent, "ROCK"):
 
         if self.has_food:
             return [{
@@ -475,3 +410,79 @@ class Actor(WorldInhabitant):
             "from": True,
             "to": False
         }
+
+    def turn_right(self):
+        if self.direction == "NORTH":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "NORTH",
+                "to": "EAST"
+            }
+        elif self.direction == "EAST":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "EAST",
+                "to": "SOUTH"
+            }
+        elif self.direction == "WEST":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "WEST",
+                "to": "NORTH"
+            }
+        elif self.direction == "SOUTH":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "direction",
+                "from": "SOUTH",
+                "to": "WEST"
+            }
+
+    def turn_left(self):
+        if self.direction == "NORTH":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "NORTH",
+                "to": "WEST"
+            }
+        elif self.direction == "EAST":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "EAST",
+                "to": "NORTH"
+            }
+        elif self.direction == "WEST":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,
+                "varTarget": "direction",
+                "from": "WEST",
+                "to": "SOUTH"
+            }
+        elif self.direction == "SOUTH":
+            return {
+                "type": "actorDelta",
+                "coords": {'x': self.x, 'y': self.y},
+                "actorID": self.uuid,  #Used instead of coords
+                "varTarget": "direction",
+                "from": "SOUTH",
+                "to": "EAST"
+            }
