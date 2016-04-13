@@ -250,10 +250,25 @@ def flee_fn(actor):
             return actor.walk(actor.get_oppCoord(dir))
 
 
-def attack_fn(actor, direction):
-    direction = to_list(direction)
-    for dir in direction:
-        return actor.attack(dir)
+def attack_fn(actor):
+    distance = 100000
+    if (len(actor.gameInstance.actors) > 1):
+        for key in actor.gameInstance.actors:
+            if (key == actor.uuid):
+                continue
+            tmp_actor = actor.gameInstance.get_actor(key)
+            tmp_distance = actor.distance_to(tmp_actor._coords)
+            if (tmp_distance < distance):
+                distance = tmp_distance
+                nearest_actor = tmp_actor._coords
+        if actor.can_reach(nearest_actor):
+            for dir in actor.direction_to(nearest_actor):
+                return actor.attack(dir)
+        else:
+            for dir in actor.direction_to(nearest_actor):
+                return actor.walk(dir)
+    else:
+        return
 
 
 FUNC_MAP = {

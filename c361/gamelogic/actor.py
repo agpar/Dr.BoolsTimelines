@@ -173,21 +173,18 @@ class Actor(WorldInhabitant):
                 "to": self.hunger + 50
             }]
             
-    def attack(self):
-
-        x1,y1 = self.get_coord(self.direction)
-
-        if self.gameInstance.check_actor((x1,y1)):
-            actor = self.gameInstance.get_actor((x1,y1))
-            print(actor.uuid)
-            return {
-                "type": "actorDelta",
-                "coords": {'x': x1, 'y': y1},
-                "actorID": actor.uuid,
-                "varTarget": "health",
-                "from": actor.health,
-                "to": actor.health - 10
-            }
+    def attack(self, direction):
+        coords = self.get_coord(direction)
+        actor = self.gameInstance.get_actor(coords)
+        x,y = actor._coords
+        return {
+            "type": "actorDelta",
+            "coords": {'x': x, 'y': y},
+            "actorID": actor.uuid,
+            "varTarget": "health",
+            "from": actor.health,
+            "to": actor.health - 10
+        }
 
     def walk(self, direction):
         """Return a delta for walking in direction."""
