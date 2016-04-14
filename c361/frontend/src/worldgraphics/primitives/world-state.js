@@ -15,8 +15,11 @@ module.exports = Class("WorldState", {
     'private _marked': [],
     'private _title': undefined,
     'private _updatechunk': null,
+    'private _clearContentsHandler': null,
 
-    __construct: function(json_dump, title, update_chunk_hook) {
+    __construct: function(json_dump, title, update_chunk_hook, clear_contents_hook) {
+        this._clearContentsHandler = clear_contents_hook
+
         this._title          = title
         this._updatechunk    = update_chunk_hook
         this._dump           = JSON.parse(JSON.stringify(json_dump))
@@ -91,11 +94,9 @@ module.exports = Class("WorldState", {
         }
 
         for(k in f_diff) {
-            if(k == "cells") {
-                for(c in patched["cells"])
-                    this._marked.push(c)
-            }
             if(t_diff[k] == "REMOVE") {
+                if(patched[k].contents != undefined)
+                    this._clearContentsHandler(patched[k].contents)
                 patched[k] = undefined
             }
         }
