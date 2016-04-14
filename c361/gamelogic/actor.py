@@ -84,6 +84,7 @@ class Actor(WorldInhabitant):
             'direction': self.direction,
             'behaviour_script': self.script,
             'smell_code': self.smell_code,
+            'has_rock': self.has_rock
         }
         return d
 
@@ -158,20 +159,13 @@ class Actor(WorldInhabitant):
 
     def eat(self):
         if self.has_food :
-            return [{
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "has_food",
-                "from": True,
-                "to": False
-            }, {
+            return {
                 "type": "actorDelta",
                 "coords": {'x': self.x, 'y': self.y},
                 "actorID": self.uuid,
                 "varTarget": "hunger",
                 "to": self.hunger + 50
-            }]
+            }
             
     def attack(self, direction):
         coords = self.get_coord(direction)
@@ -288,29 +282,19 @@ class Actor(WorldInhabitant):
             "to": direction
         }
 
-    def pickup(self, direction):
+    def pickup(self):
         """ Pickup something in a certain direction. If 
         no direction given, attempt pickup in current direction
 
         return: resulting delta from a pickup
         """
-        if direction not in DIRECTIONS:
-            direction = self.direction
-
-
-        return [{
-            "type": "worldDelta",
-            "coords": self.get_coord(direction),
-            "actorID": self.uuid,
-            "varTarget": "ROCK",
-            "to": None
-        },{
+        return {
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
             "actorID": self.uuid,
             "varTarget": "has_rock",
             "to": True
-        }]
+        }
 
     def harvest(self, direction):
         """ Harvest something in a direction. If no direction specified 
@@ -335,44 +319,30 @@ class Actor(WorldInhabitant):
             "to": True
         }] 
 
-    def drop(self, direction):
+    def drop(self, attr):
         """ Drop something in a certain direction. If no
         direction specified drop in current direction
 
         return: delta for drop
         """
-        if direction not in DIRECTIONS:
-            direction = self.direction
-
-        if self.has_food:
-            return [{
-                "type": "worldDelta",
-                "coords": self.get_coord(direction),
-                "actorID": self.uuid,
-                "varTarget": "cell",
-                "to": "FOOD"
-            }, {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID" : self.uuid,
-                "varTarget": "is_food",
-                "to": False
-            }]
-
-        if self.has_rock:
-            return [{
-                "type": "worldDelta",
-                "coords": self.get_coord(direction),
-                "actorID": self.uuid,
-                "varTarget": "cell",
-                "to": "ROCK"
-            }, {
-                "type": "actorDelta",
-                "coords": {'x': self.x, 'y': self.y},
-                "actorID": self.uuid,
-                "varTarget": "has_rock",
-                "to": False
-            }]
+        if (attr == "FOOD"):
+            if self.has_food:
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': self.x, 'y': self.y},
+                    "actorID" : self.uuid,
+                    "varTarget": "is_food",
+                    "to": False
+                }
+        if (attr == "ROCK"):
+            if self.has_rock:
+                return {
+                    "type": "actorDelta",
+                    "coords": {'x': self.x, 'y': self.y},
+                    "actorID": self.uuid,
+                    "varTarget": "has_rock",
+                    "to": False
+                }
 
 
     # See should return what is directly in front of avatar, as well as one extra cell further

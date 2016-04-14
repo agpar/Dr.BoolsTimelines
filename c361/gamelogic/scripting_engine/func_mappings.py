@@ -126,6 +126,15 @@ def actor_food(actor):
 def actor_issleeping(actor):
     return actor.is_sleeping
 
+def check_fn(actor, attr):
+    #print("yes")
+    
+    if (actor.gameInstance.has_attr(actor.gameInstance.world.get_cell(actor._coords), attr)):
+         #print("attr is at actor location")
+        return True
+    else:
+        return False
+
 # Action Functions #
 # ================ #
 
@@ -149,12 +158,15 @@ def eat_fn(actor):
         return
 
 
-def drop_fn(actor):
+def drop_fn(actor, attr):
     """ Drop rock object
 
     :return delta for drop
     """
-    return actor.drop(actor.direction)
+    if attr not in ("ROCK", "FOOD"):
+        return None
+    
+    return actor.drop(attr)
 
 
 def harvest_fn(actor, direction):
@@ -177,7 +189,7 @@ def pickup_fn(actor):
     if actor.has_rock:
         return 
     else:
-        return actor.pickup(actor.direction)
+        return actor.pickup()
 
 
 def direction_fn(actor, xy, y=None):
@@ -295,7 +307,8 @@ FUNC_MAP = {
     'pickup': pickup_fn,
     'scavenge': scavenge_fn,
     'flee': flee_fn,
-    'attack': attack_fn
+    'attack': attack_fn,
+    'CHECK': check_fn
 }
 
 SYM_MAP = {

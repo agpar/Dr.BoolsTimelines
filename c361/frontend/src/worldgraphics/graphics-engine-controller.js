@@ -44,9 +44,11 @@ module.exports = Class("GraphicsEngineController", {
             var element = $("<div class='cell-content-list'> </div>");
             var health = cont.health;
             var type = cont.type;
+            var rock = cont.has_rock;
 
             $("<span> Type: </span><span id='type'>" + type + "</span><br>").appendTo(element);
-            $("<span> Health: </span><span id='health'>" + health + "</span>").appendTo(element);
+            $("<span> Health: </span><span id='health'>" + health + "</span><br>").appendTo(element);
+            $("<span> Has Rock: </span><span id='health'>" + rock + "</span>").appendTo(element);
 
             $("div#stat-listing").append(element);
         }

@@ -134,6 +134,7 @@ class GameInstance(CoordParseMixin):
         if is_uuid:
             return self.actors.get(xy_or_UUID)
         else:
+            print(xy_or_UUID)
             x, y = self.coord_parse(xy_or_UUID)
 
         content = self[x][y]
@@ -270,7 +271,17 @@ class GameInstance(CoordParseMixin):
                         "to": False,
                         "message:": actor.name + " has died!"
                     })
-
+            if delta['varTarget'] == 'hunger':
+                if delta['to'] == False:
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': self.x, 'y': self.y},
+                        "actorID": self.uuid,
+                        "varTarget": "has_food",
+                        "from": True,
+                        "to": False
+                    })
+            
         # Calculate any side effects of the side effects.
         old_effects = effects
         while old_effects:
@@ -354,6 +365,16 @@ class GameInstance(CoordParseMixin):
                 actr.health = val
             if delta['varTarget'] == 'is_sleeping':
                 actr.is_sleeping = val
+            if delta['varTarget'] == 'has_rock':
+                if (delta['to'] == True):
+                    actr.has_rock = val
+                elif (delta['to'] == False):
+                    actr.has_rock = val
+            if delta['varTarget'] == 'has_food':
+                if (delta['to'] == False):
+                    actr.has_food = val
+                if (delta['to'] == True):
+                    actr.has_food = val
 
         if reverse:
             for act in self.actors.values():
