@@ -75,6 +75,27 @@ def mult_fn(left, right):
 # Other Functions #
 # =============== #
 
+def fuzzy_dir(direction):
+    if direction in ["NORTH", "SOUTH"]:
+        alts = ['WEST', 'EAST']
+    else:
+        alts = ['NORTH', 'SOUTH']
+    random.shuffle(alts)
+    res = [direction]
+    res.extend(alts)
+    return res
+
+def northish(actor=None):
+    return fuzzy_dir('NORTH')
+
+def southish(actor=None):
+    return fuzzy_dir('SOUTH')
+
+def eastish(actor=None):
+    return fuzzy_dir('EAST')
+
+def westish(actor=None):
+    return fuzzy_dir('WEST')
 
 # World/Actor Variables #
 # ===================== #
@@ -134,6 +155,7 @@ def check_fn(actor, attr):
         return True
     else:
         return False
+
 
 # Action Functions #
 # ================ #
@@ -258,7 +280,7 @@ def flee_fn(actor,direction):
     :param direction: a list of directions
     """
 
-    direction = to_list(direction);
+    direction = to_list(direction)
 
     for dir in direction:
         if actor.can_walk(actor.get_oppCoord(dir)):
@@ -317,6 +339,10 @@ SYM_MAP = {
     'EAST': lambda x: 'EAST',
     'SOUTH': lambda x: 'SOUTH',
     'WEST': lambda x: 'WEST',
+    'NORTHISH': northish,
+    'EASTISH': eastish,
+    'SOUTHISH': southish,
+    'WESTISH': westish,
     'MY_HUNGER': actor_hunger,
     'MY_LOCATION': actor_location,
     'MY_HEALTH': actor_health,
