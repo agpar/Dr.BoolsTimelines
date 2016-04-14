@@ -43,9 +43,10 @@ class WorldState(CoordParseMixin):
                     data = cont
 
                     inhab = None
-                    if data["type"] == "MUSH":
+                    if data.get("type") == "MUSH":
                         inhab = Plant(from_dict=data)
-
+                    if data.get("type") == "BLOCK":
+                        inhab = Block(from_dict=data)
                     #Add more types here
 
                     if inhab:
@@ -66,6 +67,7 @@ class WorldState(CoordParseMixin):
             self._inhabitants = defaultdict(list)
 
         self._prev_state = self.to_dict(False)
+        self._build_diff = {}
 
     def __getitem__(self, key):
         return self.PartialTerrainGen(self, key)
@@ -75,6 +77,26 @@ class WorldState(CoordParseMixin):
 
     def __repr__(self):
         return json.dumps(self.to_dict(False))
+
+    def apply_edit(self, edit={}):
+        cell = self[edit["coords"]["x"]][edit["coords"]["y"]]
+        cont = self._inhabitants[edit["coords"]["x"], edit["coords"]["y"]]
+        typ  = edit.get("TOOL")
+
+        if edit.get("MODE") == "INCREMENT":
+            if len(cont) < 1:
+                if typ == "BLOCK":
+                    self.add_inhabitant(Block(x=edit["coords"]["x"], y=edit["coords"]["y"], type=typ))
+                elif typ == "MUSH" or typ == "PLANT":
+                    self.add_inhabitant(Plant(x=edit["coords"]["x"], y=edit["coords"]["y"], type=typ))
+
+        elif edit.get("MODE") == "DECREMENT":
+            for c in cont:
+                if c.type == typ:
+                    self.remove_inhabitant(c)
+
+        self._build_diff = self.diff(self._prev_state)
+        return deepcopy(self._build_diff)
 
     def apply_updates(self):
         self.current_turn += 1
@@ -219,7 +241,7 @@ class WorldState(CoordParseMixin):
 
         patched = f_diff
         for k in t_diff.keys():
-            if tdiff[k] == "REMOVE":
+            if t_diff[k] == "REMOVE":
                 continue
             if f_diff.get(k) is None:
                 patched[k] = t_diff[k]
@@ -241,7 +263,7 @@ class WorldState(CoordParseMixin):
     def unpatch_dicts(self, f_diff, t_diff):
         return self.patch_dicts(f_diff, t_diff, reverse=True)
 
-    def patch(self, diffs, reverse=False):
+    def patch(self, diffs, reverse=False, build_mode=False):
         patch_diffs = []
         if reverse:
             patch_diffs = [diff["pre"] for diff in diffs]
@@ -268,7 +290,8 @@ class WorldState(CoordParseMixin):
             patched = reduce(self.patch_dicts, patch_diffs, self.to_dict(False))
 
         patched["seed"] = self._seed
-        self.__init__(json_dump=patched)
+        if not build_mode:
+            self.__init__(json_dump=patched)
         return patched
 
     def unpatch(self, diffs):

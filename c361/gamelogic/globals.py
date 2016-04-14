@@ -234,3 +234,19 @@ class Plant(WorldInhabitant):
             'coords': {'x': self.x, 'y': self.y}
         }
         return to_dict
+
+class Block(WorldInhabitant):
+    def __init__(self, x=0, y=0, type="BLOCK", from_dict=None):
+        if not from_dict:
+            self.type = type
+            self._coords = (x, y)
+        else:
+            self.type = from_dict['type']
+            self._coords = (from_dict['coords']['x'], from_dict['coords']['y'])
+
+    def to_dict(self):
+        to_dict = {
+            'type': self.type,
+            'coords': {'x': self.x, 'y': self.y}
+        }
+        return to_dict

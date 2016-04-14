@@ -91,6 +91,10 @@ module.exports = Class("WorldState", {
         }
 
         for(k in f_diff) {
+            if(k == "cells") {
+                for(c in patched["cells"])
+                    this._marked.push(c)
+            }
             if(t_diff[k] == "REMOVE") {
                 patched[k] = undefined
             }

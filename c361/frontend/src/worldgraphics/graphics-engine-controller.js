@@ -103,7 +103,7 @@ module.exports = Class("GraphicsEngineController", {
           if(options && options.cbmode)
               this._fetchTimeInterval(first, last)
           else
-              this._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
+              this._fetchTimeInterval(first, last)
         }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
@@ -124,7 +124,7 @@ module.exports = Class("GraphicsEngineController", {
                 if(options && options.cbmode)
                     this._fetchTimeInterval(first, last)
                 else
-                    this._fetchTimeInterval(first, last, {'cb': controller.prevFrame.bind(controller)})
+                    this._fetchTimeInterval(first, last)
             }
         }
 

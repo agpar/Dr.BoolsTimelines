@@ -3,7 +3,7 @@ from c361.gamelogic.globals import *
 from random import random
 from math import floor
 from copy import deepcopy
-
+#from datadiff import diff
 def random_diffs(n):
     a = WorldState()
     b = WorldState(json_dump=deepcopy(a.to_dict()))
@@ -22,7 +22,9 @@ def random_diffs(n):
 
         diffs.append(a.apply_updates())
 
+
     b.patch(diffs)
+#    diff(a.to_dict(False), b.to_dict(False))
     assert a.to_dict(False) == b.to_dict(False)
     print("Equal states forward diff? " + str(a.to_dict(False) == b.to_dict(False)))
 
