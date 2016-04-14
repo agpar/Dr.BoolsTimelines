@@ -35,6 +35,7 @@ class Actor(WorldInhabitant):
             self.sleep = model.sleep
             self.has_food = False
             self.has_rock = False
+            self.has_block = False
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.script = model.behaviour_script
@@ -48,6 +49,7 @@ class Actor(WorldInhabitant):
             self.sleep = 100
             self.has_food = True
             self.has_rock = False
+            self.has_block = False
             self.is_sleeping = False
             self.direction = "NORTH"
             self.script = script
@@ -84,7 +86,8 @@ class Actor(WorldInhabitant):
             'direction': self.direction,
             'behaviour_script': self.script,
             'smell_code': self.smell_code,
-            'has_rock': self.has_rock
+            'has_rock': self.has_rock,
+            'has_block': self.has_block
         }
         return d
 
@@ -296,28 +299,19 @@ class Actor(WorldInhabitant):
             "to": True
         }
 
-    def harvest(self, direction):
+    def harvest(self, xy):
         """ Harvest something in a direction. If no direction specified 
         harvest in current direction
 
         return: harvest resulting delta
         """
-        if direction not in DIRECTIONS:
-            direction = self.direction
-
-        return [{
-            "type": "worldDelta",
-            "coords": self.get_coord(direction),
-            "actorID": self.uuid,
-            "varTarget": "plant",
-            "to": None
-        },{
+        return {
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
             "actorID" : self.uuid,
             "varTarget": "has_food",
             "to": True
-        }] 
+        }
 
     def drop(self, attr):
         """ Drop something in a certain direction. If no

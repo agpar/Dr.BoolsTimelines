@@ -144,6 +144,24 @@ class GameInstance(CoordParseMixin):
                     return z
         return None
 
+    def check_plant(self, xy):
+        x, y = self.coord_parse(xy)
+        content = self[x][y]
+        if len(content) > 1:
+            for z in content:
+                if isinstance(z, Plant):
+                    return True
+        return False
+
+    def check_block(self, xy):
+        x, y = self.coord_parse(xy)
+        content = self[x][y]
+        if len(content) > 1:
+            for z in content:
+                if isinstance(z, Block):
+                    return True
+        return False
+
     def check_actor(self, xy):
         """ Check to see if actor is currently in location specified by param.
         :param xy: x,y coord of gameInstance
@@ -281,6 +299,15 @@ class GameInstance(CoordParseMixin):
                         "from": True,
                         "to": False
                     })
+            if delta['varTarget'] == 'has_food':
+                if delta['to'] == True:
+                    effects.append({
+                        "type": "worldDelta",
+                        "coords": {'x': xy[0], 'y': xy[1]},
+                        "actorID": self.uuid,
+                        "varTarget": "plant",
+                        "to": None
+                    })
             
         # Calculate any side effects of the side effects.
         old_effects = effects
@@ -375,6 +402,11 @@ class GameInstance(CoordParseMixin):
                     actr.has_food = val
                 if (delta['to'] == True):
                     actr.has_food = val
+            if delta['varTarget'] == 'plant':
+                if (reverse == False):
+                    self.world.remove_inhabitant(plant)
+                elif (reverse == True):
+                    self.world.add_inhabitant(plant)
 
         if reverse:
             for act in self.actors.values():

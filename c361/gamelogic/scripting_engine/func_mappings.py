@@ -169,16 +169,15 @@ def drop_fn(actor, attr):
     return actor.drop(attr)
 
 
-def harvest_fn(actor, direction):
+def harvest_fn(actor, xy):
     """ Harvest a plant.
 
     :return delta for harvest
     """
-    direction = to_list(direction)
-    for dir in direction:
-        if dir:
-            return actor.harvest(dir)
-    return actor.harvest(actor.direction)
+    if actor.gameInstance.check_plant(xy):
+        return actor.harvest(xy)
+    else:
+        return 
 
 
 def pickup_fn(actor):
