@@ -148,28 +148,17 @@
               </ul>
               Example script structure:
               <xmp>
-              if not HOLDING_ROCK and CHECK(ROCK)
-              then
-               do
-                 pickup();
-              done
+<<<<<<< HEAD
+              if nearest(WATER) == MY_LOCATION then
+                do
+                    walk(NORTH);
+                done
+              else
+                do
+                    walk(direction(NORTH));
+                done
               endif
-
-              if not HOLDING_ROCK then
-              do
-                  walk(direction(nearest(ROCK)));
-              done
-              endif
-
-              if HOLDING_ROCK and CHECK(ROCK) then
-              do
-                  walk(direction(nearest(GRASS)));
-              done
-              endif
-              if HOLDING_ROCK then
-              do
-                  drop(ROCK);
-              done
+>>>>>>> 5d7a7e1424ac7bcb2354ad210b561066e466254c
               endif
               </xmp>
               Referring to the example above, take note of the following rules regarding script syntax:
