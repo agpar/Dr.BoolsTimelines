@@ -72,6 +72,7 @@
                             <li><a href="#SLEEPING">SLEEPING</a></li>
                             <li><a href="#HOLDING_FOOD">HOLDING_FOOD</a></li>
                             <li><a href="#HOLDING_ROCK">HOLDING_ROCK</a></li>
+                            <li><a href="#CHECK">CHECK</a></li>
                         </ul>
                     </li>
         		</ul>
@@ -147,6 +148,7 @@
               </ul>
               Example script structure:
               <xmp>
+<<<<<<< HEAD
               if nearest(WATER) == MY_LOCATION then
                 do
                     walk(NORTH);
@@ -155,6 +157,8 @@
                 do
                     walk(direction(NORTH));
                 done
+              endif
+>>>>>>> 5d7a7e1424ac7bcb2354ad210b561066e466254c
               endif
               </xmp>
               Referring to the example above, take note of the following rules regarding script syntax:
@@ -176,15 +180,28 @@
         		<p>Attack in the direction that your avatar is facing. Attacking another avatar will cause that avatar to lose health.</p>
             Example usage:
             <xmp>
-              attack();
+              if MY_ENERGY > 0 then
+              do
+                  attack();
+              done
+              endif
             </xmp>
       		</div>
       		<div class "actionWords" id="drop">
         		<h3>Drop</h3>
-        		<p>Drop (if possible) whatever the actor is holding, in the direction that the actor is currently facing</p>
+        		<p>Takes an attribute, either FOOD or ROCK, as an attribute and will drop the item, if possible, in the current location</p>
             Example usage:
             <xmp>
-              drop();
+              if HOLDING_FOOD then
+              do
+                  drop(FOOD);
+              done
+              endif
+              if HOLDING_ROCK then
+              do
+                  drop(ROCK);
+              done
+              endif
             </xmp>
       		</div>
       		<div class "actionWords" id="eat">
@@ -222,10 +239,15 @@
             </xmp>
       		<div  class "actionWords" id="pickup">
         		<h3>Pickup</h3>
-        		<p> Attempt to pickup an object in the direction that you are facing. If no object is present nothing happens</p>
+        		<p> Attempt to pickup an object in the current location of the actor. If no object is present nothing happens. Must be used with a CHECK(attr) to work properly</p>
             Example usage:
             <xmp>
-              pickup();
+              if not HOLDING_ROCK and CHECK(ROCK)
+              then
+               do
+                 pickup();
+              done
+              endif
             </xmp>
       		</div>
       		<div class "actionWords" id="scavenge">
@@ -246,7 +268,11 @@
         		<p> Puts your avatar to sleep, for a specified amount of time</p>
             Example usage:
             <xmp>
-              sleep();
+              if MY_ENERGY < 50 then
+              do
+                sleep();
+              done
+              endif
             </xmp>
       		</div>
       		<div class "actionWords" id="walk">
@@ -254,10 +280,17 @@
         		<p>Takes in a list of directions as an argument and performs them. The list can also be only one direction. </p>
             Example usage:
             <xmp>
-              walk(NORTH);
+              if not CHECK(ROCK) then
+              do
+                walk(direction(nearest(ROCK)));
+              done
+              endif  
             </xmp>
             <xmp>
-              walk(direction(nearest(FOOD)));
+              OR
+            </xmp>
+            <xmp>
+              walk(NORTH);
             </xmp>
       		</div>
       		<div id="actorInformation">
@@ -301,7 +334,7 @@
         		<p>Returns 'True' if the current actor is holding food. Otherwise will return 'False'.</p>
             Example usage:
             <xmp>
-              if HOLDING_FOOD == true
+              if HOLDING_FOOD
               then
                 do
                   eat();
@@ -330,7 +363,7 @@
         		<p>Returns 'True' if the actor is SLEEPING, otherwise will return 'False'</p>
             Example usage:
             <xmp>
-              if SLEEPING == false
+              if SLEEPING
               then
                 do
                   sleep();
@@ -343,7 +376,7 @@
         		<p>Returns 'True' if the actor is holding a rock, otherwise will return 'False'.</p>
             Example usage:
             <xmp>
-              if HOLDING_ROCK == true
+              if HOLDING_ROCK
               then
                 do 
                   drop();
@@ -351,6 +384,19 @@
               endif
             </xmp>
       		</div>
+          <div id="CHECK">
+            <h3>CHECK()</h3>
+            <p>Takes an attribute, either "PLANT" or "ROCK", as an argument and returns 'True' if the actor is in the location of the given attribute, otherwise will return 'False'.</p>
+            Example usage:
+            <xmp>
+              if CHECK(ROCK)
+              then
+                do 
+                  drop();
+                done
+              endif
+            </xmp>
+          </div>
     	</div>
   	</div>
 </body>
