@@ -147,19 +147,15 @@
               </ul>
               Example script structure:
               <xmp>
-                if nearest(WATER) == MY_LOCATION
-                then
-                  do
+              if nearest(WATER) == MY_LOCATION then
+                do
                     walk(NORTH);
-                  done
-                endif
-
-                if true
-                then
-                    do
-                      walk(direction(nearest(WATER)));
-                    done
-                endif
+                done
+              else
+                do
+                    walk(direction(NORTH));
+                done
+              endif
               </xmp>
               Referring to the example above, take note of the following rules regarding script syntax:
               <ul>
