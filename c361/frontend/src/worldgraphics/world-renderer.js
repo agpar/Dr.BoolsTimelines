@@ -161,14 +161,7 @@ module.exports =  Class("WorldRenderer", {
                 for (var row in chunk) {
                     cell = chunk[row].pop()
                     while (cell != undefined) {
-                        for(c in cell.contents) {
-                            var cont = cell.contents[c]
-                            if(cont.mesh != undefined)
-                                cont.mesh.dispose()
-                        }
-                        renderer._smells[cell.smell_name] = undefined
-                        if(cell.smell != undefined)
-                            cell.smell.dispose()
+                        renderer.clearContents(cell.contents)
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
 
@@ -205,7 +198,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "ACTOR",
+                        "type": "PLANT",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -390,7 +383,7 @@ module.exports =  Class("WorldRenderer", {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate, title, this.updateChunk.bind(this))
+        this._worldState = WorldState(tstate, title, this.updateChunk.bind(this), this.clearContents.bind(this))
         this._sceneChunks.reset()
     },
     'public getStateProp': function (key) {
@@ -447,13 +440,13 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'public initSmell': function(cell, type) {
-        if(this._smells_proto[type] == undefined || cell.mesh == undefined)
+    'public initSmell': function(cont) {
+        if(this._smells_proto[cont.type] == undefined || cell.mesh == undefined)
             return
-        cell.smell_name = cell.coords.x + " " + cell.coords.y + "--smell--" + type
-        cell.smell = this._smells_proto[type].clone(cell.smell_name)
-        cell.smell.emitter = cell.mesh
-        this._smells[cell.smell_name] = cell.smell
+        cont.smell_name = cell.coords.x + " " + cell.coords.y + "--smell--" + type
+        cont.smell = this._smells_proto[type].clone(cont.smell_name)
+        cont.smell.emitter = cont.mesh
+        this._smells[cont.smell_name] = cont.smell
     },
     'public showSmells': function () {
         for(var s in this._smells){
@@ -465,6 +458,18 @@ module.exports =  Class("WorldRenderer", {
         for(var s in this._smells){
             var smell = this._smells[s]
             smell.stop()
+        }
+    },
+    'public clearContents': function (contents) {
+        if(contents != undefined) {
+            for(c in contents) {
+                var cont = contents[c]
+                this._smells[cont.smell_name] = undefined
+                if(cont.smell != undefined)
+                    cont.smell.dispose()
+                if(cont.mesh != undefined)
+                    cont.mesh.dispose()
+            }
         }
     },
     /*
