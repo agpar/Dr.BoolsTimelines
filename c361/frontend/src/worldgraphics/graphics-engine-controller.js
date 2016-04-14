@@ -29,6 +29,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
+    'private _latestTurn': 0,
 
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
@@ -106,6 +107,7 @@ module.exports = Class("GraphicsEngineController", {
         }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
+            this._latestTurn = (this._latestTurn < this._renderer.getStateProp("currentTurn")) ? this._renderer.getStateProp("currentTurn") : this._latestTurn
         }
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
@@ -179,6 +181,12 @@ module.exports = Class("GraphicsEngineController", {
             }
         })
     },
+    'public showSmellField': function () {
+        this._renderer.showSmells()
+    },
+    'public hideSmellField': function () {
+        this._renderer.hideSmells()
+    },
     __construct: function(renderTarget) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
@@ -226,7 +234,7 @@ module.exports = Class("GraphicsEngineController", {
             var turn = renderer.getStateProp("currentTurn");
             var gameid = controller._gameID;
             if (gameid && controller._is_hosting){
-                $.ajax("/game/"+gameid+"/?stop=true&on_turn="+turn);
+                $.ajax("/game/"+gameid+"/?stop=true&on_turn="+controller._latestTurn);
             }
         });
     },
@@ -344,7 +352,7 @@ module.exports = Class("GraphicsEngineController", {
 
             $.ajax({
                 type: "get",
-                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._renderer.getStateProp("currentTurn"),
+                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._latestTurn,
                 success: function (data) {
                     console.log("Game paused.");
                     $("#pause-game-btn").addClass("disabled");
@@ -395,8 +403,12 @@ module.exports = Class("GraphicsEngineController", {
         )
     },
     'public loadGame': function (gametitle, gameid, spectate) {
+        var controller = this
         if (spectate === undefined) //Added optional param to set up as spectator -AP.
             spectate = false;
+
+        if(this._gameID != undefined)
+            $.ajax("/game/"+controller._gameID+"/?stop=true&on_turn="+controller._latestTurn)
 
         this._gameID = gameid
         this._gameTitle = gametitle
@@ -498,6 +510,7 @@ module.exports = Class("GraphicsEngineController", {
 
             this._camPos.x = 0
             this._camPos.y = 0
+            control.hideSmellField()
             this._renderEngine.runRenderLoop(function () {
                 this._renderer.renderWorld()
 

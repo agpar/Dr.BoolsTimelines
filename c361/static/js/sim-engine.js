@@ -8890,6 +8890,7 @@ module.exports = Class("GraphicsEngineController", {
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
+    'private _latestTurn': 0,
 
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
@@ -8965,6 +8966,7 @@ module.exports = Class("GraphicsEngineController", {
         }
         if( this._timeLine.cursor < this._timeLine.interval.length-1){
             this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
+            this._latestTurn = (this._latestTurn < this._renderer.getStateProp("currentTurn")) ? this._renderer.getStateProp("currentTurn") : this._latestTurn
         }
         console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
     },
@@ -9038,6 +9040,12 @@ module.exports = Class("GraphicsEngineController", {
             }
         })
     },
+    'public showSmellField': function () {
+        this._renderer.showSmells()
+    },
+    'public hideSmellField': function () {
+        this._renderer.hideSmells()
+    },
     __construct: function(renderTarget) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
@@ -9085,7 +9093,7 @@ module.exports = Class("GraphicsEngineController", {
             var turn = renderer.getStateProp("currentTurn");
             var gameid = controller._gameID;
             if (gameid && controller._is_hosting){
-                $.ajax("/game/"+gameid+"/?stop=true&on_turn="+turn);
+                $.ajax("/game/"+gameid+"/?stop=true&on_turn="+controller._latestTurn);
             }
         });
     },
@@ -9203,7 +9211,7 @@ module.exports = Class("GraphicsEngineController", {
 
             $.ajax({
                 type: "get",
-                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._renderer.getStateProp("currentTurn"),
+                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._latestTurn,
                 success: function (data) {
                     console.log("Game paused.");
                     $("#pause-game-btn").addClass("disabled");
@@ -9254,8 +9262,12 @@ module.exports = Class("GraphicsEngineController", {
         )
     },
     'public loadGame': function (gametitle, gameid, spectate) {
+        var controller = this
         if (spectate === undefined) //Added optional param to set up as spectator -AP.
             spectate = false;
+
+        if(this._gameID != undefined)
+            $.ajax("/game/"+controller._gameID+"/?stop=true&on_turn="+controller._latestTurn)
 
         this._gameID = gameid
         this._gameTitle = gametitle
@@ -9357,6 +9369,7 @@ module.exports = Class("GraphicsEngineController", {
 
             this._camPos.x = 0
             this._camPos.y = 0
+            control.hideSmellField()
             this._renderEngine.runRenderLoop(function () {
                 this._renderer.renderWorld()
 
@@ -9663,27 +9676,30 @@ module.exports =  Class("WorldRenderer", {
     'private SMELL_SPREAD': 30,
     'private SMELL_RAD': 0.3,
     'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
-    'private _smellMode': false,
     'private _scene': null,
     'private _sceneChunks': null,
-    'private _smells': null,
     'private _worldState': null,
     'private _proto': {
         'WATER': null,
         'ROCK':  null,
         'GRASS': null,
-        'BLOCK': null,
         'MUSH':  null,
-        'PLANT': null,
-        'ACTOR': null
+        'ACTOR': null,
+        'BLOCK': null,
+        'PLANT': null
+    },
+    'private _smells': {},
+    'private _smells_proto': {
+        'MUSH':  null,
+        'ACTOR': null,
+        'PLANT': null
     },
     /*
     Load the prototype mesh assets and return an event handle to be bound to
     a render loop initialtion function.
     */
     'public loadAssets': function() {
-        var meta = document.querySelector("meta[name='mesh-dir']").getAttribute('content')
-        var boletus_link = meta + "boletus_obj/"
+        var particle_file = "static/image/particle.png"
 
         var loader = new BABYLON.AssetsManager(this._scene)
         /*
@@ -9697,11 +9713,14 @@ module.exports =  Class("WorldRenderer", {
             }.bind(this))
         }.bind(this)
         */
+
+        // Geometry
         this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
         this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("ACTOR", 20, 1.0, this._scene)
+        this._proto["ACTOR"] = BABYLON.MeshBuilder.CreateCylinder("ACTOR", {diameterTop: 0, tessellation: 10, height: 1}, this._scene);
         this._proto["ACTOR"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+        this._proto["ACTOR"].rotation.x = Math.PI/2.0
 
         var actormat = new BABYLON.StandardMaterial("actormat", this._scene)
 
@@ -9709,10 +9728,88 @@ module.exports =  Class("WorldRenderer", {
 
         actormat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
         actormat.diffuseColor = new BABYLON.Color3(0.7, 0.3, 0.3)
+
+        this._proto["BLOCK"] = BABYLON.Mesh.CreateBox("BLOCK", 1.0, this._scene)
+        this._proto["BLOCK"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+        this._proto["BLOCK"].scaling.y = 2.0
+        this._proto["BLOCK"].scaling.x = 0.95
+        this._proto["BLOCK"].scaling.z = 0.95
+
+        var blockmat = new BABYLON.StandardMaterial("blockmat", this._scene)
+
+        this._proto["BLOCK"].material = blockmat
+
+        blockmat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        blockmat.diffuseColor = new BABYLON.Color3(0.45, 0.3, 0.15)
+
+        this._proto["PLANT"] = BABYLON.MeshBuilder.CreateCylinder("ACTOR", {diameterTop: 1, diameterBottom: 0.01, tessellation: 6, height: 3}, this._scene);
+        this._proto["PLANT"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        var plantmat = new BABYLON.StandardMaterial("plantmat", this._scene)
+
+        this._proto["PLANT"].material = plantmat
+
+        plantmat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        plantmat.diffuseColor = new BABYLON.Color3(0.0, 0.3, 0.0)
+
+        //Smell particles
+        var base_smell = new BABYLON.ParticleSystem("particles", 2000, this._scene)
+        base_smell.particleTexture = new BABYLON.Texture(particle_file, this._scene)
+
+        // Where the particles come from
+        base_smell.minEmitBox = new BABYLON.Vector3(-1, 0, 0) // Starting all from
+        base_smell.maxEmitBox = new BABYLON.Vector3(1, 0, 0) // To...
+
+        // Size of each particle (random between...
+        base_smell.minSize = 0.1
+        base_smell.maxSize = 0.5
+
+        // Life time of each particle (random between...
+        base_smell.minLifeTime = 0.1
+        base_smell.maxLifeTime = 0.5
+
+        // Emission rate
+        base_smell.emitRate = 1500
+
+        // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+        base_smell.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE
+
+        // Set the gravity of all particles
+        base_smell.gravity = new BABYLON.Vector3(0, 0.5, 0)
+
+        // Direction of each particle after it has been emitted
+        base_smell.direction1 = new BABYLON.Vector3(-5, -5, -5)
+        base_smell.direction2 = new BABYLON.Vector3(5, 5, 5)
+
+        // Angular speed, in radians
+        base_smell.minAngularSpeed = 0
+        base_smell.maxAngularSpeed = Math.PI
+
+        // Speed
+        base_smell.minEmitPower = 0.5
+        base_smell.maxEmitPower = 1
+        base_smell.updateSpeed = 0.005
+        this._smells_proto["MUSH"] = base_smell.clone("MUSH-particles")
+        this._smells_proto["MUSH"].emitter = this._proto["MUSH"]
+        this._smells_proto["ACTOR"] = base_smell.clone("ACTOR-particles")
+        this._smells_proto["ACTOR"].emitter = this._proto["ACTOR"]
+
+        this._smells_proto["ACTOR"].color1 = new BABYLON.Color4(0.7, 0.3, 0.3, 1.0)
+        this._smells_proto["ACTOR"].color2 = new BABYLON.Color4(0.7, 0.3, 0.3, 0.5)
+
+        this._smells_proto["PLANT"] = base_smell.clone("PLANT-particles")
+        this._smells_proto["PLANT"].emitter = this._proto["PLANT"]
+
+        this._smells_proto["PLANT"].color1 = new BABYLON.Color3(0.0, 0.3, 1.0)
+        this._smells_proto["PLANT"].color2 = new BABYLON.Color3(0.0, 0.3, 0.5)
+
+
+
         return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
         //Configure the LRU cache holding the scene chunks.
+        var renderer = this
         var options = {
             max: 100,
             dispose: function (key, chunk) {
@@ -9724,6 +9821,9 @@ module.exports =  Class("WorldRenderer", {
                             if(cont.mesh != undefined)
                                 cont.mesh.dispose()
                         }
+                        renderer._smells[cell.smell_name] = undefined
+                        if(cell.smell != undefined)
+                            cell.smell.dispose()
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
 
@@ -9760,7 +9860,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "MUSH",
+                        "type": "ACTOR",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -10002,6 +10102,26 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
+    'public initSmell': function(cell, type) {
+        if(this._smells_proto[type] == undefined || cell.mesh == undefined)
+            return
+        cell.smell_name = cell.coords.x + " " + cell.coords.y + "--smell--" + type
+        cell.smell = this._smells_proto[type].clone(cell.smell_name)
+        cell.smell.emitter = cell.mesh
+        this._smells[cell.smell_name] = cell.smell
+    },
+    'public showSmells': function () {
+        for(var s in this._smells){
+            var smell = this._smells[s]
+            smell.start()
+        }
+    },
+    'public hideSmells': function () {
+        for(var s in this._smells){
+            var smell = this._smells[s]
+            smell.stop()
+        }
+    },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
     or otherwise generating it formulaically.
@@ -10033,23 +10153,38 @@ module.exports =  Class("WorldRenderer", {
             row = []
             for (var j = 0; j < chunksize; j++) {
                 cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
-                
+
                 mesh = this._proto[cell["type"]]
                            .createInstance(cellx + " " + celly)
 
                 mesh.scaling.y = cell["elevation"]/2
 
                 mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
-
                 cell["mesh"] = mesh
 
                 for(k in cell.contents) {
                     var cont = cell.contents[k]
                     cont.mesh = this._proto[cont["type"]]
-                                    .createInstance(cellx + " " + celly + " " + cont["type"])
+                                    .createInstance(cellx + " " + celly)
                     cont.mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/2, celly)
-                    cont.mesh.isPickable = false;
+                    switch(cont.direction) {
+                        case "WEST":
+                            cont.mesh.rotation.z = Math.PI/2
+                            break
+                        case "SOUTH":
+                            cont.mesh.rotation.z = Math.PI
+                            break
+                        case "EAST":
+                            cont.mesh.rotation.z = 3*Math.PI/2
+                            break
+                        default:
+                            cont.mesh.rotation.z = 0
+                            break
+                    }
+                    cont.mesh.isPickable = false
+                    this.initSmell(cell, cont["type"])
                 }
+
                 row.push(cell)
                 cellx++
             }
