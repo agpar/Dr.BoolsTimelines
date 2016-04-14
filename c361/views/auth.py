@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.views.generic.base import View
 from django.http import HttpResponseRedirect
 from c361.forms.user import UserForm
+from c361.models import GameActorModel
 
 
 """Basic auth views that I grabbed from another project."""
@@ -42,6 +43,8 @@ class UserRegister(APIView):
                 user = authenticate(username=request.POST['username'],
                                     password=request.POST['password1'])
                 login(request, user)
+
+                create_example_actor(user)
                 return HttpResponseRedirect("/")
             else:
                 return render(request, "auth/register.html", {'form': form})
@@ -56,3 +59,28 @@ def user_logout(request):
         return redirect(next)
     else:
         return redirect('/')
+
+def create_example_actor(user):
+    """Create some example actors tied to the user's account."""
+    suicide_script = """if nearest(WATER) == MY_LOCATION then
+do
+    walk(NORTH);
+done
+else
+do
+    walk(direction(nearest(WATER)));
+done
+endif"""
+    north_sleeper = """if MY_ENERGY < 80 then
+do
+    sleep();
+done
+else
+do
+    walk(NORTH);
+done
+endif"""
+    a1 = GameActorModel(title="Suicide Guy", creator=user, behaviour_script=suicide_script)
+    a2 = GameActorModel(title="Sleep Walker", creator=user, behaviour_script=north_sleeper)
+    a1.save()
+    a2.save()

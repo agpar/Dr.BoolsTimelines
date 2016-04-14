@@ -158,6 +158,10 @@ class WorldInhabitant(CoordParseMixin):
         """
         return self.direction_fn(self, other)
 
+    @property
+    def neighbors(self):
+        return self.north(), self.south(), self.east(), self.west()
+
 
 class Cell(WorldInhabitant):
 

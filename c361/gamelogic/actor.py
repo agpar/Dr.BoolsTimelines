@@ -84,6 +84,7 @@ class Actor(WorldInhabitant):
             'direction': self.direction,
             'behaviour_script': self.script,
             'smell_code': self.smell_code,
+            'has_rock': self.has_rock
         }
         return d
 

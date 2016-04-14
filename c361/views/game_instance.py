@@ -114,6 +114,8 @@ class GameDetail(BaseDetailView):
 
         if changes['type'] == 'actor':
             if changes['action'] == 'add':
+                if game.actors.count() >= 10:
+                    return JsonResponse({"error": "MAX ACTORS", "message": "Game already contains 10 actors."})
                 copy_act = GameActorModel.objects.get(id=int(changes['id'])).deep_copy()
                 coords = changes.get('coords')
                 if coords:
@@ -135,5 +137,9 @@ class GameDetail(BaseDetailView):
                     future.get()
 
                 act.delete()
+
+        if changes['type'] == 'diff':
+            future = game_proxy.edit_world(changes['diff'])
+            future.get()
 
         return Response(status=HTTP_202_ACCEPTED)

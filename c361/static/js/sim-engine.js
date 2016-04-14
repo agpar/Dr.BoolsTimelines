@@ -8854,21 +8854,7 @@ $(document).ready(function () {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
 		}
-
-    $("#toolbar-bottom .tool").click(function (evt) {
-        $("#toolbar-bottom .tool").removeClass("selected")
-        $(this).addClass("selected")
-    })
-    $("#toolbar-bottom .modifier").click(function (evt) {
-        $("#toolbar-bottom .modifier").removeClass("selected")
-        $(this).addClass("selected")
-    })
-
-    $("#add-raise").click(function (evt){CONTROLLER.setUse("ADD")})
-    $("#delete-lower").click(function (evt){CONTROLLER.setUse("DELETE")})
-    $("#camera").click(function (evt){CONTROLLER.setTool("CAMERA")})
-    $("#inspect").click(function (evt){CONTROLLER.setTool("INSPECT")})
-
+    
     $(document).trigger("loadview", [])
 });
 
@@ -8886,6 +8872,8 @@ change operations to the renderer to move the view through time.
 
 param renderTarget: The DOM element that the rendering engine will be bound to.
 */
+var TIMELINE_WINDOW = 30
+var NLOCK = false
 module.exports = Class("GraphicsEngineController", {
     'private _gameID': undefined,
     'private _activeActor': undefined,
@@ -8897,11 +8885,12 @@ module.exports = Class("GraphicsEngineController", {
     'private _camPos': null,
     'private _renderer': null,
     'private _smellMode': false,
+    'private _updateLoop': null,
     'private _timeLine': null,
-    'private _currentTurn': 0,
     'private _rtarget': null,
     'private _tool': "CAMERA",
     'private _use': "ADD",
+    'private _latestTurn': 0,
 
     'private _popupStats': function (stats) {
         $('#cell-stats').show()
@@ -8951,6 +8940,112 @@ module.exports = Class("GraphicsEngineController", {
             }.bind(this)
         ))
     },
+    'public pauseSimulation': function () {
+        if(this._updateLoop != null)
+            clearInterval(this._updateLoop)
+    },
+    'public resumeSimulation': function () {
+        var controller = this
+        this._updateLoop = setInterval(function () {
+           controller.nextFrame()
+        }, 1000)
+    },
+    'public nextFrame': function(options) {
+        var controller = this
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
+        first = (first < 0) ? 0 : first
+        if(this._timeLine.cursor >= this._timeLine.interval.length-1 - Math.floor(TIMELINE_WINDOW/4)) {
+          if(options && options.cbmode)
+              this._fetchTimeInterval(first, last)
+          else
+              this._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
+        }
+        if( this._timeLine.cursor < this._timeLine.interval.length-1){
+            this._renderer.patch([this._timeLine.interval[this._timeLine.cursor++]])
+            this._latestTurn = (this._latestTurn < this._renderer.getStateProp("currentTurn")) ? this._renderer.getStateProp("currentTurn") : this._latestTurn
+        }
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["post"]["current_turn"] + " " + this._timeLine.last)
+    },
+    'public prevFrame': function(options) {
+        var controller = this
+        if(this._timeLine.init)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var first =  cur_turn - Math.floor(TIMELINE_WINDOW/2)
+        var last = cur_turn + Math.floor(TIMELINE_WINDOW/2)
+
+        if(last > 0) {
+            if(this._timeLine.cursor <= Math.floor(TIMELINE_WINDOW/4)) {
+                if(options && options.cbmode)
+                    this._fetchTimeInterval(first, last)
+                else
+                    this._fetchTimeInterval(first, last, {'cb': controller.prevFrame.bind(controller)})
+            }
+        }
+
+        if(this._timeLine.cursor && this._timeLine.cursor > 0) {
+            this._renderer.unpatch([this._timeLine.interval[--this._timeLine.cursor]])
+        }
+
+        console.log(this._timeLine.cursor+" "+this._timeLine.interval[this._timeLine.cursor]["pre"]["current_turn"] + " " + this._timeLine.last)
+    },
+    'private _fetchTimeInterval': function(low, high, options) {
+        low = (low < 0) ? 0 : low
+
+        if(low == this._timeLine.first && high == this._timeLine.last)
+            return
+        var cur_turn = this._renderer.getStateProp("currentTurn")
+        var controller = this
+        $.ajax({
+            type: "get",
+            url: "/game/" + controller._gameID + "/turns?first=" + low + "&last=" + high,
+            statusCode: {
+                200: function (data)
+                {
+                    if(NLOCK) return
+                    NLOCK = true
+                    var diffs = data.map(function(e,i,a){return e["diff"]})
+                    if(diffs.length > 0) {
+                        controller._timeLine.first = diffs[0]["pre"]["current_turn"]
+                        controller._timeLine.last = diffs[diffs.length-1]["pre"]["current_turn"]
+                    }
+                    var tnum = diffs.map(function(e,i,a){return e["pre"]["current_turn"]})
+                    controller._timeLine.cursor = tnum.indexOf(cur_turn)
+                    if (controller._timeLine.cursor < 0)
+                        controller._timeLine.cursor = 0
+                    controller._timeLine.interval = diffs
+                    controller._timeLine.init = undefined
+                    if(options && options.cb)
+                        options.cb({'cbmode': true})
+                    console.log("Loaded timeline chunk")
+                    NLOCK = false
+                },
+
+                400: function (data)
+                {
+                    if(options == undefined || options["retry"] == undefined) {
+                        console.log(data)
+                        console.log("RETRYING TIMELINE FETCH WITH CORRECTED INTERVAL.")
+                        controller._fetchTimeInterval(low, data["responseJSON"]["latest_turn"]-1, {"retry": true})
+                    }
+                    else {
+                       console.log("RETRY FAILED")
+                       console.log(data)
+                    }
+                }
+            }
+        })
+    },
+    'public showSmellField': function () {
+        this._renderer.showSmells()
+    },
+    'public hideSmellField': function () {
+        this._renderer.hideSmells()
+    },
     __construct: function(renderTarget) {
         var engine = new BABYLON.Engine(renderTarget, true)
         var scene  = new BABYLON.Scene(engine)
@@ -8979,123 +9074,206 @@ module.exports = Class("GraphicsEngineController", {
         this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
-        this._setupKeys(scene)
+
+
+        this._initializeButtons()
+        this._initializeWindow()
         this.startSimulationEngine()
+    },
+    'private _initializeWindow': function() {
+        var controller = this
+        var renderer = this._renderer
+
+        $(window).on('beforeunload', function (event)
+        {
+            return 'Leaving this page will clear your form.';
+        });
+
+        $(window).unload(function(){
+            var turn = renderer.getStateProp("currentTurn");
+            var gameid = controller._gameID;
+            if (gameid && controller._is_hosting){
+                $.ajax("/game/"+gameid+"/?stop=true&on_turn="+controller._latestTurn);
+            }
+        });
+    },
+    'private _initializeButtons': function () {
+        var controller = this
+        var renderer = this._renderer
+        $("#toolbar-bottom .tool").click(function (evt) {
+            $("#toolbar-bottom .tool").removeClass("selected")
+            $(this).addClass("selected")
+        })
+        $("#toolbar-bottom .modifier").click(function (evt) {
+            $("#toolbar-bottom .modifier").removeClass("selected")
+            $(this).addClass("selected")
+        })
+
+        $("#add-raise").click(function (evt){controller.setUse("ADD")})
+        $("#delete-lower").click(function (evt){controller.setUse("DELETE")})
+        $("#camera").click(function (evt){controller.setTool("CAMERA")})
+        $("#inspect").click(function (evt){controller.setTool("INSPECT")})
 
         $("#simulation-render-target").click(function(evt){
-            var picked = scene.pick(evt.clientX, evt.clientY)
+            var picked = renderer.pickCell(evt.clientX, evt.clientY)
             var coords = picked.pickedMesh.name.split(" ").map(function(x){return Number(x)})
             if(evt.ctrlKey)
                 return
-            if (this._tool == "CAMERA") {
-                this._camera.angularSensibilityX = 1500
-                this._camera.angularSensibilityY = 1500
+            if (controller._tool == "CAMERA") {
+                controller._camera.angularSensibilityX = 1500
+                controller._camera.angularSensibilityY = 1500
             }
             else {
-                this._camera.angularSensibilityX = 1000000000
-                this._camera.angularSensibilityY = 1000000000
+                controller._camera.angularSensibilityX = 1000000000
+                controller._camera.angularSensibilityY = 1000000000
 
-                if(this._tool == "INSPECT") {
+                if(controller._tool == "INSPECT") {
                     console.log("INS")
 
-                    stats = this._renderer.getCell(coords[0], coords[1])
+                    stats = renderer.getCell(coords[0], coords[1])
                     console.log(stats)
-                    this._popupStats(stats)
+                    controller._popupStats(stats)
                 }
                 else {
-                    if(this._use == "ADD") {
-                        if (this._tool == "TERRAIN") {
+                    if(controller._use == "ADD") {
+                        if (controller._tool == "TERRAIN") {
                             console.log("RAI_TER")
                         }
-                        else if (this._tool == "GRASS") {
+                        else if (controller._tool == "GRASS") {
                             console.log("ADD_GRA")
                         }
-                        else if (this._tool == "ROCK") {
+                        else if (controller._tool == "ROCK") {
                             console.log("ADD_ROC")
                         }
-                        else if (this._tool == "WATER") {
+                        else if (controller._tool == "WATER") {
                             console.log("ADD_WAT")
                         }
-                        else if (this._tool == "PLANT") {
+                        else if (controller._tool == "PLANT") {
                             console.log("ADD_PLA")
                         }
-                        else if (this._tool == "MUSHROOM") {
+                        else if (controller._tool == "MUSHROOM") {
                             console.log("ADD_MUS")
                         }
-                        else if (this._tool == "WALL") {
+                        else if (controller._tool == "WALL") {
                             console.log("ADD_WAL")
                         }
-                        else if (this._tool == "BLOCK") {
+                        else if (controller._tool == "BLOCK") {
                             console.log("ADD_BLO")
                         }
-                        else if (this._tool == "ACTOR") {
+                        else if (controller._tool == "ACTOR") {
                             console.log("ADD_ACT")
-                            this._spawnActor(coord[0],coords[1])
+                            controller._spawnActor(coord[0],coords[1])
                         }
                     }
-                    else if(this._use == "DELETE") {
-                        if (this._tool == "TERRAIN") {
+                    else if(controller._use == "DELETE") {
+                        if (controller._tool == "TERRAIN") {
                             console.log("LOW_TER")
                         }
-                        else if (this._tool == "GRASS") {
+                        else if (controller._tool == "GRASS") {
                             console.log("DEL_GRA")
                         }
-                        else if (this._tool == "ROCK") {
+                        else if (controller._tool == "ROCK") {
                             console.log("DEL_ROC")
                         }
-                        else if (this._tool == "WATER") {
+                        else if (controller._tool == "WATER") {
                             console.log("DEL_WAT")
                         }
-                        else if (this._tool == "PLANT") {
+                        else if (controller._tool == "PLANT") {
                             console.log("DEL_PLA")
                         }
-                        else if (this._tool == "MUSHROOM") {
+                        else if (controller._tool == "MUSHROOM") {
                             console.log("DEL_MUS")
                         }
-                        else if (this._tool == "WALL") {
+                        else if (controller._tool == "WALL") {
                             console.log("DEL_WAL")
                         }
-                        else if (this._tool == "BLOCK") {
+                        else if (controller._tool == "BLOCK") {
                             console.log("DEL_BLO")
                         }
-                        else if (this._tool == "ACTOR") {
+                        else if (controller._tool == "ACTOR") {
                             console.log("DEL_ACT")
                         }
                     }
                 }
             }
 
-        }.bind(this))
-    },
-    'public setActiveActor': function (actor_id) {
-          this._activeActor = actor_id
-    },
-    'public get_gameID' : function()
-    {
-        return this._gameID
-    },
-    'public get_currentTurn' : function()
-    {
-        return this._currentTurn
-    },
-    'public set_currentTurn' : function(turn)
-    {
-        this._currentTurn = turn
-    },
-    'public is_hosting' : function()
-    {
-        return this._is_hosting
-    },
+        })
 
+        //IN GAME STUFF
+        $("#pause-game-btn").click(function() {
+            if ($(this).hasClass('disabled'))
+            {
+                return
+            }
+            controller.pauseSimulation();
+
+            //Do something to stop the game-loop... First implement a game loop.
+
+            $.ajax({
+                type: "get",
+                url: "/game/" + controller._gameID + "/?pause=true&on_turn=" + controller._latestTurn,
+                success: function (data) {
+                    console.log("Game paused.");
+                    $("#pause-game-btn").addClass("disabled");
+                    $("#resume-game-btn").removeClass("disabled");
+
+                },
+                failure: function (data) {
+                    console.log(data)
+                    controller.resumeSimulation()
+                }
+            });
+        });
+
+
+        $("#resume-game-btn").click(function()
+        {
+            if ($(this).hasClass('disabled'))
+            {
+                return
+            }
+
+            $.ajax({
+                type: "get",
+                url: "/game/" + controller._gameID + "/?resume=true",
+                success: function (data) {
+                    console.log("Game resumed.");
+                    $("#resume-game-btn").addClass("disabled");
+                    $("#pause-game-btn").removeClass("disabled");
+                    controller.resumeSimulation();
+                },
+                failure: function (data) {
+                    console.log(data)
+                }
+            });
+        });
+
+        $("#advance-btn").click(
+            function () {
+                controller.nextFrame()
+
+            }
+        )
+
+        $("#reverse-btn").click(
+            function () {
+                controller.prevFrame()
+            }
+        )
+    },
     'public loadGame': function (gametitle, gameid, spectate) {
+        var controller = this
         if (spectate === undefined) //Added optional param to set up as spectator -AP.
             spectate = false;
+
+        if(this._gameID != undefined)
+            $.ajax("/game/"+controller._gameID+"/?stop=true&on_turn="+controller._latestTurn)
 
         this._gameID = gameid
         this._gameTitle = gametitle
         var renderer = this._renderer
         var cam = this._camPos
-        
+        var controller = this
         if(spectate)
             this._is_hosting = false;
         else
@@ -9116,6 +9294,14 @@ module.exports = Class("GraphicsEngineController", {
             });
         }
 
+        this._timeLine = {
+            "first": 0,
+            "last": 0,
+            "cursor": 0,
+            "interval": [],
+            "init": true
+        }
+
         $.ajax({
             type: "get",
             url: "/game/"+gameid+"/?full_dump=true",
@@ -9123,36 +9309,31 @@ module.exports = Class("GraphicsEngineController", {
             statusCode: {
                 200: function(data)
                 {
-                    renderer.setWorldState(data)
+                    renderer.setWorldState(data, gametitle)
                     renderer.updateView(cam)
-                    window.CONTROLLER.set_currentTurn(data['current_turn']);
+
+                    var first = data["current_turn"] - Math.floor(TIMELINE_WINDOW/2)
+                    first = (first < 0) ? 0 : first
+                    var last = data["current_turn"] + Math.floor(TIMELINE_WINDOW/2)
+
+                    $.ajax({
+                        type: "get",
+                        url: "/game/" + controller._gameID + "/?resume=true",
+                        success: function (data) {
+                        },
+                        failure: function (data) {
+                        }
+                    });
+
+
+                    controller._fetchTimeInterval(first, last, {'cb': controller.nextFrame.bind(controller)})
 
                     //Enable 'game' tab of side menu.
                     $("#side-game-menu-tab").removeClass("disabled");
                     $('#side-menu-tabs a[href="#side-game-menu"]').tab('show');
-
-                    //Show game info.
-                    $("#loaded-game-info").html("<b>Game: </b>" + gametitle + "<br><b>Turn</b> " + window.CONTROLLER.get_currentTurn())
                 }
             }
         })
-
-        $("#advance-btn").click(
-          function () {
-              $.ajax({
-                  type: "get",
-                  url: "/game/"+gameid+"/?light_dump=true",
-                  contentType:"application/json",
-                  statusCode: {
-                      200: function(data)
-                      {
-                          renderer.setWorldState(data)
-                          renderer.updateView(cam)
-                      }
-                  }
-              })
-
-          })
         /*
         if(this._updateLoop != null)
             clearInterval(this._updateLoop)
@@ -9186,8 +9367,9 @@ module.exports = Class("GraphicsEngineController", {
             //this._renderer.smellFieldOn()
             this._renderer.updateView(this._camPos)
 
-            this._camPos = {x: 0, y: 0}
-
+            this._camPos.x = 0
+            this._camPos.y = 0
+            control.hideSmellField()
             this._renderEngine.runRenderLoop(function () {
                 this._renderer.renderWorld()
 
@@ -9197,7 +9379,8 @@ module.exports = Class("GraphicsEngineController", {
                 if(camdist > 2) {
                     var newx = Math.floor(this._camera.target.x)
                     var newy = Math.floor(this._camera.target.z)
-                    this._camPos = {x: newx, y: newy}
+                    this._camPos.x = newx
+                    this._camPos.y = newy
                     this._renderer.updateView(this._camPos)
                 }
             }.bind(this))
@@ -9327,8 +9510,8 @@ module.exports = Class("WorldCell", {
 },{"./cell-content":36,"easejs":1}],38:[function(require,module,exports){
 var Class = require("easejs").Class
 var WorldCell = require("./world-cell")
-
 module.exports = Class("WorldState", {
+    'private _currentTurn': null,
     'private _standardHeight': null,
     'private _width': null,
     'private _length': null,
@@ -9338,7 +9521,15 @@ module.exports = Class("WorldState", {
     'private _seed': null,
     'private _seedsize': null,
     'private _cells': null,
-    __construct: function(json_dump) {
+    'private _dump': null,
+    'private _marked': [],
+    'private _title': undefined,
+    'private _updatechunk': null,
+
+    __construct: function(json_dump, title, update_chunk_hook) {
+        this._title          = title
+        this._updatechunk    = update_chunk_hook
+        this._dump           = JSON.parse(JSON.stringify(json_dump))
         this._standardHeight = json_dump["standardHeight"]
         this._width          = json_dump["width"]
         this._length         = json_dump["length"]
@@ -9347,17 +9538,117 @@ module.exports = Class("WorldState", {
         this._rockThreshold  = json_dump["rockThreshold"]
         this._seed           = json_dump["seed"]
         this._seedsize       = json_dump["seedsize"]
+        this._currentTurn    = json_dump["current_turn"]
         this._cells          = json_dump["cells"]
-
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
+    },
+    'private _loadPatch': function(json_dump){
+        this._dump = JSON.parse(JSON.stringify(json_dump))
+        this._currentTurn    = json_dump["current_turn"]
+        this._cells          = json_dump["cells"]
+        $("#loaded-game-info").html("<b>Game: </b>" + this._title + "<br><b>Turn</b> " + this._currentTurn)
+        var chunks = {}
+        for(c in this._marked) {
+            var s = this._marked[c].split(" ")
+            var sp = {
+              'x': Math.floor(Number(s[0])/this._chunkSize),
+              'y': Math.floor(Number(s[1])/this._chunkSize)
+            }
+            var clab = sp.x + " " + sp.y
+            if(!chunks[clab]) {
+                this._updatechunk(sp.x, sp.y, true, true)
+                chunks[clab] = true
+            }
+        }
+        this._marked = []
     },
     'public get': function(key) {
         return this["_" + key]
     },
-    'public applyDeltas': function (deltas, backstep) {
+    'private _patch_dicts': function(fr_diff, to_diff, options) {
+        var turn_difference = fr_diff["current_turn"] - to_diff["current_turn"]
+        var f_diff = JSON.parse(JSON.stringify(fr_diff))
+        if(turn_difference * turn_difference > 1) return f_diff
+        var patched = JSON.parse(JSON.stringify(f_diff))
+        var t_diff = JSON.parse(JSON.stringify(to_diff))
 
+
+
+        for(var k in t_diff) {
+            if(t_diff[k] == "REMOVE")
+                continue
+            if(f_diff[k] == undefined){
+                patched[k] = t_diff[k]
+            }
+            else if (f_diff[k] !== null
+                     && typeof f_diff[k] === 'object'
+                     && t_diff[k] !== null
+                     && typeof t_diff[k] === 'object')
+            {
+                if(options && options["reverse"] != undefined) {
+                    patched[k] = this._patch_dicts(f_diff[k], t_diff[k], {
+                        reverse: options["reverse"],
+                        celldict: true
+                    })
+                }
+                else {
+                    patched[k] = this._patch_dicts(f_diff[k], t_diff[k])
+                }
+            }
+            else {
+                patched[k] = t_diff[k]
+            }
+        }
+
+        for(k in f_diff) {
+            if(t_diff[k] == "REMOVE") {
+                patched[k] = undefined
+            }
+        }
+
+        return patched
+    },
+    'public patch': function (diffs, options) {
+        var patch_diffs = []
+        if (options && options["reverse"] == true) {
+            for(var k in diffs)
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["pre"])))
+        }
+        else {
+            for(var k in diffs)
+                patch_diffs.push(JSON.parse(JSON.stringify(diffs[k]["post"])))
+        }
+
+        var patchdct = function(f,t) {
+            if(options && options["reverse"])
+                return this._patch_dicts(f,t, {reverse: options["reverse"]})
+            else
+                return this._patch_dicts(f,t)
+        }.bind(this)
+
+        var patched = patch_diffs.reduce(patchdct, this._dump)
+
+        for(c in patched["cells"])
+            this._marked.push(c)
+        for(c in this._cells)
+            this._marked.push(c)
+
+        this._loadPatch(JSON.parse(JSON.stringify(patched)))
+
+        return patched
+    },
+    'public unpatch': function (diffs) {
+        return this.patch(diffs, {reverse: true})
     },
     'public setCells': function(cells) {
         this._cells = cells
+    },
+    'public isMarked': function(coord){
+        return this._marked.indexOf(coord.x + " " + coord.y) > -1
+    },
+    'public unMark': function(coord){
+        if(this.isMarked(coord))
+            this._marked.splice(this._marked.indexOf(coord.x + " " + coord.y), 1)
     }
 })
 
@@ -9382,28 +9673,33 @@ param camera: The BABYLON.Camera instance which the user views through
 param scene: The BABYLON.Scene instance displaying the cells stored in loaded chunks.
 */
 module.exports =  Class("WorldRenderer", {
-    'private SMELL_SPREAD': 100,
-    'private _smellMode': true,
+    'private SMELL_SPREAD': 30,
+    'private SMELL_RAD': 0.3,
+    'private SMELL_CULL': Math.log(1/Math.pow(this.SMELL_RAD, this.SMELL_SPREAD)),
     'private _scene': null,
     'private _sceneChunks': null,
-    'private _smells': null,
     'private _worldState': null,
     'private _proto': {
         'WATER': null,
         'ROCK':  null,
         'GRASS': null,
-        'BLOCK': null,
         'MUSH':  null,
-        'PLANT': null,
-        'ACTOR': null
+        'ACTOR': null,
+        'BLOCK': null,
+        'PLANT': null
+    },
+    'private _smells': {},
+    'private _smells_proto': {
+        'MUSH':  null,
+        'ACTOR': null,
+        'PLANT': null
     },
     /*
     Load the prototype mesh assets and return an event handle to be bound to
     a render loop initialtion function.
     */
     'public loadAssets': function() {
-        var meta = document.querySelector("meta[name='mesh-dir']").getAttribute('content')
-        var boletus_link = meta + "boletus_obj/"
+        var particle_file = "static/image/particle.png"
 
         var loader = new BABYLON.AssetsManager(this._scene)
         /*
@@ -9417,11 +9713,14 @@ module.exports =  Class("WorldRenderer", {
             }.bind(this))
         }.bind(this)
         */
+
+        // Geometry
         this._proto["MUSH"] = BABYLON.Mesh.CreateSphere("MUSH", 20, 1.0, this._scene)
         this._proto["MUSH"].position = new BABYLON.Vector3(-10000,-10000,-10000)
 
-        this._proto["ACTOR"] = BABYLON.Mesh.CreateSphere("ACTOR", 20, 1.0, this._scene)
+        this._proto["ACTOR"] = BABYLON.MeshBuilder.CreateCylinder("ACTOR", {diameterTop: 0, tessellation: 10, height: 1}, this._scene);
         this._proto["ACTOR"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+        this._proto["ACTOR"].rotation.x = Math.PI/2.0
 
         var actormat = new BABYLON.StandardMaterial("actormat", this._scene)
 
@@ -9429,10 +9728,88 @@ module.exports =  Class("WorldRenderer", {
 
         actormat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
         actormat.diffuseColor = new BABYLON.Color3(0.7, 0.3, 0.3)
+
+        this._proto["BLOCK"] = BABYLON.Mesh.CreateBox("BLOCK", 1.0, this._scene)
+        this._proto["BLOCK"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+        this._proto["BLOCK"].scaling.y = 2.0
+        this._proto["BLOCK"].scaling.x = 0.95
+        this._proto["BLOCK"].scaling.z = 0.95
+
+        var blockmat = new BABYLON.StandardMaterial("blockmat", this._scene)
+
+        this._proto["BLOCK"].material = blockmat
+
+        blockmat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        blockmat.diffuseColor = new BABYLON.Color3(0.45, 0.3, 0.15)
+
+        this._proto["PLANT"] = BABYLON.MeshBuilder.CreateCylinder("ACTOR", {diameterTop: 1, diameterBottom: 0.01, tessellation: 6, height: 3}, this._scene);
+        this._proto["PLANT"].position = new BABYLON.Vector3(-10000,-10000,-10000)
+
+        var plantmat = new BABYLON.StandardMaterial("plantmat", this._scene)
+
+        this._proto["PLANT"].material = plantmat
+
+        plantmat.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0)
+        plantmat.diffuseColor = new BABYLON.Color3(0.0, 0.3, 0.0)
+
+        //Smell particles
+        var base_smell = new BABYLON.ParticleSystem("particles", 2000, this._scene)
+        base_smell.particleTexture = new BABYLON.Texture(particle_file, this._scene)
+
+        // Where the particles come from
+        base_smell.minEmitBox = new BABYLON.Vector3(-1, 0, 0) // Starting all from
+        base_smell.maxEmitBox = new BABYLON.Vector3(1, 0, 0) // To...
+
+        // Size of each particle (random between...
+        base_smell.minSize = 0.1
+        base_smell.maxSize = 0.5
+
+        // Life time of each particle (random between...
+        base_smell.minLifeTime = 0.1
+        base_smell.maxLifeTime = 0.5
+
+        // Emission rate
+        base_smell.emitRate = 1500
+
+        // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+        base_smell.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE
+
+        // Set the gravity of all particles
+        base_smell.gravity = new BABYLON.Vector3(0, 0.5, 0)
+
+        // Direction of each particle after it has been emitted
+        base_smell.direction1 = new BABYLON.Vector3(-5, -5, -5)
+        base_smell.direction2 = new BABYLON.Vector3(5, 5, 5)
+
+        // Angular speed, in radians
+        base_smell.minAngularSpeed = 0
+        base_smell.maxAngularSpeed = Math.PI
+
+        // Speed
+        base_smell.minEmitPower = 0.5
+        base_smell.maxEmitPower = 1
+        base_smell.updateSpeed = 0.005
+        this._smells_proto["MUSH"] = base_smell.clone("MUSH-particles")
+        this._smells_proto["MUSH"].emitter = this._proto["MUSH"]
+        this._smells_proto["ACTOR"] = base_smell.clone("ACTOR-particles")
+        this._smells_proto["ACTOR"].emitter = this._proto["ACTOR"]
+
+        this._smells_proto["ACTOR"].color1 = new BABYLON.Color4(0.7, 0.3, 0.3, 1.0)
+        this._smells_proto["ACTOR"].color2 = new BABYLON.Color4(0.7, 0.3, 0.3, 0.5)
+
+        this._smells_proto["PLANT"] = base_smell.clone("PLANT-particles")
+        this._smells_proto["PLANT"].emitter = this._proto["PLANT"]
+
+        this._smells_proto["PLANT"].color1 = new BABYLON.Color3(0.0, 0.3, 1.0)
+        this._smells_proto["PLANT"].color2 = new BABYLON.Color3(0.0, 0.3, 0.5)
+
+
+
         return loader
     },
     __construct: function (renderTarget, engine, camera, scene) {
         //Configure the LRU cache holding the scene chunks.
+        var renderer = this
         var options = {
             max: 100,
             dispose: function (key, chunk) {
@@ -9444,10 +9821,9 @@ module.exports =  Class("WorldRenderer", {
                             if(cont.mesh != undefined)
                                 cont.mesh.dispose()
                         }
-
-                        if(cell.smell)
-                            cell.mesh.material.dispose()
-
+                        renderer._smells[cell.smell_name] = undefined
+                        if(cell.smell != undefined)
+                            cell.smell.dispose()
                         if(cell.mesh != undefined)
                             cell.mesh.dispose()
 
@@ -9484,7 +9860,7 @@ module.exports =  Class("WorldRenderer", {
 
                 if(Math.random() < 0.1) {
                     cells[key].contents.push({
-                        "type": "MUSH",
+                        "type": "ACTOR",
                         "health": 50,
                         "mesh": undefined
                     })
@@ -9539,6 +9915,9 @@ module.exports =  Class("WorldRenderer", {
         this._proto["ROCK"]  = rock
         this._proto["GRASS"] = grass
         this._scene = scene
+    },
+    'public pickCell': function (x,y) {
+        return this._scene.pick(x,y)
     },
     /*
     Terrain generation function. Produces a cell either from the ones defined
@@ -9655,42 +10034,28 @@ module.exports =  Class("WorldRenderer", {
     Render the geometry in the scene.
     */
     'public renderWorld': function() {
-      this._scene.render()
+        this._scene.render()
     },
     /*
     Set the entire state of the world to the new state.
 
     param state: The new state to replace the state of the world.
     */
-    'public setWorldState': function (state) {
+    'public setWorldState': function (state, title) {
         var tstate = state
         if(tstate["seed"] == undefined)
             tstate["seed"] = this._worldState.get("seed")
-        this._worldState = WorldState(tstate)
+        this._worldState = WorldState(tstate, title, this.updateChunk.bind(this))
         this._sceneChunks.reset()
     },
-    'public updateWorldState': function (state) {
-        if(state.cells != undefined)
-            this._worldState.setCells(state.cells);
+    'public getStateProp': function (key) {
+        return this._worldState.get(key)
     },
-    /*.material.diffuseColor = new C
-    Update the world with the changes specified by a list of state change
-    operations.
-
-    param deltas: List of state change operations.
-    param backstep: If true then the operations will be applied backwards.
-    */
-    'public applyDeltas': function (deltas, backstep) {
-        if (backstep) {
-            for (delta in deltas) {
-
-            }
-        } else {
-            for (delta in deltas) {
-
-            }
-        }
-
+    'public patch': function (diffs) {
+        this._worldState.patch(diffs)
+    },
+    'public unpatch': function (diffs) {
+        this._worldState.unpatch(diffs)
     },
     /*
     Return the cell information at the inputted grid position.
@@ -9737,69 +10102,25 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'public renderSmell': function(cell) {
-        if(!this._smellMode){
-            cell.smell = false
-            return false
+    'public initSmell': function(cell, type) {
+        if(this._smells_proto[type] == undefined || cell.mesh == undefined)
+            return
+        cell.smell_name = cell.coords.x + " " + cell.coords.y + "--smell--" + type
+        cell.smell = this._smells_proto[type].clone(cell.smell_name)
+        cell.smell.emitter = cell.mesh
+        this._smells[cell.smell_name] = cell.smell
+    },
+    'public showSmells': function () {
+        for(var s in this._smells){
+            var smell = this._smells[s]
+            smell.start()
         }
-
-        var intensity = 0
-        var color = {'r': 0, 'g': 0, 'b': 0}
-        var worldcells = this._worldState.get("cells")
-
-        overlap = 1
-        for(var cl in worldcells){
-            var ocell = worldcells[cl]
-            var x0 = cell.coords.x - ocell.coords.x
-            var y0 = cell.coords.y - ocell.coords.y
-            var z0 = cell.elevation - ocell.elevation
-
-            for(var ct in ocell.contents){
-                var cont = ocell.contents[ct]
-                intensity += 2*Math.exp(-(x0*x0 + y0*y0 + z0*z0)/this.SMELL_SPREAD)
-
-                if(cont.type == "ACTOR") {
-                    color.r += 0.8
-                    color.g += 0.1
-                    color.b += 0.1
-                }
-                if(cont.type == "MUSH") {
-                    color.r += 0.3
-                    color.g += 0.3
-                    color.b += 0.3
-                }
-                if(cont.type == "PLANT") {
-                    color.r += 0.1
-                    color.g += 0.8
-                    color.b += 0.1
-                }
-                overlap++
-            }
+    },
+    'public hideSmells': function () {
+        for(var s in this._smells){
+            var smell = this._smells[s]
+            smell.stop()
         }
-
-        intensity /= overlap
-        if(intensity < 0.3) {
-            cell.smell = false
-            return false
-        }
-        color.r /= overlap
-        color.g /= overlap
-        color.b /= overlap
-
-        cell.mesh = this._proto[cell.type].clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.scaling.y = cell["elevation"]/2
-        cell.mesh.position = new BABYLON.Vector3(cell.coords.x, cell["elevation"]/4, cell.coords.y)
-
-        cell.mesh.material = cell.mesh.material.clone(cell.coords.x + " " + cell.coords.y)
-        cell.mesh.material.specularColor = new BABYLON.Color3(0,0,0)
-
-        var tcol = this._proto[cell.type].material.diffuseColor
-
-        cell.mesh.material.diffuseColor.r = intensity * color.r + (1 - intensity) * tcol.r
-        cell.mesh.material.diffuseColor.g = intensity * color.g + (1 - intensity) * tcol.g
-        cell.mesh.material.diffuseColor.b = intensity * color.b + (1 - intensity) * tcol.b
-        cell.smell = true
-        return true
     },
     /*
     Update a single chunk into the lru cache by either looking up the chunk in the world state
@@ -9809,78 +10130,69 @@ module.exports =  Class("WorldRenderer", {
     param y: y position of chunk
     param force: Force update the chunk even if it's already loaded.
     */
-    'public updateChunk': function (x,y) {
+    'public updateChunk': function (x,y, force, chunk_coords) {
         //Make sure to round key into chunk grid coordinates
         var chunksize = this._worldState.get("chunkSize")
         var chunk_x = Math.floor(x/chunksize)
         var chunk_y = Math.floor(y/chunksize)
+        if(chunk_coords){
+            chunk_x = x
+            chunk_y = y
+        }
 
         var cellx = chunk_x*chunksize
         var celly = chunk_y*chunksize
 
-        var chunk
-        var pcell, cell, mesh, smell
+        var cell, mesh, smell, row
+        var chunk = []
 
-        chunk = this._sceneChunks.get(chunk_x + " " + chunk_y)
-        cachemiss = chunk == undefined
-        if(cachemiss)
-            chunk = []
+        if(!force && this._sceneChunks.get(chunk_x + " " + chunk_y))
+            return
 
         for (var i = 0; i < chunksize; i++) {
-            var row
-            if(cachemiss)
-                row = []
+            row = []
             for (var j = 0; j < chunksize; j++) {
-                if(!cachemiss) {
-                    pcell = chunk[i][j]
-                    for(k in pcell.contents)
-                        pcell.contents[k]["mesh"].dispose()
-                }
+                cell = JSON.parse(JSON.stringify(this._terrainGen(cellx, celly)))
 
-                cell = this._terrainGen(cellx, celly)
+                mesh = this._proto[cell["type"]]
+                           .createInstance(cellx + " " + celly)
 
-                //If new cell is different, rerender.
-                if (cachemiss
-                    || pcell["type"] != cell["type"]
-                    || Math.floor(pcell["elevation"]*100)/100 != Math.floor(cell["elevation"]*100)/100)
-                {
-                    var s = this.renderSmell(cell)
+                mesh.scaling.y = cell["elevation"]/2
 
-                    if(!s) {
-                        mesh = this._proto[cell["type"]]
-                                   .createInstance(cellx + " " + celly)
+                mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
+                cell["mesh"] = mesh
 
-                        mesh.scaling.y = cell["elevation"]/2
-
-                        mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/4, celly)
-
-                        cell["mesh"] = mesh
-                    }
-
-                    if(cachemiss)
-                        row.push(cell)
-                    pcell = cell
-                }
-                else {
-                    pcell.contents = cell.contents
-                }
-
-                for(k in pcell.contents) {
-                    var cont = pcell.contents[k]
+                for(k in cell.contents) {
+                    var cont = cell.contents[k]
                     cont.mesh = this._proto[cont["type"]]
-                                    .createInstance(cellx + " " + celly + " " + cont["type"])
-                    cont.mesh.position = new BABYLON.Vector3(cellx, pcell["elevation"]/2, celly)
-                    cont.mesh.isPickable = false;
+                                    .createInstance(cellx + " " + celly)
+                    cont.mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/2, celly)
+                    switch(cont.direction) {
+                        case "WEST":
+                            cont.mesh.rotation.z = Math.PI/2
+                            break
+                        case "SOUTH":
+                            cont.mesh.rotation.z = Math.PI
+                            break
+                        case "EAST":
+                            cont.mesh.rotation.z = 3*Math.PI/2
+                            break
+                        default:
+                            cont.mesh.rotation.z = 0
+                            break
+                    }
+                    cont.mesh.isPickable = false
+                    this.initSmell(cell, cont["type"])
                 }
+
+                row.push(cell)
                 cellx++
             }
-            if(cachemiss)
-                chunk.push(row)
+            chunk.push(row)
             cellx = chunk_x*chunksize
             celly++
         }
-        if(cachemiss)
-            this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
     }
 })
 
