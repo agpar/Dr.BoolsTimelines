@@ -114,10 +114,11 @@ def actor_energy(actor):
 def actor_direction(actor):
     return actor.direction
 
-
 def actor_rock(actor):
     return actor.has_rock
 
+def actor_block(actor):
+    return actor.has_block
 
 def actor_food(actor):
     return actor.has_food
@@ -322,5 +323,6 @@ SYM_MAP = {
     'MY_DIRECTION' : actor_direction,
     'HOLDING_ROCK' : actor_rock,
     'HOLDING_FOOD' : actor_food,
+    'HOLDING_BLOCK': actor_block,
     'SLEEPING' : actor_issleeping
 }

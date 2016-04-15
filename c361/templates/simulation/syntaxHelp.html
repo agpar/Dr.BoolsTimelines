@@ -71,7 +71,7 @@
                             <li><a href="#MY_LOCATION">MY_LOCATION</a></li>
                             <li><a href="#SLEEPING">SLEEPING</a></li>
                             <li><a href="#HOLDING_FOOD">HOLDING_FOOD</a></li>
-                            <li><a href="#HOLDING_ROCK">HOLDING_ROCK</a></li>
+                            <li><a href="#HOLDING_ROCK">HOLDING_BLOCK</a></li>
                             <li><a href="#CHECK">CHECK</a></li>
                         </ul>
                     </li>
@@ -148,7 +148,6 @@
               </ul>
               Example script structure:
               <xmp>
-<<<<<<< HEAD
               if nearest(WATER) == MY_LOCATION then
                 do
                     walk(NORTH);
@@ -157,8 +156,6 @@
                 do
                     walk(direction(NORTH));
                 done
-              endif
->>>>>>> 5d7a7e1424ac7bcb2354ad210b561066e466254c
               endif
               </xmp>
               Referring to the example above, take note of the following rules regarding script syntax:
@@ -189,7 +186,7 @@
       		</div>
       		<div class "actionWords" id="drop">
         		<h3>Drop</h3>
-        		<p>Takes an attribute, either FOOD or ROCK, as an attribute and will drop the item, if possible, in the current location</p>
+        		<p>Takes an attribute, either FOOD or BLOCK, as an attribute and will drop the item, if possible, in the current location</p>
             Example usage:
             <xmp>
               if HOLDING_FOOD then
@@ -199,7 +196,7 @@
               endif
               if HOLDING_ROCK then
               do
-                  drop(ROCK);
+                  drop(BLOCK);
               done
               endif
             </xmp>
@@ -242,7 +239,7 @@
         		<p> Attempt to pickup an object in the current location of the actor. If no object is present nothing happens. Must be used with a CHECK(attr) to work properly</p>
             Example usage:
             <xmp>
-              if not HOLDING_ROCK and CHECK(ROCK)
+              if not HOLDING_BLOCK and CHECK(BLOCK)
               then
                do
                  pickup();
@@ -280,9 +277,9 @@
         		<p>Takes in a list of directions as an argument and performs them. The list can also be only one direction. </p>
             Example usage:
             <xmp>
-              if not CHECK(ROCK) then
+              if not CHECK(BLOCK) then
               do
-                walk(direction(nearest(ROCK)));
+                walk(direction(nearest(BLOCK)));
               done
               endif  
             </xmp>
@@ -371,12 +368,12 @@
               endif
             </xmp>
       		</div>
-      		<div id="HOLDING_ROCK">
-        		<h3>HOLDING_ROCK</h3>
-        		<p>Returns 'True' if the actor is holding a rock, otherwise will return 'False'.</p>
+      		<div id="HOLDING_BLOCK">
+        		<h3>HOLDING_BLOCK</h3>
+        		<p>Returns 'True' if the actor is holding a block, otherwise will return 'False'.</p>
             Example usage:
             <xmp>
-              if HOLDING_ROCK
+              if HOLDING_BLOCK
               then
                 do 
                   drop();
@@ -386,10 +383,10 @@
       		</div>
           <div id="CHECK">
             <h3>CHECK()</h3>
-            <p>Takes an attribute, either "PLANT" or "ROCK", as an argument and returns 'True' if the actor is in the location of the given attribute, otherwise will return 'False'.</p>
+            <p>Takes an attribute, either "PLANT" or "BLOCK", as an argument and returns 'True' if the actor is in the location of the given attribute, otherwise will return 'False'.</p>
             Example usage:
             <xmp>
-              if CHECK(ROCK)
+              if CHECK(BLOCK)
               then
                 do 
                   drop();
