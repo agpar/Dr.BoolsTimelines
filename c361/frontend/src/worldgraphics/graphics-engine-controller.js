@@ -210,11 +210,11 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, self._camPos)
 
+        this._camPos = {x: 0, y: 0}
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, this._camPos)
         this._renderEngine = engine
         this._camera = camera
-        this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
 
@@ -401,6 +401,17 @@ module.exports = Class("GraphicsEngineController", {
         $("#reverse-btn").click(
             function () {
                 controller.prevFrame()
+            }
+        )
+
+        $("#smell-on-btn").click(
+            function(){
+                controller.showSmellField()
+            }
+        )
+        $("#smell-off-btn").click(
+            function(){
+                controller.hideSmellField()
             }
         )
     },

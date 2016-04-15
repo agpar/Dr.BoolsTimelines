@@ -237,6 +237,10 @@ class WorldState(CoordParseMixin):
             x,y,grass = self.nrand_2d(None, rad=rad)
             if grass:
                 self.add_content("PLANT", x, y)
+            x,y,grass = self.nrand_2d(None, rad=rad)
+            if grass:
+                self.add_content("BLOCK", x, y)
+
         else:
             actors = [act for act in self._inhabitants if act.is_actor]
             for act in actors:
