@@ -258,6 +258,17 @@ class WorldState(CoordParseMixin):
             elif type == "BLOCK":
                 self._inhabitants[x,y].append(Block(x=x, y=y, type=type))
 
+    def remove_content(self, type, x, y):
+        delqueue = []
+        for c in self._inhabitants[x,y]:
+            print(c.type)
+            print(type)
+            if type == c.type:
+                delqueue.append(c)
+        for c in delqueue:
+            self.remove_inhabitant(c)
+
+
     def get_inhabitants(self, xy):
         """Get all the inhabitants at a location.
 
