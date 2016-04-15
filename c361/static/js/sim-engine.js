@@ -9071,11 +9071,11 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, self._camPos)
 
+        this._camPos = {x: 0, y: 0}
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, this._camPos)
         this._renderEngine = engine
         this._camera = camera
-        this._camPos = {x: 0, y: 0}
         this._renderer = renderer
 
 
@@ -9262,6 +9262,17 @@ module.exports = Class("GraphicsEngineController", {
         $("#reverse-btn").click(
             function () {
                 controller.prevFrame()
+            }
+        )
+
+        $("#smell-on-btn").click(
+            function(){
+                controller.showSmellField()
+            }
+        )
+        $("#smell-off-btn").click(
+            function(){
+                controller.hideSmellField()
             }
         )
     },
@@ -9689,6 +9700,7 @@ module.exports =  Class("WorldRenderer", {
     'private _sceneChunks': null,
     'private _worldState': null,
     'private _camPos': null,
+    'private _smellMode': false,
     'private _proto': {
         'WATER': null,
         'ROCK':  null,
@@ -9817,9 +9829,9 @@ module.exports =  Class("WorldRenderer", {
 
         return loader
     },
-    __construct: function (renderTarget, engine, camera, scene, campos) {
+    __construct: function (renderTarget, engine, camera, scene, loader, campos) {
         //Configure the LRU cache holding the scene chunks.
-        self._camPos = campos
+        this._camPos = campos
         var renderer = this
         var options = {
             max: 100,
@@ -10001,7 +10013,6 @@ module.exports =  Class("WorldRenderer", {
         var worldWidth  = this._worldState.get("width")
         var worldLength = this._worldState.get("length")
         var chunksize   = this._worldState.get("chunkSize")
-
         var cellx = Math.round(x + worldWidth/2)
         var celly = Math.round(y + worldLength/2)
 
@@ -10086,6 +10097,7 @@ module.exports =  Class("WorldRenderer", {
     'public updateView': function(cam) {
         var x = cam.x
         var y = cam.y
+
         if(this._worldState == null)
             return
 
@@ -10107,21 +10119,31 @@ module.exports =  Class("WorldRenderer", {
             }
         }
     },
-    'public initSmell': function(cont) {
-        if(this._smells_proto[cont.type] == undefined || cell.mesh == undefined)
+    'public initSmell': function(cont, coords) {
+        if(this._smells_proto[cont.type] == undefined) {
             return
-        cont.smell_name = cell.coords.x + " " + cell.coords.y + "--smell--" + type
-        cont.smell = this._smells_proto[type].clone(cont.smell_name)
+        }
+        if(this._smells[cont.smell_name] != undefined)
+            this._smells[cont.smell_name].dispose()
+        cont.smell_name = coords.x + " " + coords.y + "--smell--" + cont.type
+        cont.smell = this._smells_proto[cont.type].clone(cont.smell_name)
         cont.smell.emitter = cont.mesh
         this._smells[cont.smell_name] = cont.smell
+        if(this._smellMode)
+            this.showSmells()
+        else
+            this.hideSmells()
     },
     'public showSmells': function () {
+        this._smellMode = true
         for(var s in this._smells){
             var smell = this._smells[s]
-            smell.start()
+            if(smell)
+              smell.start()
         }
     },
     'public hideSmells': function () {
+        this._smellMode = false
         for(var s in this._smells){
             var smell = this._smells[s]
             smell.stop()
@@ -10131,9 +10153,6 @@ module.exports =  Class("WorldRenderer", {
         if(contents != undefined) {
             for(c in contents) {
                 var cont = contents[c]
-                this._smells[cont.smell_name] = undefined
-                if(cont.smell != undefined)
-                    cont.smell.dispose()
                 if(cont.mesh != undefined)
                     cont.mesh.dispose()
             }
@@ -10181,6 +10200,7 @@ module.exports =  Class("WorldRenderer", {
 
                 for(k in cell.contents) {
                     var cont = cell.contents[k]
+                    this.clearContents([cont])
                     cont.mesh = this._proto[cont["type"]]
                                     .createInstance(cellx + " " + celly)
                     cont.mesh.position = new BABYLON.Vector3(cellx, cell["elevation"]/2, celly)
@@ -10199,7 +10219,7 @@ module.exports =  Class("WorldRenderer", {
                             break
                     }
                     cont.mesh.isPickable = false
-                    this.initSmell(cell, cont["type"])
+                    this.initSmell(cont, {'x':cellx, 'y': celly})
                 }
 
                 row.push(cell)
@@ -10211,7 +10231,7 @@ module.exports =  Class("WorldRenderer", {
         }
         this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
         if(chunk_coords)
-            this.updateView(self._camPos)
+            this.updateView(this._camPos)
     }
 })
 
