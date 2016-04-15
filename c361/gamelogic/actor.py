@@ -33,7 +33,7 @@ class Actor(WorldInhabitant):
             self.health = model.health
             self.hunger = model.hunger
             self.sleep = model.sleep
-            self.has_food = True
+            self.has_food = False
             self.has_rock = False
             self.has_block = False
             self.is_sleeping = model.is_sleeping
@@ -47,7 +47,7 @@ class Actor(WorldInhabitant):
             self.health = 100
             self.hunger = 100
             self.sleep = 100
-            self.has_food = True
+            self.has_food = False
             self.has_rock = False
             self.has_block = False
             self.is_sleeping = False
@@ -286,18 +286,19 @@ class Actor(WorldInhabitant):
             "to": direction
         }
 
-    def pickup(self):
+    def pickup(self, direction):
         """ Pickup something in a certain direction. If 
         no direction given, attempt pickup in current direction
 
         return: resulting delta from a pickup
         """
+        coords = self.get_coord(direction)
         return {
-            "type": "actorDelta",
-            "coords": {'x': self.x, 'y': self.y},
+            "type": "worldDelta",
+            "coords": {'x': coords[0], 'y': coords[1]},
             "actorID": self.uuid,
-            "varTarget": "has_block",
-            "to": True
+            "varTarget": "block",
+            "to": None
         }
 
     def harvest(self, direction):
@@ -307,7 +308,7 @@ class Actor(WorldInhabitant):
         return: harvest resulting delta
         """
         self.direction = direction
-        print(self.direction)
+        #print(self.direction)
         coords = self.get_coord(direction)
 
         return {
@@ -325,7 +326,6 @@ class Actor(WorldInhabitant):
         return: delta for drop
         """
         coords = self.get_coord(self.direction)
-        print(coords)
         if (attr == "FOOD"):
             if self.has_food:
                 return {

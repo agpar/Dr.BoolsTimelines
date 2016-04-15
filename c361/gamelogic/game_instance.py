@@ -329,6 +329,15 @@ class GameInstance(CoordParseMixin):
                         "varTarget": "has_block",
                         "to": False
                     })
+                #pickup block
+                if delta['to'] == None:
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': actor.x, 'y': actor.y},
+                        "actorID" : actor.uuid,
+                        "varTarget": "has_block",
+                        "to": True
+                        })
             
         # Calculate any side effects of the side effects.
         old_effects = effects
@@ -425,13 +434,18 @@ class GameInstance(CoordParseMixin):
                     actr.has_food = val
             if delta['varTarget'] == 'plant':
                 if (delta['to'] == None):
-                    self.world.remove_inhabitant(coords)
+                    print("about to harvest")
+                    #self.world.remove_inhabitant(coords)
                 elif (delta['to'] == True):
-                    self.world.add_inhabitant(Plant(delta['coords'][0], delta['coords'][1], "MUSH"))
+                    self.world.add_inhabitant(Plant(delta['coords']['x'], delta['coords']['y'], "MUSH"))
             if delta['varTarget'] == 'block':
-                if delta['to'] == False:
-                    self.world.add_inhabitant(Block(delta['coords'][0], delta['coords'][1], "BLOCK"))
-
+                if delta['to'] == True:
+                    print("about to drop")
+                    print(delta['coords']['x'])
+                    self.world.add_inhabitant(Block(delta['coords']['x'], delta['coords']['y'], "BLOCK"))
+                if delta['to'] == None:
+                    print("about to pickup")
+                    #self.world.remove_inhabitant()
         if reverse:
             for act in self.actors.values():
                 act._turn_stat_change(reverse=True)

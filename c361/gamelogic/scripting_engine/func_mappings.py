@@ -169,7 +169,6 @@ def drop_fn(actor, attr):
     """
     if attr not in ("BLOCK", "FOOD"):
         return None
-    
     return actor.drop(attr)
 
 
@@ -183,16 +182,29 @@ def harvest_fn(actor, direction):
     return actor.harvest(direction)
 
 
-def pickup_fn(actor, direction):
+def pickup_fn(actor):
     """ Pickup a rock
 
     :return delta to pick up rock
     """
-
     if actor.has_block:
         return 
     #elif :
-    return actor.pickup(direction)
+    vision_radius = 2 if actor.gameInstance.is_night else 4
+    scan_area = actor.gameInstance.circle_at(actor, vision_radius)
+    nearest = actor._coords
+    for x, y in scan_area:
+        coord_contents = actor.gameInstance.world[x][y]
+        for content in coord_contents:
+            if actor.gameInstance.check_block(content._coords):
+                nearest = content._coords
+                break
+    if actor.can_reach(nearest):
+        #print(nearest)
+        #print(actor.direction(nearest))
+        direction = actor.direction_to(nearest)
+        for dir in direction:
+            return actor.pickup(dir)
 
 
 def direction_fn(actor, xy, y=None):
@@ -249,8 +261,8 @@ def scavenge_fn(actor, attr):
             if actor.gameInstance.check_plant(content._coords):
                 nearest = content._coords
                 break
-    print(nearest[1])
-    print(nearest[0])
+    #print(nearest[1])
+    #print(nearest[0])
     if actor.can_reach(nearest):
         #print(nearest)
         #print(actor.direction(nearest))
@@ -345,11 +357,8 @@ SYM_MAP = {
     'MY_DIRECTION' : actor_direction,
     'HOLDING_ROCK' : actor_rock,
     'HOLDING_FOOD' : actor_food,
-<<<<<<< HEAD
     'SLEEPING' : actor_issleeping,
     'HOLDING_BLOCK': actor_block,
-=======
     'HOLDING_BLOCK': actor_block,
     'SLEEPING' : actor_issleeping
->>>>>>> 599ca5ab59956bbd25ec96eef6647cb583694268
 }
