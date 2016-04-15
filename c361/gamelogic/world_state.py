@@ -44,14 +44,14 @@ class WorldState(CoordParseMixin):
                     data = cont
 
                     inhab = None
-                    if data.get("type") == "MUSH":
+                    if data.get("type") == "MUSH" or data.get("type") == "PLANT":
                         inhab = Plant(from_dict=data)
                     if data.get("type") == "BLOCK":
                         inhab = Block(from_dict=data)
                     #Add more types here
 
                     if inhab:
-                        self._inhabitants[(pair['coords'][0], pair['coords'][0])].append(inhab)
+                        self._inhabitants[(pair['coords'][0], pair['coords'][1])].append(inhab)
 
             if json_dump.get("seed") is not None:
                 self._seed = json_dump["seed"]
