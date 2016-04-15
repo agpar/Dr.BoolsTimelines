@@ -345,11 +345,6 @@ SYM_MAP = {
     'MY_DIRECTION' : actor_direction,
     'HOLDING_ROCK' : actor_rock,
     'HOLDING_FOOD' : actor_food,
-<<<<<<< HEAD
     'SLEEPING' : actor_issleeping,
-    'HOLDING_BLOCK': actor_block,
-=======
-    'HOLDING_BLOCK': actor_block,
-    'SLEEPING' : actor_issleeping
->>>>>>> 599ca5ab59956bbd25ec96eef6647cb583694268
+    'HOLDING_BLOCK': actor_block
 }
