@@ -359,6 +359,5 @@ SYM_MAP = {
     'HOLDING_FOOD' : actor_food,
     'SLEEPING' : actor_issleeping,
     'HOLDING_BLOCK': actor_block,
-    'HOLDING_BLOCK': actor_block,
     'SLEEPING' : actor_issleeping
 }
