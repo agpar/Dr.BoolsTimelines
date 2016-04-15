@@ -24,6 +24,7 @@ module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
     'private _worldState': null,
+    'private _camPos': null,
     'private _proto': {
         'WATER': null,
         'ROCK':  null,
@@ -152,8 +153,9 @@ module.exports =  Class("WorldRenderer", {
 
         return loader
     },
-    __construct: function (renderTarget, engine, camera, scene) {
+    __construct: function (renderTarget, engine, camera, scene, campos) {
         //Configure the LRU cache holding the scene chunks.
+        self._camPos = campos
         var renderer = this
         var options = {
             max: 100,
@@ -385,6 +387,7 @@ module.exports =  Class("WorldRenderer", {
             tstate["seed"] = this._worldState.get("seed")
         this._worldState = WorldState(tstate, title, this.updateChunk.bind(this), this.clearContents.bind(this))
         this._sceneChunks.reset()
+        console.log(tstate)
     },
     'public getStateProp': function (key) {
         return this._worldState.get(key)
@@ -543,5 +546,7 @@ module.exports =  Class("WorldRenderer", {
             celly++
         }
         this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        if(chunk_coords)
+            this.updateView(self._camPos)
     }
 })

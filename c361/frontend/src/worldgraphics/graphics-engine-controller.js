@@ -210,7 +210,7 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader)
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, self._camPos)
 
         this._renderEngine = engine
         this._camera = camera
