@@ -33,7 +33,7 @@ class Actor(WorldInhabitant):
             self.health = model.health
             self.hunger = model.hunger
             self.sleep = model.sleep
-            self.has_food = False
+            self.has_food = True
             self.has_rock = False
             self.has_block = False
             self.is_sleeping = model.is_sleeping
@@ -87,7 +87,8 @@ class Actor(WorldInhabitant):
             'behaviour_script': self.script,
             'smell_code': self.smell_code,
             'has_rock': self.has_rock,
-            'has_block': self.has_block
+            'has_block': self.has_block,
+            'has_food': self.has_food
         }
         return d
 
@@ -295,22 +296,26 @@ class Actor(WorldInhabitant):
             "type": "actorDelta",
             "coords": {'x': self.x, 'y': self.y},
             "actorID": self.uuid,
-            "varTarget": "has_rock",
+            "varTarget": "has_block",
             "to": True
         }
 
-    def harvest(self, xy):
+    def harvest(self, direction):
         """ Harvest something in a direction. If no direction specified 
         harvest in current direction
 
         return: harvest resulting delta
         """
+        self.direction = direction
+        print(self.direction)
+        coords = self.get_coord(direction)
+
         return {
-            "type": "actorDelta",
-            "coords": {'x': self.x, 'y': self.y},
-            "actorID" : self.uuid,
-            "varTarget": "has_food",
-            "to": True
+            "type": "worldDelta",
+            "coords": {'x': coords[0], 'y': coords[1]},
+            "actorID": self.uuid,
+            "varTarget": "plant",
+            "to": None
         }
 
     def drop(self, attr):
@@ -319,23 +324,25 @@ class Actor(WorldInhabitant):
 
         return: delta for drop
         """
+        coords = self.get_coord(self.direction)
+        print(coords)
         if (attr == "FOOD"):
             if self.has_food:
                 return {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
+                    "type": "worldDelta",
+                    "coords": {'x': coords[0], 'y': coords[1]},
                     "actorID" : self.uuid,
-                    "varTarget": "is_food",
-                    "to": False
+                    "varTarget": "plant",
+                    "to": True
                 }
-        if (attr == "ROCK"):
-            if self.has_rock:
+        if (attr == "BLOCK"):
+            if self.has_block:
                 return {
-                    "type": "actorDelta",
-                    "coords": {'x': self.x, 'y': self.y},
+                    "type": "worldDelta",
+                    "coords": {'x': coords[0], 'y': coords[1]},
                     "actorID": self.uuid,
-                    "varTarget": "has_rock",
-                    "to": False
+                    "varTarget": "block",
+                    "to": True
                 }
 
 

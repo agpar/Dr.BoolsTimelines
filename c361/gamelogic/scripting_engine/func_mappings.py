@@ -126,6 +126,9 @@ def actor_food(actor):
 def actor_issleeping(actor):
     return actor.is_sleeping
 
+def actor_holdingblock(actor):
+    return actor.has_block
+
 def check_fn(actor, attr):
     #print("yes")
     
@@ -163,32 +166,32 @@ def drop_fn(actor, attr):
 
     :return delta for drop
     """
-    if attr not in ("ROCK", "FOOD"):
+    if attr not in ("BLOCK", "FOOD"):
         return None
     
     return actor.drop(attr)
 
 
-def harvest_fn(actor, xy):
+def harvest_fn(actor, direction):
     """ Harvest a plant.
-
+    :param is the direction of the plant, NORTH, SOUTH, WEST, EAST
     :return delta for harvest
     """
-    if actor.gameInstance.check_plant(xy):
-        return actor.harvest(xy)
-    else:
-        return 
+    if actor.has_food:
+        return
+    return actor.harvest(direction)
 
 
-def pickup_fn(actor):
+def pickup_fn(actor, direction):
     """ Pickup a rock
 
     :return delta to pick up rock
     """
-    if actor.has_rock:
+
+    if actor.has_block:
         return 
-    else:
-        return actor.pickup()
+    #elif :
+    return actor.pickup(direction)
 
 
 def direction_fn(actor, xy, y=None):
@@ -236,15 +239,34 @@ def scavenge_fn(actor, attr):
     """
     if attr not in ("PLANT", "FOOD"):
         return None
-    nearest = actor.gameInstance.find_nearest(actor, attr)
-
-    if nearest == actor._coords:
-        dirs = list(DIRECTIONS)
-        walk_fn(actor, random.shuffle(dirs))
-    elif actor.can_reach(nearest):
-        return harvest_fn(actor, actor.direction(nearest))
+    vision_radius = 2 if actor.gameInstance.is_night else 4
+    scan_area = actor.gameInstance.circle_at(actor, vision_radius)
+    nearest = actor._coords
+    for x, y in scan_area:
+        coord_contents = actor.gameInstance.world[x][y]
+        for content in coord_contents:
+            if actor.gameInstance.check_plant(content._coords):
+                nearest = content._coords
+                break
+    print(nearest[1])
+    print(nearest[0])
+    if actor.can_reach(nearest):
+        #print(nearest)
+        #print(actor.direction(nearest))
+        direction = actor.direction_to(nearest)
+        for dir in direction:
+            return harvest_fn(actor, dir)
+    elif nearest == actor._coords:
+        print("here1")
+        dirs = {"NORTH", "SOUTH", "EAST", "WEST"}
+        #problem with random.shuffle(dirs)
+        return walk_fn(actor, 'NORTH')
     else:
-        return actor.walk(actor.direction(nearest_fn(actor, attr)))
+        direction = actor.direction_to(nearest)
+        print(direction)
+        for dir in direction:
+            return actor.walk(dir)
+        
 
 
 
@@ -322,5 +344,6 @@ SYM_MAP = {
     'MY_DIRECTION' : actor_direction,
     'HOLDING_ROCK' : actor_rock,
     'HOLDING_FOOD' : actor_food,
-    'SLEEPING' : actor_issleeping
+    'SLEEPING' : actor_issleeping,
+    'HOLDING_BLOCK': actor_holdingblock
 }

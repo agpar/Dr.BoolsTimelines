@@ -290,23 +290,44 @@ class GameInstance(CoordParseMixin):
                         "message:": actor.name + " has died!"
                     })
             if delta['varTarget'] == 'hunger':
+                #eat food
                 if delta['to'] == False:
                     effects.append({
                         "type": "actorDelta",
-                        "coords": {'x': self.x, 'y': self.y},
-                        "actorID": self.uuid,
+                        "coords": {'x': delta["coords"]['x'], 'y': delta["coords"]['y']},
+                        "actorID": actor.uuid,
                         "varTarget": "has_food",
                         "from": True,
                         "to": False
                     })
-            if delta['varTarget'] == 'has_food':
+            if delta['varTarget'] == 'plant':
+                #harvest plant
+                if delta['to'] == None:
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': actor.x, 'y': actor.y},
+                        "actorID" : actor.uuid,
+                        "varTarget": "has_food",
+                        "to": True
+                    })
+                #drop plant
                 if delta['to'] == True:
                     effects.append({
-                        "type": "worldDelta",
-                        "coords": {'x': xy[0], 'y': xy[1]},
-                        "actorID": self.uuid,
-                        "varTarget": "plant",
-                        "to": None
+                        "type": "actorDelta",
+                        "coords": {'x': actor.x, 'y': actor.y},
+                        "actorID" : actor.uuid,
+                        "varTarget": "has_food",
+                        "to": False
+                    })
+            if delta['varTarget'] == 'block':
+                #drop block
+                if delta['to'] == True:
+                    effects.append({
+                        "type": "actorDelta",
+                        "coords": {'x': actor.x, 'y': actor.y},
+                        "actorID" : actor.uuid,
+                        "varTarget": "has_block",
+                        "to": False
                     })
             
         # Calculate any side effects of the side effects.
@@ -392,21 +413,24 @@ class GameInstance(CoordParseMixin):
                 actr.health = val
             if delta['varTarget'] == 'is_sleeping':
                 actr.is_sleeping = val
-            if delta['varTarget'] == 'has_rock':
+            if delta['varTarget'] == 'has_block':
                 if (delta['to'] == True):
-                    actr.has_rock = val
+                    actr.has_block = val
                 elif (delta['to'] == False):
-                    actr.has_rock = val
+                    actr.has_block = val
             if delta['varTarget'] == 'has_food':
                 if (delta['to'] == False):
                     actr.has_food = val
                 if (delta['to'] == True):
                     actr.has_food = val
             if delta['varTarget'] == 'plant':
-                if (reverse == False):
-                    self.world.remove_inhabitant(plant)
-                elif (reverse == True):
-                    self.world.add_inhabitant(plant)
+                if (delta['to'] == None):
+                    self.world.remove_inhabitant(coords)
+                elif (delta['to'] == True):
+                    self.world.add_inhabitant(Plant(delta['coords'][0], delta['coords'][1], "MUSH"))
+            if delta['varTarget'] == 'block':
+                if delta['to'] == False:
+                    self.world.add_inhabitant(Block(delta['coords'][0], delta['coords'][1], "BLOCK"))
 
         if reverse:
             for act in self.actors.values():
