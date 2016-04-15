@@ -8906,11 +8906,13 @@ module.exports = Class("GraphicsEngineController", {
             var element = $("<div class='cell-content-list'> </div>");
             var health = cont.health;
             var type = cont.type;
-            var rock = cont.has_rock;
+            var block = cont.has_block;
+            var food = cont.has_food;
 
             $("<span> Type: </span><span id='type'>" + type + "</span><br>").appendTo(element);
             $("<span> Health: </span><span id='health'>" + health + "</span><br>").appendTo(element);
-            $("<span> Has Rock: </span><span id='health'>" + rock + "</span>").appendTo(element);
+            $("<span> Has Block: </span><span id='health'>" + block + "</span><br>").appendTo(element);
+            $("<span> Has Food: </span><span id='health'>" + food + "</span>").appendTo(element);
 
             $("div#stat-listing").append(element);
         }
@@ -9069,7 +9071,7 @@ module.exports = Class("GraphicsEngineController", {
         camera.wheelPrecision = 25
         camera.attachControl(renderTarget)
 
-        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader)
+        var renderer = WorldRenderer(renderTarget, engine, camera, scene, loader, self._camPos)
 
         this._renderEngine = engine
         this._camera = camera
@@ -9528,7 +9530,7 @@ module.exports = Class("WorldState", {
     'private _title': undefined,
     'private _updatechunk': null,
     'private _clearContentsHandler': null,
-    
+
     __construct: function(json_dump, title, update_chunk_hook, clear_contents_hook) {
         this._clearContentsHandler = clear_contents_hook
 
@@ -9607,7 +9609,8 @@ module.exports = Class("WorldState", {
 
         for(k in f_diff) {
             if(t_diff[k] == "REMOVE") {
-                this._clearContentsHandler(patched[k])
+                if(patched[k].contents != undefined)
+                    this._clearContentsHandler(patched[k].contents)
                 patched[k] = undefined
             }
         }
@@ -9685,6 +9688,7 @@ module.exports =  Class("WorldRenderer", {
     'private _scene': null,
     'private _sceneChunks': null,
     'private _worldState': null,
+    'private _camPos': null,
     'private _proto': {
         'WATER': null,
         'ROCK':  null,
@@ -9813,8 +9817,9 @@ module.exports =  Class("WorldRenderer", {
 
         return loader
     },
-    __construct: function (renderTarget, engine, camera, scene) {
+    __construct: function (renderTarget, engine, camera, scene, campos) {
         //Configure the LRU cache holding the scene chunks.
+        self._camPos = campos
         var renderer = this
         var options = {
             max: 100,
@@ -10046,6 +10051,7 @@ module.exports =  Class("WorldRenderer", {
             tstate["seed"] = this._worldState.get("seed")
         this._worldState = WorldState(tstate, title, this.updateChunk.bind(this), this.clearContents.bind(this))
         this._sceneChunks.reset()
+        console.log(tstate)
     },
     'public getStateProp': function (key) {
         return this._worldState.get(key)
@@ -10204,6 +10210,8 @@ module.exports =  Class("WorldRenderer", {
             celly++
         }
         this._sceneChunks.set(chunk_x + " " + chunk_y, chunk)
+        if(chunk_coords)
+            this.updateView(self._camPos)
     }
 })
 

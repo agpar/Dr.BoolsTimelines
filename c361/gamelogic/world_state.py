@@ -6,9 +6,10 @@ from functools import reduce
 from copy import deepcopy
 try:
     from .globals import *
+    from .actor import *
 except SystemError:
     from globals import *
-
+    from actor import *
 
 class WorldState(CoordParseMixin):
     SEED_SIZE = 300
@@ -65,6 +66,8 @@ class WorldState(CoordParseMixin):
             self._cells = {}
             self._seed = [[rand() for j in range(self.SEED_SIZE)] for i in range(self.SEED_SIZE)]
             self._inhabitants = defaultdict(list)
+            for i in range(50):
+                self.plant_gen(rad=50, init=True)
 
         self._prev_state = self.to_dict(False)
         self._build_diff = {}
@@ -208,6 +211,52 @@ class WorldState(CoordParseMixin):
         gradient = math.sqrt(x_slope**2 + fout[1]**2)
 
         return (fout[0], gradient)
+
+    def nrand_2d(self, actor, rad=10):
+        theta = 2*math.pi*rand()
+        R = rad * math.sqrt(-math.log(rand()))
+
+        x, y = R * math.cos(theta), R * math.sin(theta)
+        if actor is None:
+            x0, y0 = 0, 0
+        else:
+            x0, y0 = actor._coords.x, actor._coords.y
+
+        grass = False
+        for cont in self[x0 + x][y0 + y]:
+            if cont.is_grass:
+                grass = True
+                break
+        return x0 + x, y0 + y, grass
+
+    def plant_gen(self, rad=10, init=False):
+        if init:
+            x,y,grass = self.nrand_2d(None, rad=rad)
+            if grass:
+                self.add_content("MUSH", x, y)
+            x,y,grass = self.nrand_2d(None, rad=rad)
+            if grass:
+                self.add_content("PLANT", x, y)
+        else:
+            actors = [act for act in self._inhabitants if act.is_actor]
+            for act in actors:
+                x,y,grass = self.nrand_2d(act, rad=rad)
+                if grass:
+                    self.add_content("MUSH", x, y)
+                x,y,grass = self.nrand_2d(act, rad=rad)
+                if grass:
+                    self.add_content("PLANT", x, y)
+
+
+    def get_contents(self, type, x, y):
+        return [cont for cont in self._inhabitants[x, y] if cont.type == type]
+
+    def add_content(self, type, x, y):
+        if len(self._inhabitants[x,y]) < 1:
+            if type == "PLANT" or type == "MUSH":
+                self._inhabitants[x,y].append(Plant(x=x, y=y, type=type))
+            elif type == "BLOCK":
+                self._inhabitants[x,y].append(Block(x=x, y=y, type=type))
 
     def get_inhabitants(self, xy):
         """Get all the inhabitants at a location.
