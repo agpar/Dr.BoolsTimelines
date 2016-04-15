@@ -123,6 +123,8 @@ class Actor(WorldInhabitant):
             return False
         if self.gameInstance.get_actor((x2,y2)):
             return False
+        if self.gameInstance.check_block((x2,y2)):
+            return False
         return True
 
     def get_coord(self, direction):

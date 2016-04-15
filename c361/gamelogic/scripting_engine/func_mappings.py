@@ -200,12 +200,20 @@ def pickup_fn(actor):
                 nearest = content._coords
                 break
     if actor.can_reach(nearest):
-        #print(nearest)
         #print(actor.direction(nearest))
         direction = actor.direction_to(nearest)
         for dir in direction:
             return actor.pickup(dir)
-
+    elif nearest == actor._coords:
+        dirs = ["NORTH", "SOUTH", "EAST", "WEST"]
+        random.shuffle(dirs)
+        for dir in dirs:
+        #problem with random.shuffle(dirs)
+            return walk_fn(actor, dir)
+    else:
+        direction = actor.direction_to(nearest)
+        for dir in direction:
+            return actor.walk(dir)
 
 def direction_fn(actor, xy, y=None):
     """Can accept input from nearest_fn, or 2 numbers.

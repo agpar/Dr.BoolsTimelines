@@ -236,7 +236,7 @@
             </xmp>
       		<div  class "actionWords" id="pickup">
         		<h3>Pickup</h3>
-        		<p> Attempt to pickup an object in the cell next to the current location of the actor. If no object is present nothing happens.</p>
+        		<p> Attempt to pickup an object in the cell next to the current location of the actor. If no object is present, actor will walk towards nearest block or walk in random direction depending on how far the said object is.</p>
             Example usage:
             <xmp>
               if not HOLDING_BLOCK
@@ -277,9 +277,9 @@
         		<p>Takes in a list of directions as an argument and performs them. The list can also be only one direction. </p>
             Example usage:
             <xmp>
-              if not CHECK(BLOCK) then
+              if not CHECK(ROCK) then
               do
-                walk(direction(nearest(BLOCK)));
+                walk(direction(nearest(ROCK)));
               done
               endif  
             </xmp>
@@ -381,19 +381,6 @@
               endif
             </xmp>
       		</div>
-          <div id="CHECK">
-            <h3>CHECK()</h3>
-            <p>Takes an attribute, either "PLANT" or "BLOCK", as an argument and returns 'True' if the actor is in the location of the given attribute, otherwise will return 'False'.</p>
-            Example usage:
-            <xmp>
-              if CHECK(BLOCK)
-              then
-                do 
-                  drop();
-                done
-              endif
-            </xmp>
-          </div>
     	</div>
   	</div>
 </body>
