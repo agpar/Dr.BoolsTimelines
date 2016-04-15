@@ -434,18 +434,20 @@ class GameInstance(CoordParseMixin):
                     actr.has_food = val
             if delta['varTarget'] == 'plant':
                 if (delta['to'] == None):
-                    print("about to harvest")
-                    #self.world.remove_inhabitant(coords)
+                    print("about to remove plant")
+                    self.world.remove_content("PLANT", delta['coords']['x'], delta['coords']['y'])
                 elif (delta['to'] == True):
-                    self.world.add_inhabitant(Plant(delta['coords']['x'], delta['coords']['y'], "MUSH"))
+                    #self.world.add_inhabitant(Plant(delta['coords']['x'], delta['coords']['y'], "MUSH"))
+                    self.world.add_content("PLANT", delta['coords']['x'], delta['coords']['y'])
             if delta['varTarget'] == 'block':
                 if delta['to'] == True:
                     print("about to drop")
                     print(delta['coords']['x'])
-                    self.world.add_inhabitant(Block(delta['coords']['x'], delta['coords']['y'], "BLOCK"))
+                    #self.world.add_inhabitant(Block(delta['coords']['x'], delta['coords']['y'], "BLOCK"))
+                    self.world.add_content("BLOCK", delta['coords']['x'], delta['coords']['y'])
                 if delta['to'] == None:
                     print("about to pickup")
-                    #self.world.remove_inhabitant()
+                    self.world.remove_content("BLOCK", delta['coords']['x'], delta['coords']['y'])
         if reverse:
             for act in self.actors.values():
                 act._turn_stat_change(reverse=True)

@@ -33,9 +33,9 @@ class Actor(WorldInhabitant):
             self.health = model.health
             self.hunger = model.hunger
             self.sleep = model.sleep
-            self.has_food = False
+            self.has_food = True
             self.has_rock = False
-            self.has_block = False
+            self.has_block = True
             self.is_sleeping = model.is_sleeping
             self.direction = model.direction
             self.script = model.behaviour_script
@@ -47,9 +47,9 @@ class Actor(WorldInhabitant):
             self.health = 100
             self.hunger = 100
             self.sleep = 100
-            self.has_food = False
+            self.has_food = True
             self.has_rock = False
-            self.has_block = False
+            self.has_block = True
             self.is_sleeping = False
             self.direction = "NORTH"
             self.script = script
