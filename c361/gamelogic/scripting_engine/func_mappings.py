@@ -271,12 +271,13 @@ def scavenge_fn(actor, attr):
             return harvest_fn(actor, dir)
     elif nearest == actor._coords:
         print("here1")
-        dirs = {"NORTH", "SOUTH", "EAST", "WEST"}
+        dirs = ["NORTH", "SOUTH", "EAST", "WEST"]
+        random.shuffle(dirs)
+        for dir in dirs:
         #problem with random.shuffle(dirs)
-        return walk_fn(actor, 'NORTH')
+            return walk_fn(actor, dir)
     else:
         direction = actor.direction_to(nearest)
-        print(direction)
         for dir in direction:
             return actor.walk(dir)
         

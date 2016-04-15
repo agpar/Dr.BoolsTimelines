@@ -310,14 +310,16 @@ class Actor(WorldInhabitant):
         self.direction = direction
         #print(self.direction)
         coords = self.get_coord(direction)
-
-        return {
-            "type": "worldDelta",
-            "coords": {'x': coords[0], 'y': coords[1]},
-            "actorID": self.uuid,
-            "varTarget": "plant",
-            "to": None
-        }
+        if (self.gameInstance.check_plant(coords)):
+            return {
+                "type": "worldDelta",
+                "coords": {'x': coords[0], 'y': coords[1]},
+                "actorID": self.uuid,
+                "varTarget": "plant",
+                "to": None
+            }
+        else:
+            return
 
     def drop(self, attr):
         """ Drop something in a certain direction. If no

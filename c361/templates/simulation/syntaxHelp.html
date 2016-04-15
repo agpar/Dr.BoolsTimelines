@@ -194,7 +194,7 @@
                   drop(FOOD);
               done
               endif
-              if HOLDING_ROCK then
+              if HOLDING_BLOCK then
               do
                   drop(BLOCK);
               done
@@ -229,17 +229,17 @@
       		</div>
       		<div class "actionWords" id="harvest">
         		<h3>Harvest</h3>
-        		<p>Attempt to harvest in the direction that you are facing.</p>
+        		<p>Takes a direction as a paremeter. Attempts to harvest in the direction that is given. This action is best used through the scavenge function. Because unless, given a direction in which a plant exists, nothing will occur.</p>
             Example usage:
             <xmp>
-              harvest();
+              harvest(NORTH);
             </xmp>
       		<div  class "actionWords" id="pickup">
         		<h3>Pickup</h3>
-        		<p> Attempt to pickup an object in the current location of the actor. If no object is present nothing happens. Must be used with a CHECK(attr) to work properly</p>
+        		<p> Attempt to pickup an object in the cell next to the current location of the actor. If no object is present nothing happens.</p>
             Example usage:
             <xmp>
-              if not HOLDING_BLOCK and CHECK(BLOCK)
+              if not HOLDING_BLOCK
               then
                do
                  pickup();
@@ -249,13 +249,13 @@
       		</div>
       		<div class "actionWords" id="scavenge">
         		<h3>Scavenge</h3>
-        		<p> Search for the nearest food source. </p>
+        		<p> Takes PLANT or FOOD as a parameter. Searches for the nearest food source. This is ultimately called to harvest a plant</p>
             Example usage:
             <xmp>
               if MY_HEALTH == 10
               then
                   do
-                    scavenge();
+                    scavenge(PLANT);
                   done
               endif
             </xmp>
