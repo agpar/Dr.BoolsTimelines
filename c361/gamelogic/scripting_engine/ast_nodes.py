@@ -6,7 +6,7 @@ try:
 except ImportError:
     from c361.gamelogic.scripting_engine.func_mappings import *
 
-ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK'}
+ATTRIBUTES = {'FOOD', 'DEADLY', 'ACTOR', 'WATER', 'PLANT', 'GRASS', 'ROCK', 'BLOCK'}
 
 
 class Node:
