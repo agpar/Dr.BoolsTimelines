@@ -261,8 +261,6 @@ class WorldState(CoordParseMixin):
     def remove_content(self, type, x, y):
         delqueue = []
         for c in self._inhabitants[x,y]:
-            print(c.type)
-            print(type)
             if type == c.type:
                 delqueue.append(c)
         for c in delqueue:
