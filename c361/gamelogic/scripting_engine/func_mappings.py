@@ -114,10 +114,11 @@ def actor_energy(actor):
 def actor_direction(actor):
     return actor.direction
 
-
 def actor_rock(actor):
     return actor.has_rock
 
+def actor_block(actor):
+    return actor.has_block
 
 def actor_food(actor):
     return actor.has_food
@@ -126,7 +127,7 @@ def actor_food(actor):
 def actor_issleeping(actor):
     return actor.is_sleeping
 
-def actor_holdingblock(actor):
+def actor_block(actor):
     return actor.has_block
 
 def check_fn(actor, attr):
@@ -344,6 +345,11 @@ SYM_MAP = {
     'MY_DIRECTION' : actor_direction,
     'HOLDING_ROCK' : actor_rock,
     'HOLDING_FOOD' : actor_food,
+<<<<<<< HEAD
     'SLEEPING' : actor_issleeping,
-    'HOLDING_BLOCK': actor_holdingblock
+    'HOLDING_BLOCK': actor_block,
+=======
+    'HOLDING_BLOCK': actor_block,
+    'SLEEPING' : actor_issleeping
+>>>>>>> 599ca5ab59956bbd25ec96eef6647cb583694268
 }
