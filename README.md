@@ -1,20 +1,17 @@
-#C361 Project.
-Sniff it up.
+#Dr.Bool's Timelines
 
-To teammates:
+A prototype educational game designed to teach programming logic by introducing players to a simple
+scripting language that can be used to control the behaviour of agents in a 3D world. The game is open
+ended, with no concrete goals other than ensuring the survival of your avatar. The scripting language
+is intended to closely mirror a real programming language, while being simple to work with.
 
-Clone this repository to some directory, which I'll call $C361. Create a python3 virtual environment in $C361 and install requirements, like so.
-```bash
-cd $C361
-virtualenv --python=python3 .env #create a local copy of python in $C361/.env/
-source .env/bin/activate #load this new copy of python as your environmental default
-pip install -r requirements.txt #install the requirements into your new virtualenv.
-```
-I switched Django to use SQLite instead of PostgreSQL. SQLite is a python database implementation that comes packaged with django and is extremely portable. To create and migrate your SQL database for the project, run the following command (while sourced from the virtual environment you created above.
-```
-python manage.py migrate
-```
+This project includes a 3D simulation that runs in the browser, a custom scripting language with syntax checker,
+the ability to share behaviour scripts and spectate other players simulations.
 
-If everything went smoothly, you now have a working webapp. Run `python manage.py runserver` to launch the server, and browse to `localhost:8000` to check out the default project page.
 
--Alex
+### Randomly Generated 3D world
+![Randomly Generated 3D world](http://i.imgur.com/Ch1CWgB.png)
+
+### Script Editing Example
+![Scripting Example](http://i.imgur.com/MFdxYgZ.png)
+
