@@ -10,7 +10,7 @@ the ability to share behaviour scripts and spectate other players simulations.
 
 
 ### Randomly Generated 3D world
-![Randomly Generated 3D world](http://i.imgur.com/Ch1CWgB.png)
+![Randomly Generated 3D world](http://i.imgur.com/Xe2IksZ.gif)
 
 ### Script Editing Example
 ![Scripting Example](http://i.imgur.com/MFdxYgZ.png)
